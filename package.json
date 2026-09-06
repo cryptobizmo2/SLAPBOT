@@ -1,0 +1,10 @@
+{
+  "name": "slapbot",
+  "version": "1.0.0",
+  "dependencies": {
+    "@solana/web3.js": "^1.87.0",
+    "@solana/spl-token": "^0.4.0",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": { "node": "18.x" }
+}
