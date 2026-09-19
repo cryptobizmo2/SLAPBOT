@@ -240,7 +240,14 @@ let rows=[],feedMode='trending',sortKey='vol',sortDir=-1;
    this browser earlier in the session. DexScreener's newer /token-boosts/*
    and /token-profiles/* paths do NOT send CORS headers and fail from the
    browser with "Load failed", which is what blanked the dashboard. */
-const SEARCHES=['SOL/USDC','USDC','SOL'];
+const SEARCHES=['pump','bonk','wif','meme'];
+
+/* Base tokens to exclude — stablecoins, SOL itself, and staked/wrapped SOL
+   derivatives. These dominated results before and aren't what anyone is
+   scanning for. Also drops odd 'SOL-USDC' style derivative listings. */
+const SKIP=new Set(['SOL','WSOL','USDC','USDT','USD1','USDE','PYUSD','USDS',
+  'STSOL','MSOL','JITOSOL','JUPSOL','BSOL','INF','HSOL','JSOL','CGNTSOL','LST']);
+const isNoise=r=>SKIP.has((r.sym||'').toUpperCase())||(r.sym||'').includes('-');
 
 function pairToRow(p){
   const n=v=>Number.isFinite(+v)?+v:0;
@@ -284,7 +291,7 @@ async function loadFeed(mode){
     tried.push(q+': '+pairs.length);
     pairs.forEach(p=>{
       const row=pairToRow(p);
-      if(row.addr && row.price>0 && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
+      if(row.addr && row.price>0 && row.liq>=5000 && !isNoise(row) && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
     });
   });
 
