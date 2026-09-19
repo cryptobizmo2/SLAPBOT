@@ -240,7 +240,7 @@ let rows=[],feedMode='trending',sortKey='vol',sortDir=-1;
    this browser earlier in the session. DexScreener's newer /token-boosts/*
    and /token-profiles/* paths do NOT send CORS headers and fail from the
    browser with "Load failed", which is what blanked the dashboard. */
-const SEARCHES=['pump','bonk','wif','meme'];
+const SEARCHES=['bonk','wif','pump','jup','ray','popcat','mew','trump'];
 
 /* Base tokens to exclude — stablecoins, SOL itself, and staked/wrapped SOL
    derivatives. These dominated results before and aren't what anyone is
@@ -291,7 +291,15 @@ async function loadFeed(mode){
     tried.push(q+': '+pairs.length);
     pairs.forEach(p=>{
       const row=pairToRow(p);
-      if(row.addr && row.price>0 && row.liq>=5000 && !isNoise(row) && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
+      // Quality gates — text search returns hundreds of copycat scam tokens
+      // sharing a real token's name. Real tokens have real volume and real
+      // transaction counts; the fakes show $0.30 volume and 2 txns.
+      if(row.addr && row.price>0
+         && row.liq>=25000        // dead pools out
+         && row.vol>=50000        // $0.30-volume fakes out
+         && row.txns>=50          // '2 transaction' ghosts out
+         && !isNoise(row)
+         && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
     });
   });
 
@@ -301,6 +309,16 @@ async function loadFeed(mode){
       +'<br><br>Tap ↻ to retry.</td></tr>';
     power(false,'IDLE'); return;
   }
+
+  // One entry per symbol — keep the deepest-liquidity version. This is what
+  // separates the genuine BONK from the dozen copycats also called "Bonk".
+  const bySym=new Map();
+  all.forEach(r=>{
+    const k=(r.sym||'').toUpperCase();
+    const cur=bySym.get(k);
+    if(!cur||r.liq>cur.liq)bySym.set(k,r);
+  });
+  all=[...bySym.values()];
 
   // Trending = highest 24h volume. New = most recently created pool.
   all.sort(mode==='new'
@@ -369,22 +387,60 @@ async function scanToken(addr){
   $('#q').value=addr; go('token');
   $('#tokenView').innerHTML='<div class="card"><div class="empty"><span class="spin"></span> Scanning…</div></div>';
   power(true,'SCANNING');
+
+  let pairs=[], howFound='';
+
+  // Attempt 1 — direct token lookup.
   try{
     const d=await getJSON(DS+'/latest/dex/tokens/'+encodeURIComponent(addr),30000);
-    const pairs=(d.pairs||[]).filter(p=>p.chainId==='solana');
-    if(!pairs.length){
-      current=null;
-      $('#tokenView').innerHTML='<div class="card"><div class="flag fH">🛑 No Solana liquidity pool found for this address.<br><br>It may not be tradeable, may not exist, or is on another chain.</div></div>';
-      power(false,'IDLE');return;
-    }
-    const top=pairs.reduce((b,p)=>((p.liquidity?.usd)||0)>((b.liquidity?.usd)||0)?p:b,pairs[0]);
-    current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top};
-    current.auth=await checkAuth(addr);
-    renderToken();
-    renderLinks();
-  }catch(e){
-    $('#tokenView').innerHTML='<div class="card"><div class="flag fH">Scan failed — '+esc(e.message)+'</div></div>';
+    pairs=(d.pairs||[]).filter(p=>p.chainId==='solana');
+    if(pairs.length)howFound='token lookup';
+  }catch(e){ /* fall through to attempt 2 */ }
+
+  // Attempt 2 — search by address. Catches pools the token endpoint misses.
+  if(!pairs.length){
+    try{
+      const d2=await getJSON(DS+'/latest/dex/search?q='+encodeURIComponent(addr),30000);
+      pairs=(d2.pairs||[]).filter(p=>p.chainId==='solana' &&
+        (p.baseToken?.address===addr || p.quoteToken?.address===addr));
+      if(pairs.length)howFound='search';
+    }catch(e){}
   }
+
+  // Even with no DEX pool, Solana RPC still tells us the important safety facts.
+  const auth=await checkAuth(addr);
+
+  if(!pairs.length){
+    current=null;
+    const supplyTxt=auth?.supply!=null?num(auth.supply):'—';
+    $('#tokenView').innerHTML='<div class="card">'
+     +'<div class="ttl">⚠️ No DEX pool indexed</div>'
+     +'<div class="flag fM">DexScreener has no liquidity pool for this address.<br><br>'
+     +'Most common reason: the token is still on a <b>pump.fun bonding curve</b> and has not '
+     +'graduated to a Raydium/Orca pool yet — it can trade actively while remaining invisible '
+     +'to pool-based scanners.</div>'
+     +(auth
+       ? '<div class="ttl" style="font-size:11px;margin-top:12px">✅ On-chain data (read directly from Solana)</div>'
+         +'<div style="margin-bottom:8px">'+authBadges(auth)+'</div>'
+         +'<div class="g2" style="margin-bottom:10px">'
+         +'<div class="stat"><div class="k">Total Supply</div><div class="v" style="font-size:13px">'+supplyTxt+'</div></div>'
+         +'<div class="stat"><div class="k">Mint Exists</div><div class="v" style="font-size:13px">Yes</div></div></div>'
+         +(auth.freeze?'<div class="flag fH">🚨 FREEZE AUTHORITY ACTIVE — the deployer can freeze wallets and block selling. Major red flag.</div>':'<div class="flag fG">Freeze authority disabled</div>')
+         +(auth.mint?'<div class="flag fH">⚠️ MINT AUTHORITY ACTIVE — supply can be inflated at will.</div>':'<div class="flag fG">Mint authority disabled</div>')
+       : '<div class="flag fH">This address is not a valid SPL token mint on Solana — double-check it was pasted correctly.</div>')
+     +'<div class="ttl" style="font-size:11px;margin-top:12px">Check it elsewhere</div>'
+     +'<a class="lnk" href="https://pump.fun/coin/'+encodeURIComponent(addr)+'" target="_blank" rel="noreferrer"><div class="ico">💊</div><div style="flex:1"><div style="font-weight:800;font-size:13px">pump.fun</div><div class="sub" style="font-size:10.5px">If it is pre-graduation, it trades here</div></div><div class="dim">↗</div></a>'
+     +'<a class="lnk" href="https://rugcheck.xyz/tokens/'+encodeURIComponent(addr)+'" target="_blank" rel="noreferrer"><div class="ico">🛡</div><div style="flex:1"><div style="font-weight:800;font-size:13px">RugCheck</div><div class="sub" style="font-size:10.5px">Full contract safety report</div></div><div class="dim">↗</div></a>'
+     +'<a class="lnk" href="https://solscan.io/token/'+encodeURIComponent(addr)+'" target="_blank" rel="noreferrer"><div class="ico">🔍</div><div style="flex:1"><div style="font-weight:800;font-size:13px">Solscan</div><div class="sub" style="font-size:10.5px">Holders, transfers, authorities</div></div><div class="dim">↗</div></a>'
+     +'<a class="lnk" href="https://birdeye.so/token/'+encodeURIComponent(addr)+'?chain=solana" target="_blank" rel="noreferrer"><div class="ico">🐦</div><div style="flex:1"><div style="font-weight:800;font-size:13px">Birdeye</div><div class="sub" style="font-size:10.5px">Often indexes pools before DexScreener</div></div><div class="dim">↗</div></a>'
+     +'</div>';
+    power(false,'IDLE'); return;
+  }
+
+  const top=pairs.reduce((b,p)=>((p.liquidity?.usd)||0)>((b.liquidity?.usd)||0)?p:b,pairs[0]);
+  current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top,auth,howFound};
+  renderToken();
+  renderLinks();
   power(false,'IDLE');
 }
 
