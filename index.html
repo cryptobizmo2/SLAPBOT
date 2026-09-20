@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.dexscreener.com https://api.mainnet-beta.solana.com; frame-src https://dexscreener.com https://www.dextools.io; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.dexscreener.com https://api.mainnet-beta.solana.com https://slapbot-backend-production.up.railway.app; frame-src https://dexscreener.com https://www.dextools.io; object-src 'none'; base-uri 'none'">
 <title>BIG MOUF SLAP BOT — Solana Scanner</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -189,6 +189,7 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 const $=s=>document.querySelector(s);
 const DS='https://api.dexscreener.com';
 const RPC='https://api.mainnet-beta.solana.com';
+const BACKEND='https://slapbot-backend-production.up.railway.app';
 
 const cache=new Map();
 async function getJSON(u,ttl=60000){
@@ -273,61 +274,59 @@ function pairToRow(p){
 
 async function loadFeed(mode){
   feedMode=mode;
-  $('#feedTitle').textContent = mode==='new' ? '✨ Newest Pairs' : '🔥 Most Active';
-  $('#tbody').innerHTML='<tr><td colspan="8" class="empty"><span class="spin"></span> Loading live Solana pairs…</td></tr>';
+  $('#feedTitle').textContent = mode==='new' ? '✨ Newest Launches' : '🔥 Trending Now';
+  $('#tbody').innerHTML='<tr><td colspan="8" class="empty"><span class="spin"></span> Loading live Solana pools…</td></tr>';
   power(true,'FETCHING');
 
-  const tried=[]; const seen=new Set(); let all=[];
+  // ── Primary: backend discovery proxy. This is the ONLY way to get real
+  // new-launch data — those endpoints block browsers, but not servers. ──
+  try{
+    const d=await getJSON(BACKEND+'/api/pools/'+(mode==='new'?'new':'trending'),45000);
+    if(d.pools && d.pools.length){
+      rows=d.pools
+        .filter(r=>!isNoise(r) && r.liq>=1000)
+        .map(r=>({...r,
+          ratio:r.txns>0?r.buys/r.txns:0.5,
+          created:r.createdAt?Date.now()-r.createdAt:null}));
+      if(mode==='new')rows.sort((a,b)=>(a.created??Infinity)-(b.created??Infinity));
+      else rows.sort((a,b)=>b.vol-a.vol);
+      rows=rows.slice(0,30);
+      $('#feedMeta').textContent=rows.length+' · live';
+      renderTable(); power(false,'IDLE'); return;
+    }
+  }catch(e){ /* backend asleep or down — fall through */ }
 
-  // Run searches in parallel; any single failure can't sink the whole feed.
+  // ── Fallback: name-based search. Cannot find new launches (random names),
+  // but keeps the dashboard useful if the backend is unavailable. ──
+  const tried=[]; const seen=new Set(); let all=[];
   const results=await Promise.allSettled(
     SEARCHES.map(q=>getJSON(DS+'/latest/dex/search?q='+encodeURIComponent(q),60000))
   );
-
   results.forEach((r,i)=>{
     const q=SEARCHES[i];
-    if(r.status!=='fulfilled'){ tried.push(q+': '+(r.reason?.message||'failed')); return; }
+    if(r.status!=='fulfilled'){ tried.push(q+': failed'); return; }
     const pairs=(r.value?.pairs||[]).filter(p=>p.chainId==='solana');
     tried.push(q+': '+pairs.length);
     pairs.forEach(p=>{
       const row=pairToRow(p);
-      // Quality gates — text search returns hundreds of copycat scam tokens
-      // sharing a real token's name. Real tokens have real volume and real
-      // transaction counts; the fakes show $0.30 volume and 2 txns.
-      if(row.addr && row.price>0
-         && row.liq>=25000        // dead pools out
-         && row.vol>=50000        // $0.30-volume fakes out
-         && row.txns>=50          // '2 transaction' ghosts out
-         && !isNoise(row)
-         && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
+      if(row.addr && row.price>0 && row.liq>=25000 && row.vol>=50000 && row.txns>=50
+         && !isNoise(row) && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
     });
   });
 
   if(!all.length){
-    $('#tbody').innerHTML='<tr><td colspan="8" class="empty">No Solana pairs returned.<br><br>'
-      +'<span class="mono" style="font-size:10px">'+esc(tried.join(' · '))+'</span>'
+    $('#tbody').innerHTML='<tr><td colspan="8" class="empty">No pools returned.<br><br>'
+      +'<span class="mono" style="font-size:10px">backend offline · '+esc(tried.join(' · '))+'</span>'
       +'<br><br>Tap ↻ to retry.</td></tr>';
     power(false,'IDLE'); return;
   }
 
-  // One entry per symbol — keep the deepest-liquidity version. This is what
-  // separates the genuine BONK from the dozen copycats also called "Bonk".
   const bySym=new Map();
-  all.forEach(r=>{
-    const k=(r.sym||'').toUpperCase();
-    const cur=bySym.get(k);
-    if(!cur||r.liq>cur.liq)bySym.set(k,r);
-  });
+  all.forEach(r=>{const k=(r.sym||'').toUpperCase();const c=bySym.get(k);if(!c||r.liq>c.liq)bySym.set(k,r)});
   all=[...bySym.values()];
-
-  // Trending = highest 24h volume. New = most recently created pool.
-  all.sort(mode==='new'
-    ? (a,b)=>(b.created==null?Infinity:b.created)-(a.created==null?Infinity:a.created)
-    : (a,b)=>b.vol-a.vol);
-  if(mode==='new') all=all.filter(r=>r.created!=null).reverse();
-
+  all.sort(mode==='new'?(a,b)=>(a.created??Infinity)-(b.created??Infinity):(a,b)=>b.vol-a.vol);
   rows=all.slice(0,30);
-  $('#feedMeta').textContent=rows.length+' pairs';
+  $('#feedMeta').textContent=rows.length+' · fallback';
   renderTable();
   power(false,'IDLE');
 }
