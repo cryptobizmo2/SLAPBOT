@@ -209,7 +209,7 @@ const px=n=>{n=+n||0;return n===0?'0':n<1e-6?n.toExponential(2):n<0.001?n.toFixe
 const pct=n=>{n=+n||0;return(n>=0?'+':'')+n.toFixed(1)+'%'};
 const num=n=>{n=+n||0;return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(Math.round(n))};
 const short=a=>a?a.slice(0,4)+'…'+a.slice(-4):'?';
-const ago=ms=>{if(ms==null)return'?';const m=Math.floor(ms/6e4),h=Math.floor(m/60),d=Math.floor(h/24);return d>0?d+'d':h>0?h+'h':m+'m'};
+const ago=ms=>{if(ms==null)return'?';const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60),d=Math.floor(h/24);return d>0?d+'d':h>0?h+'h':m>0?m+'m':s+'s'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cls=n=>(+n||0)>=0?'up':'dn';
 
@@ -283,11 +283,24 @@ async function loadFeed(mode){
   try{
     const d=await getJSON(BACKEND+'/api/pools/'+(mode==='new'?'new':'trending'),45000);
     if(d.pools && d.pools.length){
-      rows=d.pools
-        .filter(r=>!isNoise(r) && r.liq>=1000)
-        .map(r=>({...r,
-          ratio:r.txns>0?r.buys/r.txns:0.5,
-          created:r.createdAt?Date.now()-r.createdAt:null}));
+      // Brand-new launches legitimately have tiny liquidity — that's the point
+      // of catching them early. Trending needs a real floor to stay meaningful.
+      const minLiq = mode==='new' ? 300 : 25000;
+      const minTx  = mode==='new' ? 2   : 50;
+
+      // One row per TOKEN. The feed returns the same token across several
+      // pools (pump-fun, pumpswap, meteora) — keep its deepest pool only.
+      const byAddr=new Map();
+      d.pools.forEach(r=>{
+        if(isNoise(r) || r.liq<minLiq || r.txns<minTx || !(r.price>0)) return;
+        const cur=byAddr.get(r.addr);
+        if(!cur || r.liq>cur.liq) byAddr.set(r.addr,r);
+      });
+
+      rows=[...byAddr.values()].map(r=>({...r,
+        ratio:r.txns>0?r.buys/r.txns:0.5,
+        created:r.createdAt?Date.now()-r.createdAt:null}));
+
       if(mode==='new')rows.sort((a,b)=>(a.created??Infinity)-(b.created??Infinity));
       else rows.sort((a,b)=>b.vol-a.vol);
       rows=rows.slice(0,30);
