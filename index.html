@@ -85,6 +85,13 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 .lnk{display:flex;align-items:center;gap:11px;padding:12px;background:rgba(18,20,31,.7);border:1px solid var(--ln);border-radius:11px;margin-bottom:8px}
 .lnk .ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:17px;flex-shrink:0;background:rgba(255,197,40,.12)}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.botOpt{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(30,35,56,.5);font-size:12px;cursor:pointer}
+.botOpt:last-child{border:0}
+.botOpt input{width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ffc528}
+.hit{padding:11px 13px;border-bottom:1px solid rgba(30,35,56,.5)}
+.hit:last-child{border:0}
+@keyframes hitIn{0%{opacity:0;transform:translateX(-10px)}100%{opacity:1;transform:translateX(0)}}
+.hit{animation:hitIn .3s ease both}
 </style>
 </head>
 <body>
@@ -101,6 +108,7 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 <nav id="nav">
   <button class="on" data-p="dash">📊 Dashboard</button>
   <button data-p="token">🔬 Analyze</button>
+  <button data-p="bot">🎯 Micro Bot</button>
   <button data-p="watch">⭐ Watchlist</button>
   <button data-p="tools">🔗 Tools</button>
 </nav>
@@ -146,6 +154,53 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 
 <section id="p-token" class="page">
   <div id="tokenView"><div class="card"><div class="empty">No token selected.<br><br>Search an address above, or tap any row on the Dashboard.</div></div></div>
+</section>
+
+<section id="p-bot" class="page">
+  <div class="card">
+    <div class="row" style="margin-bottom:11px">
+      <div>
+        <div class="ttl" style="margin:0">🎯 Micro Bot</div>
+        <div class="sub" style="margin-top:3px">Hunts continuously. Collects matches below. Never trades.</div>
+      </div>
+      <button class="btn" id="armBtn">ARM</button>
+    </div>
+    <div id="botStatus" class="flag fI">Disarmed — tap ARM to start hunting.</div>
+  </div>
+
+  <div class="card">
+    <div class="ttl">🔎 Hunt Modes</div>
+    <label class="botOpt"><input type="checkbox" id="mFresh" checked><span><b>Fresh Safe Launches</b><br><span class="sub">New pools that pass mint + freeze authority checks</span></span></label>
+    <label class="botOpt"><input type="checkbox" id="mSpike" checked><span><b>Volume Spikes</b><br><span class="sub">Volume jumps 3x or more between scans</span></span></label>
+    <label class="botOpt"><input type="checkbox" id="mCustom" checked><span><b>Custom Filters</b><br><span class="sub">Your own rules, set below</span></span></label>
+  </div>
+
+  <div class="card">
+    <div class="ttl">⚙️ Custom Filters</div>
+    <div class="g2">
+      <div><div class="lbl">Min Liquidity ($)</div><input type="number" id="fLiq" value="5000"></div>
+      <div><div class="lbl">Max Age (minutes)</div><input type="number" id="fAge" value="60"></div>
+      <div><div class="lbl">Min Buy Pressure (%)</div><input type="number" id="fBuy" value="55"></div>
+      <div><div class="lbl">Min 24h Volume ($)</div><input type="number" id="fVol" value="1000"></div>
+    </div>
+    <label class="botOpt" style="margin-top:9px"><input type="checkbox" id="fMint" checked><span>Require mint authority revoked</span></label>
+    <label class="botOpt"><input type="checkbox" id="fFreeze" checked><span>Require freeze authority revoked</span></label>
+  </div>
+
+  <div class="card">
+    <div class="ttl">🔔 Alerts</div>
+    <div class="sub" style="margin-bottom:8px">Hits always land in the list below. These are optional extras.</div>
+    <label class="botOpt"><input type="checkbox" id="aNotif"><span>Browser notification (works while app is backgrounded)</span></label>
+    <label class="botOpt"><input type="checkbox" id="aSound"><span>Sound</span></label>
+  </div>
+
+  <div class="card" style="padding:0">
+    <div class="row" style="padding:11px 13px 8px">
+      <div class="ttl" style="margin:0">🎯 Hits</div>
+      <button class="btn2" style="padding:6px 11px" id="clrHits">Clear</button>
+    </div>
+    <div id="hitList"></div>
+  </div>
 </section>
 
 <section id="p-watch" class="page">
@@ -220,6 +275,8 @@ document.addEventListener('visibilitychange',()=>{
   else{power(false,'IDLE'); if(view==='dash'){loadFeed(feedMode,true);startAuto()}}
 });
 
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
 const WK='slapbot_watch';
 const getW=()=>{try{return JSON.parse(localStorage.getItem(WK)||'[]')}catch{return[]}};
 const setW=v=>{try{localStorage.setItem(WK,JSON.stringify(v))}catch{}};
@@ -234,6 +291,7 @@ function go(p){view=p;
   [...$('#nav').children].forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   if(p==='watch')renderW(); if(p==='tools')renderLinks();
   if(p==='dash')startAuto(); else stopAuto();
+  if(p==='bot')renderHits();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.p)});
@@ -634,6 +692,145 @@ function analyst(r,auth,onchain){
 
   return {score,grade,verdict,flags:F,stops};
 }
+
+
+/* ══ MICRO BOT — continuous hunt, alert-only, never trades ══════════════
+   Runs its own 30s poll against the backend's new-pools feed, independent
+   of whatever tab you're on. Authority checks are done ONLY for tokens that
+   already passed the cheap filters, so we never burn RPC calls on junk. */
+let botArmed=load('slapbot_armed',false);
+let botHits=load('slapbot_hits',[]);
+let botSeen=load('slapbot_seen',[]);
+let prevVol={}, botTimer=null;
+
+const botCfg=()=>({
+  fresh:$('#mFresh').checked, spike:$('#mSpike').checked, custom:$('#mCustom').checked,
+  minLiq:+$('#fLiq').value||0, maxAge:+$('#fAge').value||60,
+  minBuy:+$('#fBuy').value||0, minVol:+$('#fVol').value||0,
+  reqMint:$('#fMint').checked, reqFreeze:$('#fFreeze').checked,
+  notif:$('#aNotif').checked, sound:$('#aSound').checked,
+});
+
+function beep(){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext; if(!C)return;
+    const ctx=new C(), o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine'; o.frequency.setValueAtTime(880,ctx.currentTime);
+    o.frequency.setValueAtTime(1320,ctx.currentTime+0.12);
+    g.gain.setValueAtTime(0.22,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.35);
+    o.start(); o.stop(ctx.currentTime+0.35);
+  }catch(e){}
+}
+
+function alertHit(hit,cfg){
+  if(cfg.sound)beep();
+  if(cfg.notif && 'Notification' in window && Notification.permission==='granted'){
+    try{ new Notification('🎯 SLAPBOT — '+hit.sym,{body:hit.reason+'\n'+usd(hit.liq)+' liquidity · '+ago(hit.age)+' old',tag:hit.addr}); }catch(e){}
+  }
+}
+
+async function botScan(){
+  if(!botArmed)return;
+  const cfg=botCfg();
+  if(!cfg.fresh && !cfg.spike && !cfg.custom)return;
+  try{
+    const d=await getJSON(BACKEND+'/api/pools/new',25000);
+    const pools=(d.pools||[]).filter(p=>p.addr&&p.price>0&&!isNoise(p));
+    for(const p of pools){
+      const age=p.createdAt?Date.now()-p.createdAt:null;
+      const buyPct=p.txns>0?(p.buys/p.txns)*100:50;
+      const vlPrev=prevVol[p.addr];
+      prevVol[p.addr]=p.vol;
+
+      let reason=null;
+
+      // Volume spike — needs a prior reading to compare against.
+      if(cfg.spike && vlPrev!=null && vlPrev>0 && p.vol>=vlPrev*3 && p.vol>=cfg.minVol){
+        reason='Volume spiked '+(p.vol/vlPrev).toFixed(1)+'x';
+      }
+
+      // Fresh safe launch — cheap gates first, authority check only if passed.
+      if(!reason && cfg.fresh && age!=null && age<=cfg.maxAge*60000
+         && p.liq>=cfg.minLiq && p.txns>=5){
+        const a=await checkAuth(p.addr);
+        if(a && !a.mint && !a.freeze) reason='Fresh launch · mint + freeze both revoked';
+      }
+
+      // Custom rules.
+      if(!reason && cfg.custom && age!=null && age<=cfg.maxAge*60000
+         && p.liq>=cfg.minLiq && p.vol>=cfg.minVol && buyPct>=cfg.minBuy){
+        const a=(cfg.reqMint||cfg.reqFreeze)?await checkAuth(p.addr):null;
+        const mintOk=!cfg.reqMint||(a&&!a.mint);
+        const freezeOk=!cfg.reqFreeze||(a&&!a.freeze);
+        if(mintOk&&freezeOk) reason='Matched your custom filters';
+      }
+
+      if(reason && !botSeen.includes(p.addr)){
+        botSeen.unshift(p.addr);
+        if(botSeen.length>500)botSeen=botSeen.slice(0,300);
+        save('slapbot_seen',botSeen);
+        const hit={addr:p.addr,sym:p.sym,name:p.name,reason,liq:p.liq,vol:p.vol,
+                   price:p.price,buyPct:Math.round(buyPct),age,at:Date.now()};
+        botHits.unshift(hit);
+        if(botHits.length>60)botHits=botHits.slice(0,60);
+        save('slapbot_hits',botHits);
+        alertHit(hit,cfg);
+        renderHits();
+      }
+    }
+    $('#botStatus').className='flag fG';
+    $('#botStatus').innerHTML='🟢 <b>Hunting</b> — scanned '+pools.length+' new pools · '+botHits.length+' hits so far';
+  }catch(e){
+    $('#botStatus').className='flag fM';
+    $('#botStatus').innerHTML='⚠️ Scan failed — '+esc(e.message)+'. Retrying in 30s.';
+  }
+}
+
+function renderHits(){
+  const el=$('#hitList'); if(!el)return;
+  el.innerHTML=!botHits.length
+   ?'<div class="empty">No hits yet.<br><br>Arm the bot and leave this page open.</div>'
+   :botHits.map(x=>'<div class="hit">'
+     +'<div class="row" style="margin-bottom:5px">'
+       +'<div style="min-width:0"><span class="gold" style="font-weight:800;font-size:13px">'+esc(x.sym)+'</span>'
+       +' <span class="sub" style="font-size:10px">'+esc((x.name||"").slice(0,22))+'</span></div>'
+       +'<span class="sub" style="font-size:10px">'+fmtSince(Date.now()-x.at)+'</span></div>'
+     +'<div class="flag fG" style="margin-bottom:6px;padding:6px 9px">🎯 '+esc(x.reason)+'</div>'
+     +'<div class="row" style="font-size:11px">'
+       +'<span class="sub">'+usd(x.liq)+' liq · '+usd(x.vol)+' vol · '+x.buyPct+'% buys'+(x.age!=null?' · '+ago(x.age)+' old':'')+'</span>'
+       +'<button class="btn" style="padding:5px 10px;font-size:10px" onclick="scanToken(\''+x.addr+'\')">Analyze</button></div>'
+    +'</div>').join('');
+}
+
+function setArmed(on){
+  botArmed=on; save('slapbot_armed',on);
+  const b=$('#armBtn');
+  b.textContent=on?'DISARM':'ARM';
+  b.style.background=on?'linear-gradient(135deg,#00ff9d,#00c97d)':'';
+  if(on){
+    if('Notification' in window && Notification.permission==='default'){
+      Notification.requestPermission().catch(()=>{});
+    }
+    $('#botStatus').className='flag fI';
+    $('#botStatus').innerHTML='<span class="spin"></span> Starting first scan…';
+    botScan();
+    if(botTimer)clearInterval(botTimer);
+    botTimer=setInterval(()=>{ if(!document.hidden)botScan(); },30000);
+  }else{
+    if(botTimer){clearInterval(botTimer);botTimer=null}
+    $('#botStatus').className='flag fI';
+    $('#botStatus').textContent='Disarmed — tap ARM to start hunting.';
+  }
+}
+
+$('#armBtn').onclick=()=>setArmed(!botArmed);
+$('#clrHits').onclick=()=>{ if(confirm('Clear all hits?')){botHits=[];save('slapbot_hits',botHits);renderHits()} };
+window.renderHits=renderHits;
+renderHits();
+if(botArmed)setArmed(true);
+
 
 /* ══ WATCHLIST ══ */
 function renderW(){
