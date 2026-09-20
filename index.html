@@ -215,7 +215,10 @@ const cls=n=>(+n||0)>=0?'up':'dn';
 
 function power(on,t){const e=$('#pwr');e.className='pill '+(on?'pOn':'pOff');
   e.querySelector('.dot').classList.toggle('live',on);$('#pwrTxt').textContent=t}
-document.addEventListener('visibilitychange',()=>{power(false,document.hidden?'PAUSED':'IDLE')});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){stopAuto();power(false,'PAUSED')}
+  else{power(false,'IDLE'); if(view==='dash'){loadFeed(feedMode,true);startAuto()}}
+});
 
 const WK='slapbot_watch';
 const getW=()=>{try{return JSON.parse(localStorage.getItem(WK)||'[]')}catch{return[]}};
@@ -230,9 +233,30 @@ function go(p){view=p;
   document.querySelectorAll('.page').forEach(s=>s.classList.toggle('on',s.id==='p-'+p));
   [...$('#nav').children].forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   if(p==='watch')renderW(); if(p==='tools')renderLinks();
+  if(p==='dash')startAuto(); else stopAuto();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.p)});
+
+
+/* ══ LIVE ENGINE — auto-refresh, price-change flashes, age ticker ══ */
+let autoTimer=null, tickTimer=null, lastLoad=0, prevPrices={};
+const REFRESH_MS=30000;
+
+function fmtSince(ms){const s=Math.floor(ms/1000);return s<60?s+'s ago':Math.floor(s/60)+'m ago'}
+
+function startAuto(){
+  stopAuto();
+  autoTimer=setInterval(()=>{ if(!document.hidden && view==='dash') loadFeed(feedMode,true); },REFRESH_MS);
+  tickTimer=setInterval(()=>{
+    if(!lastLoad)return;
+    const el=$('#liveAge'); if(el)el.textContent=fmtSince(Date.now()-lastLoad);
+  },1000);
+}
+function stopAuto(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null}
+  if(tickTimer){clearInterval(tickTimer);tickTimer=null}
+}
 
 /* ══ DASHBOARD — all data sourced from DexScreener (CORS-confirmed) ══ */
 let rows=[],feedMode='trending',sortKey='vol',sortDir=-1;
@@ -272,10 +296,11 @@ function pairToRow(p){
   };
 }
 
-async function loadFeed(mode){
+async function loadFeed(mode,silent){
   feedMode=mode;
+  prevPrices={}; rows.forEach(r=>{prevPrices[r.addr]=r.price});
   $('#feedTitle').textContent = mode==='new' ? '✨ Newest Launches' : '🔥 Trending Now';
-  $('#tbody').innerHTML='<tr><td colspan="8" class="empty"><span class="spin"></span> Loading live Solana pools…</td></tr>';
+  if(!silent)$('#tbody').innerHTML='<tr><td colspan="8" class="empty"><span class="spin"></span> Loading live Solana pools…</td></tr>';
   power(true,'FETCHING');
 
   // ── Primary: backend discovery proxy. This is the ONLY way to get real
@@ -304,8 +329,9 @@ async function loadFeed(mode){
       if(mode==='new')rows.sort((a,b)=>(a.created??Infinity)-(b.created??Infinity));
       else rows.sort((a,b)=>b.vol-a.vol);
       rows=rows.slice(0,30);
-      $('#feedMeta').textContent=rows.length+' · live';
-      renderTable(); power(false,'IDLE'); return;
+      lastLoad=Date.now();
+      $('#feedMeta').innerHTML=rows.length+' · <span style="color:var(--grn)">●</span> live · <span id="liveAge">0s ago</span>';
+      renderTable(); power(false,'IDLE'); startAuto(); return;
     }
   }catch(e){ /* backend asleep or down — fall through */ }
 
@@ -339,7 +365,8 @@ async function loadFeed(mode){
   all=[...bySym.values()];
   all.sort(mode==='new'?(a,b)=>(a.created??Infinity)-(b.created??Infinity):(a,b)=>b.vol-a.vol);
   rows=all.slice(0,30);
-  $('#feedMeta').textContent=rows.length+' · fallback';
+  lastLoad=Date.now();
+  $('#feedMeta').innerHTML=rows.length+' · fallback · <span id="liveAge">0s ago</span>';
   renderTable();
   power(false,'IDLE');
 }
@@ -353,7 +380,10 @@ function renderTable(){
   });
   $('#tbody').innerHTML=s.map(r=>{
     const bs=r.txns>0?Math.round(r.buys/r.txns*100):50;
-    return '<tr onclick="scanToken(\''+r.addr+'\')">'
+    const prev=prevPrices[r.addr];
+    const moved = prev && prev!==r.price ? (r.price>prev?'up':'dn') : null;
+    const flashStyle = moved ? ';background:'+(moved==='up'?'rgba(0,255,157,.14)':'rgba(255,56,100,.14)') : '';
+    return '<tr style="transition:background 1.2s'+flashStyle+'" onclick="scanToken(\''+r.addr+'\')">'
     +'<td><div style="display:flex;align-items:center;gap:8px">'
       +(r.logo?'<img src="'+esc(r.logo)+'" style="width:24px;height:24px;border-radius:6px;object-fit:cover;background:#12141f" loading="lazy" onerror="this.style.display=\'none\'">':'')
       +'<div><div style="font-weight:800">'+esc(r.sym)+'</div>'
@@ -369,6 +399,7 @@ function renderTable(){
       +'<div class="press" style="width:38px"><i style="width:'+bs+'%;background:#00ff9d"></i><i style="width:'+(100-bs)+'%;background:#ff3864"></i></div></div></td>'
     +'</tr>';
   }).join('');
+  setTimeout(()=>{document.querySelectorAll('#tbody tr').forEach(tr=>{tr.style.background=''})},1400);
 }
 document.querySelectorAll('thead th[data-s]').forEach(th=>{
   th.onclick=()=>{const k=th.dataset.s; if(sortKey===k)sortDir*=-1; else{sortKey=k;sortDir=-1} renderTable()};
@@ -421,6 +452,10 @@ async function scanToken(addr){
 
   // Even with no DEX pool, Solana RPC still tells us the important safety facts.
   const auth=await checkAuth(addr);
+  // Backend reads top-10 holder concentration straight from Solana —
+  // the strongest single rug predictor available.
+  let onchain=null;
+  try{ onchain=await getJSON(BACKEND+'/api/mint-check/'+encodeURIComponent(addr),300000); }catch(e){}
 
   if(!pairs.length){
     current=null;
@@ -450,7 +485,7 @@ async function scanToken(addr){
   }
 
   const top=pairs.reduce((b,p)=>((p.liquidity?.usd)||0)>((b.liquidity?.usd)||0)?p:b,pairs[0]);
-  current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top,auth,howFound};
+  current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top,auth,onchain,howFound};
   renderToken();
   renderLinks();
   power(false,'IDLE');
@@ -465,25 +500,8 @@ function renderToken(){
   const info=t.info||{}, web=info.websites?.[0]?.url, soc=info.socials||[];
   const sym=t.baseToken.symbol;
 
-  let score=0;const F=[];
-  if(liq<1000){score+=35;F.push(['H','Only '+usd(liq)+' liquidity — extreme rug risk']);}
-  else if(liq<10000){score+=15;F.push(['M','Thin liquidity ('+usd(liq)+') — heavy slippage risk']);}
-  else F.push(['G','Liquidity '+usd(liq)]);
-  if(createdMs!=null){const h=createdMs/36e5;
-    if(h<6){score+=20;F.push(['H','Pool only '+h.toFixed(1)+'h old — highest-risk rug window']);}
-    else if(h<48){score+=10;F.push(['M','Pool '+ago(createdMs)+' old — still inside typical rug window']);}
-    else F.push(['G','Pool age '+ago(createdMs)]);}
-  if(ch24<-55){score+=20;F.push(['H','Down '+ch24.toFixed(0)+'% in 24h — possible rug in progress']);}
-  if(vol>0&&liq>0&&vol/liq>25){score+=15;F.push(['H','Volume/liquidity '+(vol/liq).toFixed(0)+'x — wash-trading signal']);}
-  if(a){
-    if(a.freeze){score+=30;F.push(['H','🚨 FREEZE AUTHORITY ACTIVE — deployer can freeze your wallet']);}
-    else F.push(['G','Freeze authority disabled']);
-    if(a.mint){score+=25;F.push(['H','⚠️ MINT AUTHORITY ACTIVE — supply can be inflated']);}
-    else F.push(['G','Mint authority disabled']);
-  } else F.push(['I','On-chain check unavailable — verify manually on Solscan']);
-  if(!web&&!soc.length){score+=8;F.push(['M','No website or socials listed']);}
-  score=Math.min(score,100);
-  const v=score>=60?['🛑','HIGH RISK','#ff3864']:score>=30?['⚠️','CAUTION','#ffab00']:['✅','LOWER RISK','#00ff9d'];
+  const A=analyst(t,a,current.onchain);
+  const score=A.score, F=A.flags, v=A.verdict;
   const bs=(buys+sells)>0?Math.round(buys/(buys+sells)*100):50;
   const fav=inW(current.addr);
 
@@ -507,16 +525,24 @@ function renderToken(){
 
    +'<div class="card">'
      +'<div class="row" style="margin-bottom:9px">'
-       +'<div style="display:flex;align-items:center;gap:9px">'
-         +'<span style="font-size:20px">'+v[0]+'</span>'
-         +'<div><div style="font-size:14px;font-weight:900;color:'+v[2]+'">'+v[1]+'</div><div class="sub">Risk '+score+'/100</div></div>'
+       +'<div style="display:flex;align-items:center;gap:10px">'
+         +'<div style="width:42px;height:42px;border-radius:11px;display:grid;place-items:center;'
+           +'font-size:21px;font-weight:900;color:'+v[2]+';border:2px solid '+v[2]+';background:rgba(255,255,255,.04)">'+A.grade+'</div>'
+         +'<div><div style="font-size:14px;font-weight:900;color:'+v[2]+'">'+v[0]+' '+v[1]+'</div>'
+         +'<div class="sub">Risk '+score+'/100 · analyst grade</div></div>'
        +'</div>'+authBadges(a)+'</div>'
+     +'<div class="sub" style="margin-bottom:9px;font-style:italic">'+esc(v[3])+'</div>'
+     +(A.stops.length?'<div class="ttl" style="font-size:11px;color:var(--red)">⛔ Hard Stops</div>'
+        +A.stops.map(s=>'<div class="flag fH" style="border-width:2px"><b>'+esc(s)+'</b></div>').join(''):'')
      +'<div class="press" style="height:6px;margin-bottom:10px"><i style="width:'+(100-score)+'%;background:#00ff9d"></i><i style="width:'+score+'%;background:#ff3864"></i></div>'
      +'<div class="g4" style="margin-bottom:10px">'
        +'<div class="stat"><div class="k">Liquidity</div><div class="v">'+usd(liq)+'</div></div>'
        +'<div class="stat"><div class="k">24h Vol</div><div class="v">'+usd(vol)+'</div></div>'
        +'<div class="stat"><div class="k">FDV</div><div class="v">'+(t.fdv?usd(t.fdv):'—')+'</div></div>'
        +'<div class="stat"><div class="k">Pool Age</div><div class="v" style="font-size:12px">'+(createdMs!=null?ago(createdMs):'—')+'</div></div>'
+       +'<div class="stat"><div class="k">Top 10 Hold</div><div class="v" style="font-size:13px;color:'
+         +(current.onchain?.top10HolderPct>=70?'var(--red)':current.onchain?.top10HolderPct>=50?'var(--amb)':'var(--grn)')+'">'
+         +(current.onchain?.top10HolderPct!=null?current.onchain.top10HolderPct.toFixed(1)+'%':'—')+'</div></div>'
      +'</div>'
      +'<div class="row" style="margin-bottom:6px;font-size:11px;font-weight:800"><span class="up">'+buys+' buys</span><span class="dn">'+sells+' sells</span></div>'
      +'<div class="press" style="margin-bottom:12px"><i style="width:'+bs+'%;background:#00ff9d"></i><i style="width:'+(100-bs)+'%;background:#ff3864"></i></div>'
@@ -537,6 +563,76 @@ function drawChart(src){
   $('#chartBox').innerHTML = src==='dt'
    ? '<iframe src="https://www.dextools.io/widget-chart/en/solana/pe-light/'+p+'?theme=dark&chartType=2&chartResolution=15&drawingToolbars=false" style="height:400px" loading="lazy" title="DEXTools chart"></iframe>'
    : '<iframe src="https://dexscreener.com/solana/'+p+'?embed=1&theme=dark&trades=1&info=0" style="height:440px" loading="lazy" title="DexScreener chart"></iframe>';
+}
+
+
+/* ══ ANALYST ENGINE — letter grade + hard-stop guardrails ══
+   Hard stops are non-negotiable: certain findings mean DO NOT BUY regardless
+   of how good everything else looks. They override the numeric score. */
+function analyst(r,auth,onchain){
+  let score=0; const F=[]; const stops=[];
+
+  // ── HARD STOPS ──
+  if(auth?.freeze){
+    stops.push('FREEZE AUTHORITY ACTIVE — the deployer can freeze your wallet and block you from ever selling. This is the single most reliable honeypot signal.');
+  }
+  const top10=onchain?.top10HolderPct;
+  if(top10!=null && top10>=90){
+    stops.push('TOP 10 WALLETS HOLD '+top10.toFixed(1)+'% — a handful of wallets control nearly the entire supply and can exit at any moment.');
+  }
+  if(onchain?.rugged){ stops.push('FLAGGED AS ALREADY RUGGED on-chain.'); }
+
+  // ── SCORED RISK ──
+  const liq=+r.liquidity?.usd||0, vol=+r.volume?.h24||0, ch24=+r.priceChange?.h24||0;
+  const buys=r.txns?.h24?.buys||0, sells=r.txns?.h24?.sells||0;
+  const createdMs=r.pairCreatedAt?Date.now()-r.pairCreatedAt:null;
+
+  if(liq<1000){score+=35;F.push(['H','Only '+usd(liq)+' liquidity — you may be unable to exit a position']);}
+  else if(liq<10000){score+=18;F.push(['M','Thin liquidity ('+usd(liq)+') — expect heavy slippage']);}
+  else if(liq<50000){score+=6;F.push(['M','Moderate liquidity '+usd(liq)]);}
+  else F.push(['G','Healthy liquidity '+usd(liq)]);
+
+  if(auth?.mint){score+=25;F.push(['H','Mint authority ACTIVE — supply can be inflated without warning']);}
+  else if(auth)F.push(['G','Mint authority revoked — supply is fixed']);
+
+  if(top10!=null){
+    if(top10>=70){score+=25;F.push(['H','Top 10 wallets hold '+top10.toFixed(1)+'% — severe concentration']);}
+    else if(top10>=50){score+=15;F.push(['M','Top 10 wallets hold '+top10.toFixed(1)+'% — elevated dump risk']);}
+    else if(top10>=30){score+=6;F.push(['M','Top 10 wallets hold '+top10.toFixed(1)+'%']);}
+    else F.push(['G','Top 10 wallets hold '+top10.toFixed(1)+'% — well distributed']);
+  } else F.push(['I','Holder concentration unavailable — verify on Solscan']);
+
+  if(createdMs!=null){const hrs=createdMs/36e5;
+    if(hrs<6){score+=18;F.push(['H','Pool only '+ago(createdMs)+' old — peak rug window']);}
+    else if(hrs<48){score+=9;F.push(['M','Pool '+ago(createdMs)+' old — still unproven']);}
+    else F.push(['G','Pool age '+ago(createdMs)]);}
+
+  if(vol>0&&liq>0){const vl=vol/liq;
+    if(vl>25){score+=15;F.push(['H','Volume/liquidity '+vl.toFixed(0)+'x — strong wash-trading signal']);}
+    else if(vl>10){score+=7;F.push(['M','Volume/liquidity '+vl.toFixed(1)+'x — possible wash trading']);}}
+
+  if(ch24<-55){score+=15;F.push(['H','Down '+ch24.toFixed(0)+'% in 24h — possible rug underway']);}
+  const tot=buys+sells;
+  if(tot>40&&sells>buys*2.2){score+=10;F.push(['M','Sells outpacing buys '+sells+':'+buys+' — heavy distribution']);}
+  else if(tot>40&&buys>sells*1.5)F.push(['G','Buy pressure: '+buys+' buys vs '+sells+' sells']);
+
+  const info=r.info||{};
+  if(!info.websites?.length&&!info.socials?.length){score+=8;F.push(['M','No website or socials — anonymous project']);}
+
+  score=Math.min(score,100);
+  if(stops.length)score=100;
+
+  const grade = stops.length ? 'F'
+    : score<15 ? 'A' : score<30 ? 'B' : score<50 ? 'C' : score<70 ? 'D' : 'F';
+  const verdict = {
+    A:['✅','LOW RISK','var(--grn)','Passes every automated check. Still do your own research.'],
+    B:['✅','ACCEPTABLE','var(--grn)','Minor concerns, nothing disqualifying.'],
+    C:['⚠️','ELEVATED RISK','var(--amb)','Real concerns present. Size down if you proceed.'],
+    D:['🛑','HIGH RISK','var(--red)','Multiple serious red flags. Most traders should pass.'],
+    F:['🛑','DO NOT BUY','var(--red)','Disqualifying findings. Walk away.'],
+  }[grade];
+
+  return {score,grade,verdict,flags:F,stops};
 }
 
 /* ══ WATCHLIST ══ */
