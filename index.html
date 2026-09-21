@@ -125,6 +125,12 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
       <button class="on" data-f="trending">🔥 Trending</button>
       <button data-f="new">✨ New Pools</button>
     </div>
+    <div class="seg" id="padSeg" style="margin-top:7px">
+      <button class="on" data-d="all">All</button>
+      <button data-d="pump-fun">pump.fun</button>
+      <button data-d="raydium-launchlab">LaunchLab</button>
+      <button data-d="meteora-dbc">Meteora</button>
+    </div>
   </div>
   <div class="card" style="padding:0">
     <div class="row" style="padding:11px 13px 8px">
@@ -316,8 +322,18 @@ function stopAuto(){
   if(tickTimer){clearInterval(tickTimer);tickTimer=null}
 }
 
+const PADS={'pump-fun':['pump.fun','#22c55e'],'pumpswap':['PumpSwap','#4ade80'],
+  'raydium-launchlab':['LaunchLab','#00e5ff'],'meteora-dbc':['Meteora','#9d4edd'],
+  'meteora-damm-v2':['Meteora','#9d4edd'],'raydium':['Raydium','#00e5ff'],
+  'orca':['Orca','#ffc528']};
+const padBadge=d=>{
+  if(!d)return '';
+  const p=PADS[d]||[d,'#7a8299'];
+  return '<span class="badge" style="color:'+p[1]+';border-color:'+p[1]+'44;background:'+p[1]+'14;font-size:8px">'+esc(p[0])+'</span>';
+};
+
 /* ══ DASHBOARD — all data sourced from DexScreener (CORS-confirmed) ══ */
-let rows=[],feedMode='trending',sortKey='vol',sortDir=-1;
+let rows=[],feedMode='trending',sortKey='vol',sortDir=-1,padFilter='all';
 
 /* Discovery uses ONLY /latest/dex/* — the path family confirmed working in
    this browser earlier in the session. DexScreener's newer /token-boosts/*
@@ -364,7 +380,10 @@ async function loadFeed(mode,silent){
   // ── Primary: backend discovery proxy. This is the ONLY way to get real
   // new-launch data — those endpoints block browsers, but not servers. ──
   try{
-    const d=await getJSON(BACKEND+'/api/pools/'+(mode==='new'?'new':'trending'),45000);
+    const url = padFilter==='all'
+      ? BACKEND+'/api/pools/'+(mode==='new'?'new':'trending')
+      : BACKEND+'/api/pools/dex/'+padFilter;
+    const d=await getJSON(url,45000);
     if(d.pools && d.pools.length){
       // Brand-new launches legitimately have tiny liquidity — that's the point
       // of catching them early. Trending needs a real floor to stay meaningful.
@@ -445,7 +464,9 @@ function renderTable(){
     +'<td><div style="display:flex;align-items:center;gap:8px">'
       +(r.logo?'<img src="'+esc(r.logo)+'" style="width:24px;height:24px;border-radius:6px;object-fit:cover;background:#12141f" loading="lazy" onerror="this.style.display=\'none\'">':'')
       +'<div><div style="font-weight:800">'+esc(r.sym)+'</div>'
-      +'<div class="sub" style="font-size:9px">'+esc((r.name||'').slice(0,20))+(r.created!=null?' · '+ago(r.created):'')+'</div></div></div></td>'
+      +'<div class="sub" style="font-size:9px">'+esc((r.name||'').slice(0,18))+(r.created!=null?' · '+ago(r.created):'')+'</div>'
+      +(r.dex?'<div style="margin-top:2px">'+padBadge(r.dex)+'</div>':'')
+      +'</div></div></td>'
     +'<td class="num mono">$'+px(r.price)+'</td>'
     +'<td class="num '+cls(r.ch1)+'">'+pct(r.ch1)+'</td>'
     +'<td class="num '+cls(r.ch24)+'" style="font-weight:800">'+pct(r.ch24)+'</td>'
@@ -464,6 +485,10 @@ document.querySelectorAll('thead th[data-s]').forEach(th=>{
 });
 $('#feedSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   [...$('#feedSeg').children].forEach(x=>x.classList.toggle('on',x===b)); loadFeed(b.dataset.f)});
+$('#padSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  padFilter=b.dataset.d;
+  [...$('#padSeg').children].forEach(x=>x.classList.toggle('on',x===b));
+  cache.clear(); loadFeed(feedMode);});
 $('#rFeed').onclick=()=>{cache.clear();loadFeed(feedMode)};
 
 /* ══ TOKEN ANALYSIS — single-address DexScreener lookup (verified reliable) ══ */
