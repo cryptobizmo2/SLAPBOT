@@ -472,7 +472,13 @@ async function loadFeed(mode,silent){
     tried.push(q+': '+pairs.length);
     pairs.forEach(p=>{
       const row=pairToRow(p);
+      // Established tokens don't move +1000% in a day. When they "do", the
+      // pool is manipulated or broken — drop it rather than display it.
+      const absurd = Math.abs(row.ch24)>1000 || Math.abs(row.ch1)>300;
+      // Huge claimed liquidity with almost no trading = fabricated liquidity.
+      const fakeLiq = row.liq>5e6 && row.txns<1000;
       if(row.addr && row.price>0 && row.liq>=25000 && row.vol>=50000 && row.txns>=50
+         && !absurd && !fakeLiq
          && !isNoise(row) && !seen.has(row.addr)){ seen.add(row.addr); all.push(row); }
     });
   });
@@ -484,8 +490,11 @@ async function loadFeed(mode,silent){
     power(false,'IDLE'); return;
   }
 
+  // Keep the version with the most real trading activity. Reported
+  // liquidity is trivially faked (a copycat JUP showed $707M liq on 373 txns);
+  // thousands of genuine transactions are not.
   const bySym=new Map();
-  all.forEach(r=>{const k=(r.sym||'').toUpperCase();const c=bySym.get(k);if(!c||r.liq>c.liq)bySym.set(k,r)});
+  all.forEach(r=>{const k=(r.sym||'').toUpperCase();const c=bySym.get(k);if(!c||r.txns>c.txns)bySym.set(k,r)});
   all=[...bySym.values()];
   all.sort(mode==='new'?(a,b)=>(a.created??Infinity)-(b.created??Infinity):(a,b)=>b.vol-a.vol);
   rows=all.slice(0,30);
