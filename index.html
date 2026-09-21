@@ -263,10 +263,20 @@ const RPC='https://api.mainnet-beta.solana.com';
 const BACKEND='https://slapbot-backend-production.up.railway.app';
 
 const cache=new Map();
-async function getJSON(u,ttl=60000){
+/* Every request has a hard timeout. Previously a single hung request (slow
+   RPC, stalled connection) froze the UI indefinitely with no feedback. */
+async function getJSON(u,ttl=60000,timeoutMs=10000){
   const h=cache.get(u); if(h&&Date.now()-h.t<ttl)return h.d;
-  const r=await fetch(u); if(!r.ok)throw new Error('HTTP '+r.status);
-  const d=await r.json(); cache.set(u,{d,t:Date.now()}); return d;
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),timeoutMs);
+  try{
+    const r=await fetch(u,{signal:ctrl.signal});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json(); cache.set(u,{d,t:Date.now()}); return d;
+  }catch(e){
+    if(e.name==='AbortError')throw new Error('timed out');
+    throw e;
+  }finally{ clearTimeout(timer); }
 }
 async function rpc(method,params){
   const r=await fetch(RPC,{method:'POST',headers:{'Content-Type':'application/json'},
@@ -573,6 +583,10 @@ async function scanToken(addr){
 
   let pairs=[], howFound='';
 
+  // Kick off the on-chain authority check NOW so it runs in parallel with the
+  // DexScreener lookup instead of waiting behind it.
+  const authPromise=checkAuth(addr);
+
   // Attempt 1 — direct token lookup.
   try{
     const d=await getJSON(DS+'/latest/dex/tokens/'+encodeURIComponent(addr),30000);
@@ -591,11 +605,7 @@ async function scanToken(addr){
   }
 
   // Even with no DEX pool, Solana RPC still tells us the important safety facts.
-  const auth=await checkAuth(addr);
-  // Backend reads top-10 holder concentration straight from Solana —
-  // the strongest single rug predictor available.
-  let onchain=null;
-  try{ onchain=await getJSON(BACKEND+'/api/mint-check/'+encodeURIComponent(addr),300000); }catch(e){}
+  const auth=await authPromise;  // usually already finished by now
 
   if(!pairs.length){
     current=null;
@@ -627,10 +637,67 @@ async function scanToken(addr){
   }
 
   const top=pairs.reduce((b,p)=>((p.liquidity?.usd)||0)>((b.liquidity?.usd)||0)?p:b,pairs[0]);
-  current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top,auth,onchain,howFound};
-  renderToken();
+  current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top,auth,
+           onchain:null,onchainPending:true,howFound};
+  renderToken();          // user sees the full scan NOW
   renderLinks();
   power(false,'IDLE');
+
+  // Holder concentration is slow (public RPC scans every token account), so
+  // it loads in the background and slots in when ready. The chart is never
+  // reloaded. If the user has already scanned something else, drop it.
+  const scanned=addr;
+  getJSON(BACKEND+'/api/mint-check/'+encodeURIComponent(addr),300000,12000)
+    .then(d=>{ if(current&&current.addr===scanned){ current.onchain=d; current.onchainPending=false; refreshAnalyst(); } })
+    .catch(()=>{ if(current&&current.addr===scanned){ current.onchainPending=false; refreshAnalyst(); } });
+}
+
+
+/* Analyst card is rendered separately so it can update when slow on-chain
+   data arrives — WITHOUT tearing down and reloading the chart iframe. */
+function analystCardHTML(){
+  const t=current.raw, a=current.auth;
+  const liq=+t.liquidity?.usd||0, vol=+t.volume?.h24||0;
+  const buys=t.txns?.h24?.buys||0, sells=t.txns?.h24?.sells||0;
+  const createdMs=t.pairCreatedAt?Date.now()-t.pairCreatedAt:null;
+  const info=t.info||{}, web=info.websites?.[0]?.url, soc=info.socials||[];
+  const A=analyst(t,a,current.onchain);
+  const score=A.score, F=A.flags, v=A.verdict;
+  const bs=(buys+sells)>0?Math.round(buys/(buys+sells)*100):50;
+  return '<div class="card">'
+     +'<div class="row" style="margin-bottom:9px">'
+       +'<div style="display:flex;align-items:center;gap:10px">'
+         +'<div style="width:42px;height:42px;border-radius:11px;display:grid;place-items:center;'
+           +'font-size:21px;font-weight:900;color:'+v[2]+';border:2px solid '+v[2]+';background:rgba(255,255,255,.04)">'+A.grade+'</div>'
+         +'<div><div style="font-size:14px;font-weight:900;color:'+v[2]+'">'+v[0]+' '+v[1]+'</div>'
+         +'<div class="sub">Risk '+score+'/100 · analyst grade</div></div>'
+       +'</div>'+authBadges(a)+'</div>'
+     +'<div class="sub" style="margin-bottom:9px;font-style:italic">'+esc(v[3])+'</div>'
+     +(A.stops.length?'<div class="ttl" style="font-size:11px;color:var(--red)">⛔ Hard Stops</div>'
+        +A.stops.map(s=>'<div class="flag fH" style="border-width:2px"><b>'+esc(s)+'</b></div>').join(''):'')
+     +'<div class="press" style="height:6px;margin-bottom:10px"><i style="width:'+(100-score)+'%;background:#00ff9d"></i><i style="width:'+score+'%;background:#ff3864"></i></div>'
+     +'<div class="g4" style="margin-bottom:10px">'
+       +'<div class="stat"><div class="k">Liquidity</div><div class="v">'+usd(liq)+'</div></div>'
+       +'<div class="stat"><div class="k">24h Vol</div><div class="v">'+usd(vol)+'</div></div>'
+       +'<div class="stat"><div class="k">FDV</div><div class="v">'+(t.fdv?usd(t.fdv):'—')+'</div></div>'
+       +'<div class="stat"><div class="k">Pool Age</div><div class="v" style="font-size:12px">'+(createdMs!=null?ago(createdMs):'—')+'</div></div>'
+       +'<div class="stat"><div class="k">Top 10 Hold</div><div class="v" style="font-size:13px;color:'
+         +(current.onchain?.top10HolderPct>=70?'var(--red)':current.onchain?.top10HolderPct>=50?'var(--amb)':'var(--grn)')+'">'
+         +(current.onchainPending?'<span class="spin" style="width:11px;height:11px"></span>':current.onchain?.top10HolderPct!=null?current.onchain.top10HolderPct.toFixed(1)+'%':'—')+'</div></div>'
+     +'</div>'
+     +'<div class="row" style="margin-bottom:6px;font-size:11px;font-weight:800"><span class="up">'+buys+' buys</span><span class="dn">'+sells+' sells</span></div>'
+     +'<div class="press" style="margin-bottom:12px"><i style="width:'+bs+'%;background:#00ff9d"></i><i style="width:'+(100-bs)+'%;background:#ff3864"></i></div>'
+     +'<div class="ttl" style="font-size:11px">Findings</div>'
+     +F.map(f=>'<div class="flag f'+f[0]+'">'+f[1]+'</div>').join('')
+     +((web||soc.length)?'<div style="display:flex;gap:11px;flex-wrap:wrap;margin-top:8px;font-size:11px">'
+       +(web?'<a class="gold" href="'+esc(web)+'" target="_blank" rel="noreferrer">🌐 Website ↗</a>':'')
+       +soc.map(s=>'<a class="gold" href="'+esc(s.url)+'" target="_blank" rel="noreferrer" style="text-transform:capitalize">'+esc(s.type)+' ↗</a>').join('')+'</div>':'')
+     +'<div class="sub" style="margin-top:8px;font-size:10px">Reduces risk — does not eliminate it. Always DYOR.</div>'
+   +'</div>';
+}
+function refreshAnalyst(){
+  const box=$('#analystBox');
+  if(box&&current)box.innerHTML=analystCardHTML();
 }
 
 function renderToken(){
@@ -668,36 +735,7 @@ function renderToken(){
      +'<div id="chartBox"></div>'
    +'</div>'
 
-   +'<div class="card">'
-     +'<div class="row" style="margin-bottom:9px">'
-       +'<div style="display:flex;align-items:center;gap:10px">'
-         +'<div style="width:42px;height:42px;border-radius:11px;display:grid;place-items:center;'
-           +'font-size:21px;font-weight:900;color:'+v[2]+';border:2px solid '+v[2]+';background:rgba(255,255,255,.04)">'+A.grade+'</div>'
-         +'<div><div style="font-size:14px;font-weight:900;color:'+v[2]+'">'+v[0]+' '+v[1]+'</div>'
-         +'<div class="sub">Risk '+score+'/100 · analyst grade</div></div>'
-       +'</div>'+authBadges(a)+'</div>'
-     +'<div class="sub" style="margin-bottom:9px;font-style:italic">'+esc(v[3])+'</div>'
-     +(A.stops.length?'<div class="ttl" style="font-size:11px;color:var(--red)">⛔ Hard Stops</div>'
-        +A.stops.map(s=>'<div class="flag fH" style="border-width:2px"><b>'+esc(s)+'</b></div>').join(''):'')
-     +'<div class="press" style="height:6px;margin-bottom:10px"><i style="width:'+(100-score)+'%;background:#00ff9d"></i><i style="width:'+score+'%;background:#ff3864"></i></div>'
-     +'<div class="g4" style="margin-bottom:10px">'
-       +'<div class="stat"><div class="k">Liquidity</div><div class="v">'+usd(liq)+'</div></div>'
-       +'<div class="stat"><div class="k">24h Vol</div><div class="v">'+usd(vol)+'</div></div>'
-       +'<div class="stat"><div class="k">FDV</div><div class="v">'+(t.fdv?usd(t.fdv):'—')+'</div></div>'
-       +'<div class="stat"><div class="k">Pool Age</div><div class="v" style="font-size:12px">'+(createdMs!=null?ago(createdMs):'—')+'</div></div>'
-       +'<div class="stat"><div class="k">Top 10 Hold</div><div class="v" style="font-size:13px;color:'
-         +(current.onchain?.top10HolderPct>=70?'var(--red)':current.onchain?.top10HolderPct>=50?'var(--amb)':'var(--grn)')+'">'
-         +(current.onchain?.top10HolderPct!=null?current.onchain.top10HolderPct.toFixed(1)+'%':'—')+'</div></div>'
-     +'</div>'
-     +'<div class="row" style="margin-bottom:6px;font-size:11px;font-weight:800"><span class="up">'+buys+' buys</span><span class="dn">'+sells+' sells</span></div>'
-     +'<div class="press" style="margin-bottom:12px"><i style="width:'+bs+'%;background:#00ff9d"></i><i style="width:'+(100-bs)+'%;background:#ff3864"></i></div>'
-     +'<div class="ttl" style="font-size:11px">Findings</div>'
-     +F.map(f=>'<div class="flag f'+f[0]+'">'+f[1]+'</div>').join('')
-     +((web||soc.length)?'<div style="display:flex;gap:11px;flex-wrap:wrap;margin-top:8px;font-size:11px">'
-       +(web?'<a class="gold" href="'+esc(web)+'" target="_blank" rel="noreferrer">🌐 Website ↗</a>':'')
-       +soc.map(s=>'<a class="gold" href="'+esc(s.url)+'" target="_blank" rel="noreferrer" style="text-transform:capitalize">'+esc(s.type)+' ↗</a>').join('')+'</div>':'')
-     +'<div class="sub" style="margin-top:8px;font-size:10px">Reduces risk — does not eliminate it. Always DYOR.</div>'
-   +'</div>';
+   +'<div id="analystBox">'+analystCardHTML()+'</div>';
 
   drawChart('ds');
   $('#cDS').onclick=()=>{$('#cDS').classList.add('on');$('#cDT').classList.remove('on');drawChart('ds')};
