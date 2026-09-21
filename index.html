@@ -85,6 +85,15 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 .lnk{display:flex;align-items:center;gap:11px;padding:12px;background:rgba(18,20,31,.7);border:1px solid var(--ln);border-radius:11px;margin-bottom:8px}
 .lnk .ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:17px;flex-shrink:0;background:rgba(255,197,40,.12)}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cp{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;color:#b8bfd1;background:rgba(255,197,40,.07);border:1px solid rgba(255,197,40,.22);border-radius:6px;padding:3px 7px;cursor:pointer;margin-top:3px;white-space:nowrap;-webkit-user-select:none;user-select:none}
+.cp:active{background:rgba(255,197,40,.22);transform:scale(.97)}
+.cp b{color:var(--gold);font-weight:800;font-size:10.5px}
+.caBox{display:flex;align-items:center;gap:8px;background:rgba(10,12,22,.85);border:1px solid rgba(255,197,40,.25);border-radius:10px;padding:10px 11px;margin-top:10px;cursor:pointer}
+.caBox:active{border-color:var(--gold);background:rgba(255,197,40,.08)}
+.caBox .ca{flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#e8eaf0;word-break:break-all;line-height:1.45}
+.caBox .lbl2{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:3px}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:linear-gradient(135deg,var(--gold),var(--mag));color:#12060a;font-weight:900;font-size:12.5px;padding:11px 18px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:999;box-shadow:0 10px 30px rgba(0,0,0,.55);white-space:nowrap}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .botOpt{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(30,35,56,.5);font-size:12px;cursor:pointer}
 .botOpt:last-child{border:0}
 .botOpt input{width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ffc528}
@@ -234,6 +243,7 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 </section>
 
 </main>
+<div id="toast"></div>
 
 <script>
 "use strict";
@@ -331,6 +341,43 @@ const padBadge=d=>{
   const p=PADS[d]||[d,'#7a8299'];
   return '<span class="badge" style="color:'+p[1]+';border-color:'+p[1]+'44;background:'+p[1]+'14;font-size:8px">'+esc(p[0])+'</span>';
 };
+
+
+/* ══ COPY — tap any address to copy it ═════════════════════════════════
+   Only genuine base58 Solana addresses are ever rendered as copyable, so a
+   malformed API value can't be injected into the page via onclick. */
+const safeAddr=a=>/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a||'')?a:'';
+let toastTimer=null;
+function toast(msg){
+  const t=$('#toast'); if(!t)return;
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),1600);
+}
+async function copyAddr(addr){
+  addr=safeAddr(addr); if(!addr)return;
+  let ok=false;
+  try{ await navigator.clipboard.writeText(addr); ok=true; }catch(e){}
+  if(!ok){
+    // Fallback for older iOS Safari, which needs an explicit selection range.
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=addr; ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0,addr.length);
+      ok=document.execCommand('copy');
+      document.body.removeChild(ta);
+    }catch(e){}
+  }
+  toast(ok?'✓ Copied '+short(addr):'Copy failed — long-press the address instead');
+}
+window.copyAddr=copyAddr;
+/* compact chip for lists — stopPropagation so tapping it doesn't also open the row */
+const copyChip=a=>{a=safeAddr(a);return a?'<span class="cp" onclick="event.stopPropagation();copyAddr(\''+a+'\')">'+short(a)+' <b>⧉</b></span>':''};
+/* full-width contract-address box for the detail view */
+const caBox=(a,label)=>{a=safeAddr(a);return a?'<div class="caBox" onclick="copyAddr(\''+a+'\')">'
+  +'<div style="flex:1;min-width:0"><div class="lbl2">'+(label||'Contract Address')+'</div><div class="ca">'+a+'</div></div>'
+  +'<button class="btn" style="padding:8px 12px;font-size:11px;flex-shrink:0">⧉ Copy</button></div>':''};
 
 /* ══ DASHBOARD — all data sourced from DexScreener (CORS-confirmed) ══ */
 let rows=[],feedMode='trending',sortKey='vol',sortDir=-1,padFilter='all';
@@ -465,7 +512,8 @@ function renderTable(){
       +(r.logo?'<img src="'+esc(r.logo)+'" style="width:24px;height:24px;border-radius:6px;object-fit:cover;background:#12141f" loading="lazy" onerror="this.style.display=\'none\'">':'')
       +'<div><div style="font-weight:800">'+esc(r.sym)+'</div>'
       +'<div class="sub" style="font-size:9px">'+esc((r.name||'').slice(0,18))+(r.created!=null?' · '+ago(r.created):'')+'</div>'
-      +(r.dex?'<div style="margin-top:2px">'+padBadge(r.dex)+'</div>':'')
+      +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
+        +copyChip(r.addr)+(r.dex?padBadge(r.dex):'')+'</div>'
       +'</div></div></td>'
     +'<td class="num mono">$'+px(r.price)+'</td>'
     +'<td class="num '+cls(r.ch1)+'">'+pct(r.ch1)+'</td>'
@@ -545,6 +593,8 @@ async function scanToken(addr){
     const supplyTxt=auth?.supply!=null?num(auth.supply):'—';
     $('#tokenView').innerHTML='<div class="card">'
      +'<div class="ttl">⚠️ No DEX pool indexed</div>'
+     +caBox(addr,'Token Address · tap to copy')
+     +'<div style="height:10px"></div>'
      +'<div class="flag fM">DexScreener has no liquidity pool for this address.<br><br>'
      +'Most common reason: the token is still on a <b>pump.fun bonding curve</b> and has not '
      +'graduated to a Raydium/Orca pool yet — it can trade actively while remaining invisible '
@@ -596,7 +646,10 @@ function renderToken(){
       +'<div style="text-align:right"><div class="mono" style="font-size:18px;font-weight:900">$'+px(t.priceUsd)+'</div>'
       +'<div class="'+cls(ch24)+'" style="font-weight:800">'+pct(ch24)+' 24h</div></div>'
       +'<button class="btn2" onclick="toggleW(\''+current.addr+'\',\''+esc(sym).replace(/'/g,"")+'\')">'+(fav?'★':'☆')+'</button>'
-    +'</div></div></div>'
+    +'</div></div>'
+    +caBox(current.addr,'Token Address · tap to copy')
+    +(current.pairAddress?caBox(current.pairAddress,'Pool / Pair Address'):'')
+    +'</div>'
 
    +'<div class="card">'
      +'<div class="row" style="margin-bottom:8px">'
@@ -820,7 +873,8 @@ function renderHits(){
    :botHits.map(x=>'<div class="hit">'
      +'<div class="row" style="margin-bottom:5px">'
        +'<div style="min-width:0"><span class="gold" style="font-weight:800;font-size:13px">'+esc(x.sym)+'</span>'
-       +' <span class="sub" style="font-size:10px">'+esc((x.name||"").slice(0,22))+'</span></div>'
+       +' <span class="sub" style="font-size:10px">'+esc((x.name||"").slice(0,22))+'</span>'
+       +'<div>'+copyChip(x.addr)+'</div></div>'
        +'<span class="sub" style="font-size:10px">'+fmtSince(Date.now()-x.at)+'</span></div>'
      +'<div class="flag fG" style="margin-bottom:6px;padding:6px 9px">🎯 '+esc(x.reason)+'</div>'
      +'<div class="row" style="font-size:11px">'
@@ -864,7 +918,7 @@ function renderW(){
    ?'<div class="card"><div class="empty">Nothing saved yet.<br><br>Scan a token and tap ☆ to keep it here.</div></div>'
    :'<div class="card">'+w.map(x=>'<div class="tok">'
       +'<div style="flex:1"><div class="gold" style="font-weight:800">'+esc(x.sym)+'</div>'
-      +'<div class="mono sub" style="font-size:9px">'+short(x.addr)+'</div></div>'
+      +'<div>'+copyChip(x.addr)+'</div></div>'
       +'<button class="btn" style="padding:7px 12px;font-size:11px" onclick="scanToken(\''+x.addr+'\')">Scan</button>'
       +'<button class="btn2" style="padding:7px 10px" onclick="toggleW(\''+x.addr+'\',\''+esc(x.sym)+'\')">✕</button>'
      +'</div>').join('')+'</div>';
