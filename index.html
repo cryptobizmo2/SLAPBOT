@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.dexscreener.com https://api.mainnet-beta.solana.com https://slapbot-backend-production.up.railway.app; frame-src https://dexscreener.com https://www.dextools.io; object-src 'none'; base-uri 'none'">
-<title>BIG MOUF SLAP BOT — Solana Scanner</title>
+<title>BIG MOUF SLAP BOT — Multi-Chain Scanner</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--bg:#05060b;--pnl:#0d0f1a;--pnl2:#12141f;--ln:#1e2338;--txt:#eef0f8;--dim:#7a8299;
@@ -102,6 +102,29 @@ iframe{width:100%;border:0;border-radius:10px;display:block;background:var(--pnl
 .fscan{background:rgba(20,23,38,.9);color:#eef0f8;border:1px solid #1e2338!important}
 @media(max-width:430px){.featured{flex-wrap:wrap}.featured .acts{width:100%}.featured .acts a,.featured .acts button{flex:1;text-align:center}}
 @media(prefers-reduced-motion:reduce){.featured::after{animation:none}}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(30,35,56,.55)}
+.chk .ci{font-size:15px;line-height:1.25;flex:none;width:20px;text-align:center}
+.chk .ct{font-size:12.5px;font-weight:800;color:#eef0f8}
+.chk .cd{font-size:11.5px;color:#9aa2b8;line-height:1.5;margin-top:2px}
+.gradeBox{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:23px;font-weight:900;border:2px solid;background:rgba(255,255,255,.04);flex:none}
+.trd{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(30,35,56,.45);font-size:11.5px}
+.trd:last-child{border:0}
+#chartBox svg text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.chainBar{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chainBar::-webkit-scrollbar{display:none}
+.chainBar button{flex:none;padding:7px 11px;border-radius:99px;border:1px solid #1e2338;background:rgba(18,20,31,.85);color:#9aa2b8;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;white-space:nowrap}
+.chainBar button.on{background:linear-gradient(135deg,#ffc528,#ff2d95);color:#12060a;border-color:transparent}
+.chainBar select{flex:none;width:auto;padding:7px 10px;border-radius:99px;font-size:11px;font-weight:800;background:rgba(18,20,31,.85);color:#9aa2b8;border:1px solid #1e2338}
+.cBadge{font-size:8px;font-weight:900;padding:1px 6px;border-radius:99px;border:1px solid rgba(0,229,255,.35);color:#00e5ff;background:rgba(0,229,255,.08);white-space:nowrap}
+.cBadge.unv{border-color:rgba(255,171,0,.35);color:#ffab00;background:rgba(255,171,0,.08)}
+/* ── BIG MOUF watermark: faint full-page stamp + corner signature + chart stamp ── */
+.wm{position:fixed;inset:0;z-index:4;pointer-events:none;background:var(--logo) center 48%/min(80vw,540px) no-repeat;opacity:.055}
+.wmCorner{position:fixed;bottom:8px;right:10px;z-index:150;display:flex;align-items:center;gap:5px;pointer-events:none;opacity:.55}
+.wmCorner img{width:16px;height:16px;border-radius:50%}
+.wmCorner span{font-size:8px;color:#334155;letter-spacing:.5px}
+#chartBox{position:relative}
+#chartBox::before{content:'';position:absolute;inset:0;background:var(--logo) center/36% no-repeat;opacity:.08;pointer-events:none}
+#chartBox svg{position:relative;z-index:1}
 .ownerOnly{display:none!important}
 body.owner .ownerOnly{display:block!important}
 body.owner .publicOnly{display:none!important}
@@ -131,7 +154,7 @@ body.owner #ownerBadge{display:inline-flex}
   <div class="logoWrap"><img id="hdrLogo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwMDAgQDAwMEBAQFBgoGBgUFBgwICQcKDgwPDg4MDQ0PERYTDxAVEQ0NExoTFRcYGRkZDxIbHRsYHRYYGRj/2wBDAQQEBAYFBgsGBgsYEA0QGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBj/wAARCACAAIADASIAAhEBAxEB/8QAHQAAAgMBAQEBAQAAAAAAAAAABgcABAUIAwIBCf/EAD4QAAEDAwMDAgMHAQUHBQAAAAECAwQFBhEAEiEHEzEiQQgUURUjMkJSYXGBFiRikbEXM0NjcoKhRJOjwdH/xAAbAQACAwEBAQAAAAAAAAAAAAAEBQIDBgABB//EADgRAAEDAwEFBwIEBAcAAAAAAAECAxEABCExBRJBUWETcYGRscHwIqEUMkLxBmLR4SQzUnKCorL/2gAMAwEAAhEDEQA/AP5/6mpqa6uqamrVOp06rVRmnU2K5JlPK2ttNjJUf/z3J8AcnTStqgUi3UGTGiUyu1dogu1WpYXSaZlQRuS3/wCqUlR9SyC0n9K+DoW5vEMYOTy+ae+gk4q9q3U5kaUJ0PppctYoaa/KTFodBUSBWKy98rHWR7N59Tx/ZtKjootixbYq8t+NbNJubqBNitl54QW/s+IlIxkkkLdUBnPIQcA/Q6N6BbtzdQLhFcGyouqS2o3Jc8haWY6U/iSy2MbmwCpPpSEAYwoYzpuWzZPw29LuntTrFXvWo3DU3kFEtFNnKpkaQknPZSlCwXGwoeApY8azl5tmCpBUd7glPoTrPLKSeXGmbNgoALCccz8iO+R1pKdL7npzsioVJi2LEs+hUtvfJq8qjqrD6VKzsbQJLigtxZBwAAOCTgDVWofEPc79QWzSFNCGFHat6FEaWsD6pZaQhA/wgH/qOrHVRyl1+YxQbTtyLbdIhRU1KbGjJ3oi7wnClBKQpxzatpPq9yRxydAVGoikRvnoPT2v12MBuEhTi20rSPJCWknj/uP86LtmbdxPbvI14Kgx3knJPeenOoOl6ezaOmpA9hw8KPKNc9+Xb1Eh29XZTFJTOC0Ien05pplpZbUptThU1wgqCQfqDxrU6j2TULGejxbnolmVNr5QOSqs1G7Mb5grUOwlbfbcJ2hPqTuB5UAUjjJn9dH6tCZYum3auYbrrMreZLclt3tuJWkFDjQ3IJQAU7xkAjjnXvU5XTvqfTm4cOc3SpKVd1ESIhUdZXtIwmM4tTayeOEOE/iwPVod9pxDiXNwJQNd0T4yII/tXrTmChRJVwk+xkUv34HTuoVF2n1CLW7NqCPKkH7TiAYzuI9LqUkc7gXOMEZ1m3B02uKh0dVdj/K1qhBQSavSXPmGEE+Eu8BbKv8AC4lJ09fhlsqNeNxyna7V02/V7SGIE+pU9MhjarfuYltOY9IBVtypJTuIB4Gsi7unfUrpT1fqF1zqo1TafOLqmazbKUqgOFw+ht5CshLJJG7uhSSM8q86uTtJLVyq3S5kcFGZOsD9WmdVccYmoKti42HCjXiBHnw8ornHU05K3alBvaSEU2FCtm63xuixmvuKZXElSglUcLP90eXtVtbVhtePSUcJKhmQ5dPqD8GfGeiymHFNPMPIKFtrScFKknkEHgg6d290h8YweXz5w1kUvcaU3rpXjqampomqqmrNOp82rVWPTadGcky5DgaaZbGStR4AGq2mdbVK/s5ajcxwKRVqzGW6XADuhU7kKUCASlb5CkhWPS2FK8K0Ld3PYIkfmOB86a/YZq+3Z7VWdBrXvBp1Mo9Hfp0F9x6MXRDqVUiIK1TXiM/LM4weyklJIykvYVg4AGtdNLtm3n5E6tuwBOQ8VJtxp8OogLAG4OJ8b8jJBG1J4wpQwH38Pto2YY8e/wDqM/HpbCIoZtaNMSllDDYye+sDypRUcHnAUDkqWDrmCuinxpdXdk02FUEmqvBLpyhZ3Ou5IUk5A9AxnI5Os1ZPC+ecZSo/TEkRknUeEZ8hAGW1wfwqEuKRroDoBwPX4Tk173FfFz3CpuNFdLUZ5eG0LPnH5g2eT+ylZP02+NGtL6XWnQ6dHkdSpFxv1iUy1KffjJSY1LS4fuu+V5LhPBIHgEjHGdLS3l1SoXVFh0BD3zKnNzKCUu7AASOVg8cfsNOamdWKZf0ug0m+YUo12TNisuyUJHaeUHA2l5ScEJwlRyMYznB+hd8w5agN2whPGPzftg+PSau2Vc2ty4pV4qVRidPnzWhCvIqdPsa5g/8AaDjkuqsMImqb7UaW6hwlx5xz/iAHCUJyEJCl4TnWPNue5KpVWK9FvvsVmC2WktUeOiIglLRWA0hlKUqGQlKlEckk8gaePUufUHL1oCVvQvseQ/NgS6VUlH5JXaRlpntgjCjtKUEc5xjOvqZ0AsWHPXVpVAr1tSozjgLa31yaY6tvbvT8whJW2jKgklRQeeNAMbSaQgF0QVSRAB6R9uFGX+xHHHQm3c3d3BzGucYMxPHypY2B1Bpcu3JFMvi3pNVNRqAahiNFCm0uunLhACfTlRSShJPKyQkZIIb1Hs6PSbunU0UZy1p0c5NLqryg86D4KAWwMH2yQT9NMvqImrzLEg0O2bVn0WHR3Eym36V/eIylbsrW04DkkZ3ZyScfXSkaeteqVmWl2TLlSqgVBMyqq9Ub0uDKlZ9Sie3yfH9MaYWi0lRuGwRrIGe7oMd/TNC7VW9bpTbO/WIGYzkwYOpgnhmK+7cu24pyo9mzKnLaVIfQ1EmoWpL8Z0+hAKh6lt84KTnaOU48EotrqbedrU8Q6pLRNpr+9K4zjg27s4I2HwT9UAg59QVpfsSJjFMZhxmt1QB7hfRnuNtFJwjd5Gc54xxj6nWlYMWBNvyOm4WXFUiKhyXPbZV2lFlpBWoFWM84CcZ5KgMjOdGXNnbLQtTiAU6xx7x38OuaRObUds2+1ST9IPly60dRrdoV7NzatadFnzIlCT87UqC+2WUlDvoLzGwlRSlQG5rjwSjyRrNr8Ju+IMSFIeMi4AykUiquEdyqMgYTGkkEgP7QC0okqKSlC+duDDoJdkK2Oq1dvz5Jce1Iy0KnxmnEpLcdx5ztp2Z9QSrZnGcY3Dxra64W/bcupt3vYzbTVo1yYhyTDjvoaNNlEnKgTkMocUBleMBSfTwsaSLuVMXgtySBjdJzBiSk8J465GNd000ZSbi2FwU65UNOmPkDzrldaFtOqbcSpC0khSVDBBHsRr50e3nGYuGim9ILzMiYzI+RrSmAQlx7B7ctIwCEvJSrPA9aVfqGgLWrtn+2RvEQdCOR+acxBpQ812aomRwPT5963rNobNw3lDp8x0swQVPzXh/wo7aSt1X8hCVY/fGmFPauOTUHrnrFFh/YlVimsCOytKXmoDCwyiOFp9TbasNtYPkAkDIOhK2kCB06r9TUVIcnbaY0pJ5KAC+8B9MhttOfos6L7PNzUS2rltlFlMyV1WMxClqqMztux0rO9pIG4bCTzgj+caV3hUtwuAiEkCDjEgqIMiDkeKY40axuoQEmcyceMA/fzq11M6sV3qhUqVOq1JZoVKhMttMRaaC5HTsAxyDlPq5Ix+kflGsSHTbONjpqVbuxlUtx5Twp0NpS3lFDvAVkDYFJcUQefw+2hOvmo0mrGjz2IKXWG04DKkPpSCkKCd/OcAjjPByPOtehWzXrhqUSi0mPHmKeb3/fs7UR0EgFalcgDcoAYOSSABkgavTass26UsncSM45a6maEccceUQvJIjqOGKI4ho4fqibVqEaK5XUlxbz+8ikRMB11o7cqWreptA2pJUW8AerWZelwLMJFEoUh9FPbUCJqIioT01eBuU8CSpfqBKRnCBwB510v056YW909QuMqMJVdlpSt2cFZbb5yGW05/COCTyCcfiAB0Qt3laNfs+dQ79Uw+00XY0mJMSF7XUK8K3cjjapJGDg5BGs+drtoelCCsDiTnv06dPvWnt/4ZfLJW4oJUqSBH26fc1z9Qeq1HvOA3S73ShE9TjbjrykJUl15HAfSDwFkZC0ng5JHnA6js++oVHst9ilTJFMjSEfKj5YGdTmw46pa8Nk72glBAxlGccjwdcEXlSaTTeoFUpNHDsiA24FRitX3yEqSFBJ/UU5wf41vWabhn0p82rXH01qGB/cS8W3HUZxltQIV7/hOQP6jU9p7EaebS60spSc9BPoPSvLXagUTb3iN5ScSNcevvT06m3Zbkypv1KiUlumTHVDtyLZX28oCVBtBjAAZJG5Rws42jIOs3oZ0ei9TOoE6qXoiOqLB2vSGmmktr5J2JcKDjeQklQHsAMgqyE1Lum/p0R7vSJEjZGMt1JeOQ0DgqOMZHPvp1fC51MZp1GuaiT3WkTZJamxm0J2hSEApWODkkHYSOSQSfbQN5b3GztnOLYMqEZmTqKJNw0+8ljOdARA/flXaLVsWfQIKIlJtihRMvFgsrYQ2XVFO7I4CVEgjwDyR5OuMvifsSBZ1vyKxZMCHAps6V26qw02CsFSgUFKvKUFTYCkDCSSg4GSA62+rCp8ZuQ9UH6dGhLJkqcZ7jLi1Hz3AnAACU4IIxgeTnCY6u3LHX09foVdltOxpshkJdQ4oqfbQ4l1e0E5BwhCc5P4wdZ3Yq70XrTikkiRI1nr4aivNpbLaVZrU/BCcjvGlc1SY1RoSl06SZ0MvMRnVNpGFuJcR3UcZ8ELBH8jTm6LWRbdS68ybIr9UjiDOoDsWetD24IfXjCSo/iWkhJGMgK248aWVWvEPXnLrsSLDYS9FYhxo7o+ZXHQyhCG1AkAbwG04Oc+dWLTplxtVT7Vt+1qvIfSlLxkyFqab/HkKJO0crH6jkjGvo9406/bkKV2ZKeY1IHp31lbdwNPjikf1NbEW06ZY1bfoFauiE+anMlW/VKelJC4yApPYl4J5Tv7bqSPYEfXKnnQpFOqkmny2+3IjuqZdQfyqSSCP8xo9umVWpPVOIq6U09T8p1lT6InbUjYV7CglI5wAR5PtzrDvxPzFdiVsciqw25aj/zBlpz+u9tR/rqyy30LSXFbxWMkaSOXhPWAKsf3FoO4ICTjnB5+MeJNaE9tMTpXbMdKSDIRUJ6x+rctLCf/AA0f89bdMoLTtbqLH+zpUtxoR8RahW+06zuQOXBxuWokKUMDaOMDnVC5mD/Yq1ikEpRbm7H1Kpruf9dWIVsCTNnpHT2W6GHGF9qTVktutp2AlLmcEqXkE4SCnOMDQ3ajsiSYyrjH6/8Acn55G11s74EcE/8AnuNULzCaNCFFetajQHpAD7b0V4PutoCiNqlY8nBBH0xx9Wh0HuSlQZrkB9LDM+UyjtqICFLISpBwQBlQbyRnn1L8nnS7p/Tau3BfxhxLfDXfK9sSmFUpMfbgYWpO7b/JPnOim+uhF92U9DqEalPw3vS6z2l+oqA3ZA3E7hjdx/loe6ftVti0cchShM8PU8udX2LbzTwukokJOnwU+qnVGafRn1PvtR6pRne+yQ5hMhojwM+yk4x9FDSM6oV2g3jd7FaoT0mBJeDSJL6fSh5W4J5APkAnn6jQBXbmu+qwjU6ipMgMhLSpCFelIJO0bPYEg+2M6EjNkyHzIddUtYO5KR6Ug+xwNeWGxlNnfKs/MU52j/EbbqdxKSQeePh7qcvVi2rZeuWhRqfJZZlvpSy9MbJe7zQTgOrQnncCkpyPIHvt0IotS4LWmruWjXLRZpgAvFcadlakDIUkoOFEKGQUe4J9s4rWHImS+o8J5Uhx6QApxtxcwRlZQ2rGHVAhPPjjnx76YF804z7ZeZMesFiN3pTaBJhONMrGSC6tABJ3OKODg+o/XOiipVqEWylAiMz1J4a9OVILh0XTy7hCd2TiPnjRLbVvpuqlVPqtQqDVUSXqTKYkwkRFvJlSipKdrbh8qOScpBGE8nduCuf7dqSqLXkCX8zEW25tTIYUW34jn4SsfXAzlB4IyOPOu8+mHU23nvh7tJEBSG24dPahPIOSlt5tSd6FYSrC1DeRwCoK8+45L+INmjnry+/TUBn5iKzImNoSElLxByNvspSdhx9Vc6SbE2mq4vHrJxBAyBPAJMQeeuPKj9oWqm2EXAI1HjOZ+1PSnu19+FGRTL4hVkNJ+VkU8sdhjI4UW/JA8/iHP7aV3V2bRWrFNOgNsuqalttpON3ZdJUSGzn8OwEH+R9Bobt2c9KtSKum/LtS1OutSCl8NKSkEbd6lkbsg+c59vYaOZ1Ltyn9BGZSWo9UuJdQLqWy5vQ260AtKWeAFEJzv8hX4QeBnm0JtH0zk70QAB59Pand5fC4sFBA1TxM+U8felhREO29c9OU5W1U1yZSUv8AeagfOupUtWQhKFeFnaOfb+uiSbFlVWQH3LfvWvjcApyrP/IMPNgHISkYx6ucDPCT551k2zSLsrF9P1GQ9cHekx1mRKpsJbz2CpOUhIQrjAP0/D59jkV5uqSq1CponXMmMyvtypc0PqS0O4QHA1tBSAjCsf8A3pwo9q7+YTGT/cAH7+FY1tCkN5Hzz9qo1C5KbPTEh0uz6dR22pCFd5pSnHVbVeCs+fP+mvS5mu50vt2Tj1Rps+Co/sFtupH/AMqtFN+3HYzlhWpZNiyHZDFPmPSJLzra0rfddS0kuHcB57eMDgAfvznXfD+V6SqQRgt3TLbSP2+Xaz/oNTQ+CWSElMqODM8RJnOZmrw1CXQSDgaRHA8O6tGRCjVPoXRalImtxu1RpkQbgSXHGZqHEtjHuUvDRB0c6CU7qTbNWuGu3ZJpLUJLiwhmGZDq9oSc7itIByocH6aGbCDdc6QVOlOo7xotVj1FbR/PEfKWHx/AIaUddU33fVFsjpFQotDo9v0RiYjasRqePWCQCB94AM8cqIHGcjGkG0r65tSbO1/zFLVBxjRXXgRTS3t2nwl538oSPceoNY/SGTFtb4b7nhUqbLfhtF1CTIPZU6e64DuQh7Ht9FaPrOpNFpdjt1+puQjV3UoSuU+2FKbw0ThOVAp4QB6QSc8DzrDonRyrNdNV09y6aVDjVlSpUiLGZEx0JUtSwgKQpLKE+r/mD9zrQsjpnY180l5qhX3Wq81BfEd16FVNiGHduRtS22lvOD+lQ/nWSuw26444XdTkgE4OkkQNevhTdtRbQEpTAxqQNI55rm7qTPRWKjJr7kvfvQppBfdLis7SpKFIUSkoISUkYyCEnjzpLVand2Yw9SqetuPJjodYjtbnCBtAWo+TjeFgZ+n0GuuOkHQu1r2pd4VOpzn6g3RK7NpkaTHDbKXW2khQdUQknJzyEqSnA4GtilWbavTD4VKRetyWui+a3Vfk3ExXNqnFOSMBtppBBAABH5VKUf5wNfZ7UZ2ePw7crUCEgaa6awMddPE0nvGTdntCAkazr6fPKuHJTE1iShL8J9nckIbS42UlWOOARzo2YoTl5XAmmqpcKz3kwO2yn7xDMh9sAqLu4qUlS0hXgY3AcAE6d/xBC0qh0fgVq3OmtdtifFmMokPyobUFkBSVZb2BYLigvGFhvI2nkA402ekFs2BdPwo2lCvGdSYz7kJaVqRsjyUjvOBCu4nC92MEEnn3yNG3m39y0TdbhBJKdRgxMxMHT9qDY2bLxaKpEToc+9c69RrGX0wqb0ywLzmNMrhw46IkULZefkdsh5xaScds9pbgOSfvEDA5OkhJi1tdT71RjznJMkqX3XUqWt1Q8qyeVHJGddxdDOlsCh1a5ap1Su2LVJomKp1J+0pQkJciN+JCUrJGHPSE+4CVfXRDbXTmxa18QXUi5qyKPJYjPRoFMhENtxi38k2tS0NJwhaiVAZIODn3OdBsfxC3aKcQ4N8pAO8I+rQAcNJ1PWrndnLeCSmUg8DOOv7VwOKlUaaytlO+MHTvWw8go9f6kkj9/wDzq7atanm/6VKlvvTlNPBCW3XFKSlKuFYz4ASVHjHjXYEW0Om/Wj4ZrjvO1LZ/spUaZ8wtkDYVd6O13cbE+hSFZ2/hCgeQeORfrh0Wtjp106tm8LdZX36tPjQnBL2uICHmisqBSlKwePdRGCRpgjbtu8rsVtlLhJTB5xxIn1oc2bqIIXKRB19Aa6I6a3BSGOntM+VnpYSWloRhaVKS202k5OVbyedvpB5Gl/Lkw7C660+9GKi7Dplc3pmFcooSXUjIUCpSRgjPpz+XPudZlF6OV6zetNHtKuXZNl0mr06f9m/Zn91djOshtW5Yc7iVjasgJyRyr+TXvr4eOoM2NGVS6w1V2YSlKYiqAhOBSgAT5LSzgY8tawDdkyh7dNwN1YPA5BJjJESCOMVpPxAIUrcP29s6d9Lbrl0VvQX+z1JlR6cq3pr7bipbU1oq2dwkrKAckBJT43HA/bS76txTSunFDil5t77QrlWqCXW87XEJcQylQz7HYrGnZ1LrYj9ODaVYifJVyjNLRMgvspDoUpkLb/CnnOU49ShyOdIjr5JbiXlQ7LZc3i2aLGpz5ByFSlAvSD/7jpH/AG61mwnbh5xhp79E8P0hMT5keBpRtFLbTTi0Z3/WT7A1gdIrqp1p9UoUiupK6DOQum1Vse8V4bFn+U5Cx+6dNfq7PWzZn9iKnIEiZQn/AJZLxwRJaPqafSQOQtspPnjJGubtNakCV1RsqLSEOg3NQGAhoqIBm09KslBJ8qZySP8ADnTzatg3+IbvFYAiTy5HuyQfA6CgtnXSg0u3GSRgc+Y7+I8eJrq3o/1NpFofDraFE+yZdTrRgZUlPoQlK3FlA3H/AAkeNB1k9RGnrRqtA6YUCHRKCJJamIZDockOLR6ip1St6jtGCcjHtgHRN9lULpJ0ctOf1IqsSlyTSY/bjZ7jzuE5Gxseo8EZPgfXSrk/EZbcZC6RYlmNsAhSY8mcEstNKP5xHaHJ98FQzxnPjWEbtXrlx827SiComZhOCcnnHCMjNaUOsMoaLqxMZGp0GByzrRhaEJ+iUyqUW0Jcyl0hqqOOSaczIUpDa1MsKUgqPqUByOSTg4OcapUqHHviwafWKJdDMBajHUyV7ZKozrCkHZ8uVA8FGMfQgjg6X3RmuUSjVirf7Ueo9UokNT65BpDHfaVUHlgBbjzjSchOMDaFAq/YA5eNE6j9L1wTRej8iZRnidjkqhWxvKR7FTjqNoH7qzq3aDL9s6ogKUZSd8JO7pneMGZxoCOdQt7ht1ASkADI3Sc5PASPbpSv682zNoHTGMzHt2suJmvIUqe7BWy0lLfJJUoDlR9vHn9tfFJrFFa+HOBVKJurFZplPYMqHEhvOhlLbgLgdcCNjf3e7JJ4zr3602dd96QKWt++borkwykQ4VPrTTLbbq1n1loNEAbU+s+k4SlRJ8av3lA6kRuiMHon06syofJIbSuqTmMpTJB9RytRSnK1AqUAThISk/TRjK7Zy1t2A4CSveOYAA1JkDGgAAEnE0M4btDzrykRCYGJ10iCc8dTFVUdRelk3qJRaZDrEZmkvxHnZk+U2ptDDqkgNsnI8g7snGORg+dX6XWLSmdVq9R3K9ARSWSxJptYKiiI6Qw2Ftd5QCQrKARk4OCBnjK26WdBa/UqlHuO7bfdeoqCHWoXe2meDnB3JOUt+Mn82QB5JD16xVi5rs+HKfb7tsNW+20pp51pVRQhlmOyskI3Y2/hSjAHAOBzjVF63YM3KbRhwqmEk7yfpJVM6ZPA8IgTNXW79640bhaAI+oCDmBEdBy48dKEXodndNul0qXFvWLUIzSpC2i1LaW5IddBKWg22r1eBk+MZJwONe12UW6786V0idQXpFTgyJUSpRo78gJQhKSQrZvIAKclJGfY/TRPZqaRD6GRPlegdHeq/wAugtQXWWF/MYO1Ljz7iNxKklThP0UANX1O0mF0hqdbmfJ9LaxFZcebi0+cXYu8DIzHUkNL3qIBQlJVyDuzoE3W69vIMuBcSd0z/wAUneieIkVeEkt7q0Qgp4TjxIiehivadd19m/qFVZtRRKqFOFQ+zlOtDwtpG8HHn0gayL0um5q/cyrvjXRWLTuimUtRH2W6hyNKZbK1jvRVEbhuKklWSBkZHGkvbHWqqnrpSLu6pKeTS4TDkUQ6fGS32+61grDWRnnBUc5OAB9NHvX6xXOohs6+umbguCjzmXIDf2cfve/3QS2UnlCtrmSCOAlRPA0c3s561uWm3yEpKT9USmZJ3c4Mjnzodd1butLU2iTOmhjGcZ5mlhb13Tbv6g1jqReQZcYhOiu1MNo2NvSEpCY8dKSfzLCDj6JPtpPVeqTK3X5tYqLpdlzH1yHln8y1qKif8zo56jS4tvRUdOaRLZkCE8X6vKjn7uRNxgpSfdDQ9A/cE6XOt5sxhObhIgEAJHJI08/TdnSsxfOmAyTMa9/9vWamr1Hq0yh1pipwV7X2s45IyFJKVDjnkEjj66o6mmikhQKVaGgASDIpqs0avdTraqFcg1xdcnUpsKcpE2SfnEMAfjRn/fpT4O3BAxkDONZ3Tew6pfdysxaVIbjLafSVvPRw40ygfmUkZ9/17U8cn20DUyoyaTVWKhDedafZVuQtpxTagf8AqSQR/TRpR6m3cVFVS5VzzKBMQ6VxBnt05ZI/CrYMoX/jVuz7n30nuGXrdtaWyN06GJ3eeBqPLrOtMWnEPqSVfm4515ZOh+CuoKhF+HXpc9Bfvi4V3TdsNYccdeUuW73AQQfl0ntNAewVz/OsWp9f7iuychnpzQqdRok+WYlPeqkZUmbUXz57MdoFCcFSck5GSBnPGhzpP1Cr9qIPT2tGt0qrSF4hLprNKZjyUbc5U6+161kjhW87s/XziS6vVqZ8UNsXhcFR7UaDIKBOqC2nER3EdxaQ6Wfux+NKvTwc/UHWPb2Y12qhdDtVBJKZVIMCRuoCQIPeeVO1XL27LJ3ASAcQc/6lST6UwLSofxGUG6Jlxz7Fql0VWQyY7M2sQ3AiE2fIZbC0BOSBuxjITjjJzlNR+v3USdV4UeuXRMMJ/wCWqlDg0kU1LST+JhThWjaSkngkkg58c6MXeq9CHURN5KvqyHakqP2kzYtOlPywNm3GU5QBjjG3JHH76E7d6kJmUy/qTNumvUSHX58mQqVMpch75tLzKGs5SlSgRtOEkj04weNQbcUree/DDeATB3DjMQBB0/liuUwoQ2XxBJ/Vr3549at9YIPWep2vFl1ij1WwrYpwQ0limMqkJSThtBeebd3EYKUjICRn6nX5XLK6oy/h6o3SyZ0nuh1dLnfNy545MphK1rSE4KilSu4sY527Aec41hP16NaPw2VewKBeNVuRuYl9KmY9FktBa3Ck7ipxPpSNo53c44GqHSzqVPt3oHdtt1i8F0uXNMkiJOS735AVGCU9tZGUncCBgjnnRKULTbBTTQhtf0/SoE8AqPzYk6zVJSS7uqcypOcggfyzpw4V9/ERfN4zprNPodPq9o0iiITHkUtx5bEwdwAtPPoGD21ICQnlWDndgqAKNpFzSabX4VYqkEVvtuoWRUStYUAeUgknHtyBx9NF/SiZdsjqIq4/nqk64ECKqWt5BdWSUkNpU+SgkJSVYVkAJ/jTk6hdXbylxXbYtu5q/Efhq7dSqNVXTDDiIKeUpXHaJ7nPgK3Ajxnw1T2dgBYNtpIAyd4jXWcE6nnPChghy4/xSlmZxidPED5Nc9yGJl93nGjUGmKNQnONtM04OuPbySR90pfKWxgEhZynP0HBPV6zVujNzPUO37zbnVaKytla6S+VRoTrrZQ6kOeHVpSopBSAASTyRrKp12UK2X/s+iInfIyQtqfWwkokzOOUIwQW2slJIBClDydL2QWFS3TGSpLJWe2lfkJzxn98abM2xeIStMNAYBzPfOndrnJ4UE692YlKpWdSPbn6cudeZJUoqUSSeSTr81NTTml1TU1NTXV1TWjTasuC05FeYbkw3f8AeMOD/IpPlJyB484weMjWdqaitAWINepUUmRRzSqtKebcplJdj1GlpR3PsmsqSQDhSlBokjBAT5SRknwdWI6aCzIdZaqteseQ9hLrTgW9HUQTxuTheAQfIOOdL4Eg8a1Idw1SItP34kISAO1KSHUYCt2MK9s+37n6nS9ywMktmJ+Z1B8RPWjW7zACxMfMaEeB8KPo/Te+q2vNq3bSrjJPpRDrSUOn+UOqQoH9tFdtdGr9pVVck9TLeviPCZRvZjQ2HXkylbVeXGyoISFbCePUCRkedIgOtFlKVsAq7m5SwcEp/SPp763TXojEZ9NPk1yMpR+6bRMwhsceccn8308j6cjP2t2UFtCxnju5HjvR/wBasbfZ3gspOOG9j096Pb0t6+611GrdTtSh1WmUOTMcchxw4qI002TwlKHFDaB9DrDctW4KeA5cN+02lYGS2qpqkPD+ENFX+uh92p288omR9vS8k8PSk+MqwPH02/8An9tZEmVBMzfCp/ZZ7XbKHHCvKsEb8+x8HHtqTNtcbobJAAGu7nzKjnwrlvMglQBM/wA2PsB60UPyIU11qJFerN2Ps8NKmKU3Hb3EDISSTgnHkp9tVJ7yWnWG7hliQ00CpFMgK2IZUCDtOOE7kk+oZIPnxjWH9sVP7Nap6ZrqIzYUlLaDtGFHJBxyRkng6o+dFt2kH6j/AF9gPACqF3O8IA+ep8Sa0KjWJdRbbYWUNRmgA2w0kJQnHGSB5VjjcedZ+pqaMSkJEJFClRUZNTU1NTUq8r//2Q==" alt="BIG MOUF SLAP BOT"></div>
   <div style="flex:1;min-width:0">
     <div class="brand">BIG MOUF SLAP BOT</div>
-    <div class="tag">Solana Scanner · <span style="color:#ffc528">B33</span></div>
+    <div class="tag">Multi-Chain Scanner · <span style="color:#ffc528">B37</span></div>
   </div>
   <div class="pill" id="ownerBadge" style="color:#ffc528;border-color:rgba(255,197,40,.4);background:rgba(255,197,40,.1)">🔑 OWNER</div>
   <div class="pill pOff" id="pwr"><span class="dot"></span><span id="pwrTxt">IDLE</span></div>
@@ -164,13 +187,14 @@ body.owner #ownerBadge{display:inline-flex}
 <section id="p-dash" class="page on">
   <div class="card">
     <div style="display:flex;gap:8px;margin-bottom:10px">
-      <input id="q" class="mono" placeholder="Paste any Solana token address…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input id="q" class="mono" placeholder="Paste any token address — any chain" autocomplete="off" autocapitalize="off" spellcheck="false">
       <button class="btn" id="go">Scan</button>
     </div>
     <div class="seg" id="feedSeg">
       <button class="on" data-f="trending">🔥 Trending</button>
       <button data-f="new">✨ New Pools</button>
     </div>
+    <div class="chainBar" id="chainBar"><button data-c="all">🌐 All Chains</button><button data-c="solana" class="on">Solana</button><button data-c="robinhood">Robinhood</button><button data-c="bsc">BSC</button><button data-c="base">Base</button><button data-c="ethereum">Ethereum</button><button data-c="arbitrum">Arbitrum</button><button data-c="polygon">Polygon</button><select id="chainMore" aria-label="More chains"></select></div>
     <div class="seg" id="padSeg" style="margin-top:7px">
       <button class="on" data-d="all">All</button>
       <button data-d="pump-fun">pump.fun</button>
@@ -286,12 +310,16 @@ body.owner #ownerBadge{display:inline-flex}
     <div class="flag fI">🦎 <b>GeckoTerminal</b> — trending &amp; new pools, via your backend</div>
     <div class="flag fI">📊 <b>DEXTools</b> — "Pro" chart embed</div>
     <div class="flag fI">⛓ <b>Solana RPC</b> — on-chain mint/freeze authority &amp; holder checks</div>
+    <div class="flag fI">🛡 <b>GoPlus</b> — contract safety on 13 EVM chains (honeypots, taxes, owner powers)</div>
+    <a href="security.html" style="display:block;margin-top:10px;padding:11px;border-radius:10px;text-align:center;font-weight:900;font-size:12.5px;background:linear-gradient(135deg,#ffc528,#ff2d95);color:#12060a;text-decoration:none">🛡 Run live security scan →</a>
     <div class="sub" style="margin-top:8px">Hidden from the public. Tap the logo 5× to toggle owner mode.</div>
   </div>
 </section>
 
 </main>
 <div id="toast"></div>
+<div class="wm" aria-hidden="true"></div>
+<div class="wmCorner" aria-hidden="true"><img id="wmCornerImg" alt=""><span>BIG MOUF SLAP BOT</span></div>
 
 <script>
 "use strict";
@@ -306,10 +334,33 @@ body.owner #ownerBadge{display:inline-flex}
    only blank its own card, never the whole page.
    ══════════════════════════════════════════════════════════════════ */
 const $=s=>document.querySelector(s);
-const BUILD='B33';
+const BUILD='B37';
 const DS='https://api.dexscreener.com';
 const RPC='https://api.mainnet-beta.solana.com';
 const BACKEND='https://slapbot-backend-production.up.railway.app';
+/* ══ CHAINS — every chain DexScreener lists. Graded ONLY where contract safety
+   can actually be verified: Solana (native checks) + 13 EVM chains (GoPlus).
+   Every other chain is shown as UNVERIFIED — never given a letter grade. ══ */
+const CHAIN_NAMES={solana:'Solana',robinhood:'Robinhood',bsc:'BSC',base:'Base',ethereum:'Ethereum',arc:'Arc',
+  polygon:'Polygon',pulsechain:'PulseChain',hyperevm:'HyperEVM',ton:'TON',sui:'Sui',near:'NEAR',avalanche:'Avalanche',
+  arbitrum:'Arbitrum',ink:'Ink',cronos:'Cronos',xrpl:'XRPL',sonic:'Sonic',hyperliquid:'Hyperliquid',monad:'Monad',
+  hedera:'Hedera',tron:'Tron',worldchain:'World Chain',starknet:'Starknet',abstract:'Abstract',stable:'Stable',
+  optimism:'Optimism',mantle:'Mantle',seiv2:'Sei V2',linea:'Linea',icp:'ICP',berachain:'Berachain',megaeth:'MegaETH',
+  injective:'Injective',aptos:'Aptos',flare:'Flare',algorand:'Algorand',plasma:'Plasma',zksync:'zkSync',metis:'Metis',
+  fantom:'Fantom',apechain:'ApeChain',cardano:'Cardano',unichain:'Unichain',blast:'Blast',stacks:'Stacks',celo:'Celo',
+  opbnb:'opBNB',flowevm:'Flow EVM',soneium:'Soneium',manta:'Manta',conflux:'Conflux',merlinchain:'Merlin Chain',
+  scroll:'Scroll',beam:'Beam',katana:'Katana',story:'Story',kava:'Kava',fuse:'Fuse',multiversx:'MultiversX',
+  telos:'Telos',movement:'Movement',polkadot:'Polkadot',stepnetwork:'Step Network'};
+const GRADED_EVM=new Set(['ethereum','bsc','polygon','arbitrum','base','avalanche','optimism','fantom','cronos','linea','scroll','mantle','zksync']);
+// Only explorers whose /token/ and /tx/ links are certain — others get no link rather than a broken one.
+const EXPLORERS={ethereum:'https://etherscan.io',bsc:'https://bscscan.com',base:'https://basescan.org',arbitrum:'https://arbiscan.io',
+  polygon:'https://polygonscan.com',avalanche:'https://snowtrace.io',optimism:'https://optimistic.etherscan.io',fantom:'https://ftmscan.com',
+  cronos:'https://cronoscan.com',linea:'https://lineascan.build',scroll:'https://scrollscan.com',blast:'https://blastscan.io',celo:'https://celoscan.io',
+  solana:'https://solscan.io'};
+const chainName=c=>CHAIN_NAMES[c]||c||'?';
+const chainFam=c=>c==='solana'?'solana':GRADED_EVM.has(c)?'evm':'other';
+const safeChain=c=>/^[a-z0-9]{2,20}$/.test(c||'')&&CHAIN_NAMES[c]?c:'';
+let chainSel='all';   // restored from storage once load() exists (below)
 
 const cache=new Map();
 /* Every request has a hard timeout. Previously a single hung request (slow
@@ -352,6 +403,7 @@ document.addEventListener('visibilitychange',()=>{
 
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
+chainSel=safeChain(load('slapbot_chain','solana'))||'solana';
 
 /* ══ OWNER MODE — you see the data sources; the public sees SLAPBOT ══
    Cosmetic only: this repo is public, so anyone reading the page source can
@@ -382,6 +434,7 @@ function go(p){view=p;
   [...$('#nav').children].forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   if(p==='watch')renderW(); if(p==='tools')renderLinks();
   if(p==='dash')startAuto(); else stopAuto();
+  if(p!=='token')stopTokenLive(); else if(current&&$('#chartBox'))startTokenLive();
   if(p==='bot')renderHits();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -421,7 +474,17 @@ const padBadge=d=>{
 /* ══ COPY — tap any address to copy it ═════════════════════════════════
    Only genuine base58 Solana addresses are ever rendered as copyable, so a
    malformed API value can't be injected into the page via onclick. */
-const safeAddr=a=>/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a||'')?a:'';
+const isSolAddr=a=>/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a||'');
+const isEvmAddr=a=>/^0x[0-9a-fA-F]{40}$/.test(a||'');
+/* Any chain's address — but only characters that can never break out of a
+   link or a quoted string. A pure-base58 blob of the wrong length for Solana
+   is refused as malformed rather than shown. */
+const safeAddr=a=>{a=String(a||'');
+  if(isSolAddr(a)||isEvmAddr(a))return a;
+  if(!/^[A-Za-z0-9:._-]{3,200}$/.test(a))return '';
+  if(/^[EU]Q[A-Za-z0-9_-]{46}$/.test(a))return a;          // TON user-friendly address
+  if(/^[1-9A-HJ-NP-Za-km-z]{25,60}$/.test(a))return '';
+  return a;};
 let toastTimer=null;
 function toast(msg){
   const t=$('#toast'); if(!t)return;
@@ -466,7 +529,8 @@ const SEARCHES=['bonk','wif','pump','jup','ray','popcat','mew','trump'];
 /* Base tokens to exclude — stablecoins, SOL itself, and staked/wrapped SOL
    derivatives. These dominated results before and aren't what anyone is
    scanning for. Also drops odd 'SOL-USDC' style derivative listings. */
-const SKIP=new Set(['SOL','WSOL','USDC','USDT','USD1','USDE','PYUSD','USDS',
+const SKIP=new Set(['WETH','ETH','WBNB','BNB','WAVAX','AVAX','WMATIC','MATIC','WPOL','POL','DAI','WBTC','CBBTC','FDUSD','TUSD','USDBC','USDB','EURC','WS','WHYPE','WBERA','WTRX','WTON',
+  'SOL','WSOL','USDC','USDT','USD1','USDE','PYUSD','USDS',
   'STSOL','MSOL','JITOSOL','JUPSOL','BSOL','INF','HSOL','JSOL','CGNTSOL','LST']);
 const isNoise=r=>SKIP.has((r.sym||'').toUpperCase())||(r.sym||'').includes('-');
 
@@ -495,6 +559,7 @@ function pairToRow(p){
 async function loadFeed(mode,silent){
   feedMode=mode;
   prevPrices={}; rows.forEach(r=>{prevPrices[r.addr]=r.price});
+  if(chainSel!=='solana') return loadFeedMulti(mode,silent);
   $('#feedTitle').textContent = mode==='new' ? '✨ Newest Launches' : '🔥 Trending Now';
   if(!silent)$('#tbody').innerHTML='<tr><td colspan="8" class="empty"><span class="spin"></span> Loading live Solana pools…</td></tr>';
   power(true,'FETCHING');
@@ -609,6 +674,63 @@ async function loadFeed(mode,silent){
   power(false,'IDLE');
 }
 
+
+/* ══ ALL-CHAINS FEED — DexScreener-homepage style, one mixed list ══ */
+async function loadFeedMulti(mode,silent){
+  const label=chainSel==='all'?'All Chains':chainName(chainSel);
+  $('#feedTitle').textContent=(mode==='new'?'✨ Newest Launches':'🔥 Trending Now')+' · '+label;
+  if(!silent)$('#tbody').innerHTML='<tr><td colspan="8" class="empty"><span class="spin"></span> Loading '+esc(label)+'…</td></tr>';
+  power(true,'FETCHING');
+  try{
+    const d=await getJSON(BACKEND+'/api/feed/'+(mode==='new'?'new':'trending')+'?chain='+encodeURIComponent(chainSel),45000);
+    if(d.unavailable){
+      rows=[]; lastLoad=Date.now();
+      $('#feedMeta').innerHTML='0 · '+esc(label);
+      $('#tbody').innerHTML='<tr><td colspan="8" class="empty">No live feed for '+esc(label)+' yet.<br><br>Tap <b>All Chains</b>, or paste a '+esc(label)+' token address above to scan it.</td></tr>';
+      power(false,'IDLE'); startAuto(); return;
+    }
+    const minLiq=mode==='new'?300:3000, minTx=mode==='new'?2:20;
+    const best=new Map();
+    (d.pools||[]).forEach(r=>{
+      if(!safeAddr(r.addr)||isNoise(r)||!(r.price>0)||r.liq<minLiq||r.txns<minTx)return;
+      const key=(r.net?.gid||'')+':'+r.addr, cur=best.get(key);
+      if(!cur||r.liq>cur.liq)best.set(key,r);
+    });
+    rows=[...best.values()].map(r=>({...r,chain:safeChain(r.net?.chain)||null,chainLabel:r.net?.name||'',
+      ratio:r.txns>0?r.buys/r.txns:0.5,created:r.createdAt?Date.now()-r.createdAt:null}));
+    if(mode==='new')rows.sort((a,b)=>(a.created??Infinity)-(b.created??Infinity)); else rows.sort((a,b)=>b.vol-a.vol);
+    rows=rows.slice(0,40);
+    lastLoad=Date.now();
+    $('#feedMeta').innerHTML=rows.length+' · <span style="color:var(--grn)">●</span> live · <span id="liveAge">0s ago</span>';
+    renderTable(); power(false,'IDLE'); startAuto(); return;
+  }catch(e){}
+  // Backend asleep: fall back to name search across chains
+  try{
+    const res=await Promise.allSettled(SEARCHES.map(q=>getJSON(DS+'/latest/dex/search?q='+encodeURIComponent(q),60000)));
+    const best=new Map();
+    res.forEach(r=>{ if(r.status!=='fulfilled')return;
+      (r.value?.pairs||[]).forEach(p=>{
+        if(chainSel!=='all'&&p.chainId!==chainSel)return;
+        const row=pairToRow(p); row.chain=safeChain(p.chainId)||null; row.chainLabel=chainName(p.chainId);
+        if(!safeAddr(row.addr)||isNoise(row)||!(row.price>0)||row.liq<25000||row.vol<50000||row.txns<50)return;
+        const k=p.chainId+':'+row.addr, cur=best.get(k); if(!cur||row.txns>cur.txns)best.set(k,row);
+      });});
+    rows=[...best.values()].sort((a,b)=>b.vol-a.vol).slice(0,30);
+  }catch(e){ rows=[]; }
+  lastLoad=Date.now();
+  $('#feedMeta').innerHTML=rows.length+' · fallback · <span id="liveAge">0s ago</span>';
+  if(!rows.length){ $('#tbody').innerHTML='<tr><td colspan="8" class="empty">No pools returned right now. Tap ↻ to retry.</td></tr>'; power(false,'IDLE'); return; }
+  renderTable(); power(false,'IDLE');
+}
+function setChain(c){
+  c=c==='all'?'all':safeChain(c); if(!c)return;
+  chainSel=c; save('slapbot_chain',c);
+  [...$('#chainBar').querySelectorAll('button')].forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  const sel=$('#chainMore'); if(sel) sel.value=[...sel.options].some(o=>o.value===c)?c:'';
+  $('#padSeg').style.display=c==='solana'&&ownerMode?'':'none';   // launchpad names: owner-only, Solana-only
+  cache.clear(); loadFeed(feedMode);
+}
+
 function renderTable(){
   if(!rows.length){$('#tbody').innerHTML='<tr><td colspan="8" class="empty">Nothing returned right now.</td></tr>';return}
   const s=[...rows].sort((a,b)=>{
@@ -621,13 +743,14 @@ function renderTable(){
     const prev=prevPrices[r.addr];
     const moved = prev && prev!==r.price ? (r.price>prev?'up':'dn') : null;
     const flashStyle = moved ? ';background:'+(moved==='up'?'rgba(0,255,157,.14)':'rgba(255,56,100,.14)') : '';
-    return '<tr style="transition:background 1.2s'+flashStyle+'" onclick="scanToken(\''+r.addr+'\')">'
+    const rc=safeChain(r.chain)||'';
+    return '<tr style="transition:background 1.2s'+flashStyle+'" onclick="scanToken(\''+safeAddr(r.addr)+'\',\''+rc+'\')">'
     +'<td><div style="display:flex;align-items:center;gap:8px">'
       +(r.logo?'<img src="'+esc(r.logo)+'" style="width:24px;height:24px;border-radius:6px;object-fit:cover;background:#12141f" loading="lazy" onerror="this.style.display=\'none\'">':'')
       +'<div><div style="font-weight:800">'+esc(r.sym)+'</div>'
       +'<div class="sub" style="font-size:9px">'+esc((r.name||'').slice(0,18))+(r.created!=null?' · '+ago(r.created):'')+'</div>'
       +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
-        +copyChip(r.addr)+(r.dex?padBadge(r.dex):'')+'</div>'
+        +copyChip(r.addr)+(chainSel!=='solana'&&(r.chain||r.chainLabel)?'<span class="cBadge'+(r.chain&&chainFam(r.chain)!=='other'?'':' unv')+'">'+esc(r.chain?chainName(r.chain):r.chainLabel)+'</span>':'')+(chainSel==='solana'&&ownerMode&&r.dex?padBadge(r.dex):'')+'</div>'
       +'</div></div></td>'
     +'<td class="num mono">$'+px(r.price)+'</td>'
     +'<td class="num '+cls(r.ch1)+'">'+pct(r.ch1)+'</td>'
@@ -713,22 +836,28 @@ async function probeMint(addr){
   return {state:'unknown'};
 }
 
-async function scanToken(addr){
+async function scanToken(addr,chainHint){
   addr=(addr||'').trim(); if(!addr)return;
+  if(!safeAddr(addr)){ go('token'); current=null;
+    $('#tokenView').innerHTML='<div class="card"><div class="flag fM">That doesn\'t look like a token address. Paste a contract address — Solana, 0x…, or any chain DexScreener lists.</div></div>'; return; }
+  chainHint=safeChain(chainHint)||'';
+  const solShape=isSolAddr(addr), same=a=>String(a||'').toLowerCase()===addr.toLowerCase();
   $('#q').value=addr; go('token');
   $('#tokenView').innerHTML='<div class="card"><div class="empty"><span class="spin"></span> Scanning…</div></div>';
   power(true,'SCANNING');
 
-  let pairs=[], howFound='';
+  let pairs=[], howFound='', allChains=[];
 
   // Kick off the on-chain authority check NOW so it runs in parallel with the
   // DexScreener lookup instead of waiting behind it.
-  const authPromise=checkAuth(addr);
+  const authPromise=solShape?checkAuth(addr):Promise.resolve(null);
 
   // Attempt 1 — direct token lookup.
   try{
     const d=await getJSON(DS+'/latest/dex/tokens/'+encodeURIComponent(addr),30000);
-    pairs=(d.pairs||[]).filter(p=>p.chainId==='solana');
+    pairs=(d.pairs||[]).filter(p=>safeChain(p.chainId));
+    allChains=[...new Set(pairs.map(p=>p.chainId))];
+    if(chainHint && pairs.some(p=>p.chainId===chainHint)) pairs=pairs.filter(p=>p.chainId===chainHint);
     if(pairs.length)howFound='token lookup';
   }catch(e){ /* fall through to attempt 2 */ }
 
@@ -736,8 +865,8 @@ async function scanToken(addr){
   if(!pairs.length){
     try{
       const d2=await getJSON(DS+'/latest/dex/search?q='+encodeURIComponent(addr),30000);
-      pairs=(d2.pairs||[]).filter(p=>p.chainId==='solana' &&
-        (p.baseToken?.address===addr || p.quoteToken?.address===addr));
+      pairs=(d2.pairs||[]).filter(p=>safeChain(p.chainId) && (same(p.baseToken?.address) || same(p.quoteToken?.address))
+        && (!chainHint || p.chainId===chainHint));
       if(pairs.length)howFound='search';
     }catch(e){}
   }
@@ -745,7 +874,26 @@ async function scanToken(addr){
   // Even with no DEX pool, Solana RPC still tells us the important safety facts.
   const auth=await authPromise;  // usually already finished by now
 
+  if(!pairs.length && !solShape){
+    current=null;
+    $('#tokenView').innerHTML='<div class="card"><div class="ttl">⚠️ No trading pool found</div>'
+      +caBox(addr,'Address you pasted · tap to copy')+'<div style="height:10px"></div>'
+      +'<div class="flag fM">This address has no trading pool on any of the '+Object.keys(CHAIN_NAMES).length+' chains SLAPBOT covers.<br><br>'
+      +'It may be brand new, not yet listed, or not a token contract. Double-check you copied the <b>token\'s</b> address, not a wallet.</div></div>';
+    renderLinks(); power(false,'IDLE'); return;
+  }
   if(!pairs.length){
+    // Pre-graduation pump.fun tokens aren't on DexScreener. The backend reads
+    // the bonding curve straight from Solana and prices it exactly.
+    $('#tokenView').innerHTML='<div class="card"><div class="empty"><span class="spin"></span> Reading this token on-chain…</div></div>';
+    let prof=null;
+    try{ prof=await getJSON(BACKEND+'/api/token/'+encodeURIComponent(addr),30000,12000); }catch(e){}
+    if(prof && prof.source && prof.source!=='none' && prof.price>0){
+      current={addr,pairAddress:prof.poolAddress||null,poolCount:prof.poolAddress?1:0,raw:profileToPair(prof),
+        auth:auth||(prof.onchainOk?{mint:prof.mintAuthority,freeze:prof.freezeAuthority,supply:prof.supply}:null),
+        onchain:profileToOnchain(prof),onchainPending:false,curve:prof.curve||null,howFound:'onchain'};
+      renderToken(); renderLinks(); power(false,'IDLE'); return;
+    }
     current=null;
     $('#tokenView').innerHTML='<div class="card"><div class="empty"><span class="spin"></span> No pool found — identifying this address on Solana…</div></div>';
     const P=await probeMint(addr);
@@ -756,11 +904,11 @@ async function scanToken(addr){
     const MSG={
       mint:['🪙 Real token — no DEX pool yet','fI',
         'This is a genuine Solana token, but it has no indexed liquidity pool yet.<br><br>'
-        +'Most likely it is still on a <b>pump.fun bonding curve</b> and hasn\'t graduated to a Raydium/Orca pool — '
+        +'Most likely it is still on its launchpad\'s <b>bonding curve</b> and hasn\'t graduated to a full trading pool — '
         +'it can trade actively while staying invisible to pool-based scanners.'],
       wallet:['👛 That is a wallet address','fM',
         'This address belongs to a <b>wallet</b>, not a token. Wallets hold tokens — they aren\'t tokens themselves.<br><br>'
-        +'Paste the token\'s <b>contract / mint address</b> instead. On pump.fun it\'s under "CA"; on most chart sites you can tap the token name to copy it.'],
+        +'Paste the token\'s <b>contract / mint address</b> instead. It\'s usually labeled "CA" or "Contract" on the token\'s page.'],
       tokenacct:['📦 That is a token holding, not the token','fM',
         'This is a <b>token account</b> — one wallet\'s balance of a token — not the token itself.'],
       program:['🏊 That looks like a pool or program address','fM',
@@ -804,8 +952,8 @@ async function scanToken(addr){
     // Links that actually make sense for what this address is
     const isAcct=['wallet','program','tokenacct'].includes(P.state);
     html+='<div class="ttl" style="font-size:11px;margin-top:12px">Check it elsewhere</div>'
-      +lk('https://solscan.io/'+(isAcct?'account/':'token/')+e,'🔍','Solscan',isAcct?'See exactly what this account is':'Holders, transfers, authorities');
-    if(!isAcct && P.state!=='missing'){
+      +lk('https://solscan.io/'+(isAcct?'account/':'token/')+e,'🔍',ownerMode?'Solscan':'Block Explorer',isAcct?'See exactly what this account is':'Holders, transfers, authorities');
+    if(ownerMode && !isAcct && P.state!=='missing'){
       html+=lk('https://pump.fun/coin/'+e,'💊','pump.fun','If it\'s pre-graduation, it trades here')
         +lk('https://rugcheck.xyz/tokens/'+e,'🛡','RugCheck','Full contract safety report')
         +lk('https://birdeye.so/token/'+e+'?chain=solana','🐦','Birdeye','Often indexes brand-new pools early');
@@ -816,8 +964,12 @@ async function scanToken(addr){
   }
 
   const top=pairs.reduce((b,p)=>((p.liquidity?.usd)||0)>((b.liquidity?.usd)||0)?p:b,pairs[0]);
-  current={addr,pairAddress:top.pairAddress,poolCount:pairs.length,raw:top,auth,
-           onchain:null,onchainPending:true,howFound};
+  const ch=safeChain(top.chainId)||'', fam=chainFam(ch);
+  const alsoOn=[...new Set([...allChains,...pairs.map(p=>p.chainId)])].filter(c=>c!==ch&&safeChain(c));
+  if(!solShape && safeAddr(top.baseToken?.address)) addr=top.baseToken.address;   // canonical checksum form
+  current={addr,pairAddress:safeAddr(top.pairAddress)||null,poolCount:pairs.length,raw:top,auth:fam==='solana'?auth:null,
+           onchain:null,onchainPending:fam==='solana',howFound,chain:ch,fam,alsoOn,
+           sec:undefined,secPending:fam==='evm'};
   renderToken();          // user sees the full scan NOW
   renderLinks();
   power(false,'IDLE');
@@ -826,6 +978,14 @@ async function scanToken(addr){
   // it loads in the background and slots in when ready. The chart is never
   // reloaded. If the user has already scanned something else, drop it.
   const scanned=addr;
+  if(fam==='evm'){
+    // Ethereum-style chains: honeypots, taxes, owner powers — checked contract-side
+    getJSON(BACKEND+'/api/security/'+ch+'/'+encodeURIComponent(addr),600000,14000)
+      .then(d=>{ if(current&&current.addr===scanned){ current.sec=d; current.secPending=false; refreshAnalyst(); } })
+      .catch(()=>{ if(current&&current.addr===scanned){ current.sec={covered:true,ok:false,error:'Security check unavailable right now'}; current.secPending=false; refreshAnalyst(); } });
+    return;
+  }
+  if(fam!=='solana') return;          // no verified checks exist for this chain
   getJSON(BACKEND+'/api/mint-check/'+encodeURIComponent(addr),300000,12000)
     .then(d=>{ if(current&&current.addr===scanned){ current.onchain=d; current.onchainPending=false; refreshAnalyst(); } })
     .catch(()=>{ if(current&&current.addr===scanned){ current.onchainPending=false; refreshAnalyst(); } });
@@ -834,97 +994,283 @@ async function scanToken(addr){
 
 /* Analyst card is rendered separately so it can update when slow on-chain
    data arrives — WITHOUT tearing down and reloading the chart iframe. */
+
+/* ══ MULTI-CHAIN GRADING ══
+   Solana → analyst() (native checks, unchanged)
+   13 EVM chains → analystEvm() (GoPlus contract checks)
+   Everything else → analystUnverified(): NO letter grade, ever. */
+const VERDICT={A:['✅','LOW RISK','var(--grn)','Passes every automated check. Still do your own research.'],
+  B:['✅','ACCEPTABLE','var(--grn)','Minor concerns, nothing disqualifying.'],
+  C:['⚠️','ELEVATED RISK','var(--amb)','Real concerns present. Size down if you proceed.'],
+  D:['🛑','HIGH RISK','var(--red)','Multiple serious red flags. Most traders should pass.'],
+  F:['🛑','DO NOT BUY','var(--red)','Disqualifying findings. Walk away.']};
+const gradeOf=(score,stops)=>stops.length?'F':score<15?'A':score<30?'B':score<50?'C':score<70?'D':'F';
+function marketFindings(r){
+  let score=0; const F=[];
+  const liq=+r.liquidity?.usd||0, vol=+r.volume?.h24||0, ch24=+r.priceChange?.h24||0;
+  const buys=r.txns?.h24?.buys||0, sells=r.txns?.h24?.sells||0, createdMs=r.pairCreatedAt?Date.now()-r.pairCreatedAt:null;
+  if(liq<1000){score+=35;F.push(['H','Only '+usd(liq)+' liquidity — you may be unable to exit a position']);}
+  else if(liq<10000){score+=18;F.push(['M','Thin liquidity ('+usd(liq)+') — expect heavy slippage']);}
+  else if(liq<50000){score+=6;F.push(['M','Moderate liquidity '+usd(liq)]);}
+  else F.push(['G','Healthy liquidity '+usd(liq)]);
+  if(createdMs!=null){const hrs=createdMs/36e5;
+    if(hrs<6){score+=18;F.push(['H','Pool only '+ago(createdMs)+' old — peak rug window']);}
+    else if(hrs<48){score+=9;F.push(['M','Pool '+ago(createdMs)+' old — still unproven']);}
+    else F.push(['G','Pool age '+ago(createdMs)]);}
+  if(vol>0&&liq>0){const vl=vol/liq;
+    if(vl>25){score+=15;F.push(['H','Volume/liquidity '+vl.toFixed(0)+'x — strong wash-trading signal']);}
+    else if(vl>10){score+=7;F.push(['M','Volume/liquidity '+vl.toFixed(1)+'x — possible wash trading']);}}
+  if(ch24<-55){score+=15;F.push(['H','Down '+ch24.toFixed(0)+'% in 24h — possible rug underway']);}
+  const tot=buys+sells;
+  if(tot>40&&sells>buys*2.2){score+=10;F.push(['M','Sells outpacing buys '+sells+':'+buys+' — heavy distribution']);}
+  else if(tot>40&&buys>sells*1.5)F.push(['G','Buy pressure: '+buys+' buys vs '+sells+' sells']);
+  const info=r.info||{};
+  if(!info.websites?.length&&!info.socials?.length){score+=8;F.push(['M','No website or socials — anonymous project']);}
+  return {score,F};
+}
+function unverifiedResult(F,why){
+  return {unverified:true,score:null,grade:'?',verdict:['⚠️','UNVERIFIED','var(--amb)',why],flags:F,stops:[]};
+}
+function analystUnverified(r,ch){
+  const {F}=marketFindings(r);
+  F.unshift(['M','Contract not checked — SLAPBOT can\'t verify honeypots, taxes or owner powers on '+chainName(ch)
+    +' yet. The market numbers are real; the contract itself is unknown.']);
+  return unverifiedResult(F,'Contract safety can\'t be verified on '+chainName(ch)+' — treat it as possibly unsafe.');
+}
+function analystEvm(r,sec){
+  const {score:ms,F}=marketFindings(r);
+  if(sec===undefined) return {pending:true,score:null,grade:'…',
+    verdict:['⏳','CHECKING CONTRACT','var(--dim)','Reading the contract for honeypots, taxes and owner powers…'],flags:F,stops:[]};
+  if(!sec||!sec.ok) return unverifiedResult(F,(sec&&sec.error)||'The contract check didn\'t complete — treat it as possibly unsafe.');
+  let score=ms; const stops=[];
+  const pc=v=>(v*100<10?(v*100).toFixed(1):(v*100).toFixed(0))+'%';
+  // Disqualifiers
+  if(sec.honeypot===true) stops.push('HONEYPOT — this token can be bought but NOT sold. Your money would be trapped.');
+  if(sec.cannotSellAll===true) stops.push('You can\'t sell your full balance — the contract blocks complete sells.');
+  if(sec.sellTax!=null&&sec.sellTax>=0.5) stops.push('SELL TAX '+pc(sec.sellTax)+' — most of your money is taken when you sell.');
+  if(sec.ownerChangeBalance===true) stops.push('The owner can change wallet balances — they can wipe yours out.');
+  const w=sec.top10WalletPct;
+  if(w!=null&&w>=90) stops.push('TOP 10 WALLETS HOLD '+w.toFixed(1)+'% — a handful of wallets control nearly the entire supply.');
+  // Contract findings
+  if(sec.honeypot===false) F.push(['G','Not a honeypot — sells go through']);
+  else if(sec.honeypot===null){score+=20;F.unshift(['H','⚠️ Couldn\'t confirm you can sell — honeypot status unknown. Treat as unverified.']);}
+  if(sec.buyTax!=null&&sec.sellTax!=null){
+    const tax=Math.max(sec.buyTax,sec.sellTax), txt='Tax '+pc(sec.buyTax)+' buy / '+pc(sec.sellTax)+' sell';
+    if(tax>=0.10&&tax<0.5){score+=25;F.push(['H',txt+' — a big cut on every trade']);}
+    else if(tax>=0.05){score+=10;F.push(['M',txt]);}
+    else if(tax===0)F.push(['G','No buy or sell tax']);
+    else F.push(['G','Low tax — '+txt.slice(4)]);
+  } else {score+=10;F.push(['M','Buy/sell tax couldn\'t be measured — check before trading']);}
+  if(sec.mintable===true&&!sec.ownerRenounced){score+=25;F.push(['H','Owner can mint new supply — your share can be diluted']);}
+  else if(sec.mintable===false)F.push(['G','No mint function — supply is fixed']);
+  if(sec.openSource===false){score+=25;F.push(['H','Contract source isn\'t verified — nobody can read what it does']);}
+  else if(sec.openSource===true)F.push(['G','Contract source verified']);
+  if(sec.hiddenOwner===true){score+=20;F.push(['H','Hidden owner — control remains even if ownership looks renounced']);}
+  if(sec.takeBackOwnership===true){score+=20;F.push(['H','Ownership can be reclaimed — "renounced" isn\'t final']);}
+  if(sec.pausable===true){score+=15;F.push(['H','Owner can pause all transfers — trading can be frozen']);}
+  if(sec.taxModifiable===true){score+=15;F.push(['H','Owner can change the tax at any time']);}
+  if(sec.selfdestruct===true){score+=20;F.push(['H','Contract can self-destruct']);}
+  if(sec.proxy===true){score+=10;F.push(['M','Upgradeable contract — the owner can change its code later']);}
+  if(sec.blacklist===true){score+=8;F.push(['M','Owner can blacklist wallets from trading']);}
+  if(sec.ownerRenounced)F.push(['G','Ownership renounced']);
+  if(w!=null&&w<90){
+    if(w>=70){score+=25;F.push(['H','Top 10 wallets hold '+w.toFixed(1)+'% — severe concentration']);}
+    else if(w>=50){score+=15;F.push(['M','Top 10 wallets hold '+w.toFixed(1)+'% — elevated dump risk']);}
+    else if(w>=30){score+=6;F.push(['M','Top 10 wallets hold '+w.toFixed(1)+'%']);}
+    else F.push(['G','Top 10 wallets hold '+w.toFixed(1)+'% — well distributed']);}
+  score=Math.min(score,100);
+  if(sec.honeypot===null) score=Math.max(score,30);     // unknown ≠ safe: never better than C
+  if(stops.length) score=100;
+  const grade=gradeOf(score,stops);
+  return {score,grade,verdict:VERDICT[grade],flags:F,stops};
+}
+function evmBadges(s){
+  const B=(txt,good)=>'<span class="badge '+(good?'bG':'bR')+'">'+txt+'</span> ';
+  return (s.honeypot===true?B('HONEYPOT',0):s.honeypot===false?B('SELLABLE',1):'')
+    +(s.ownerRenounced?B('RENOUNCED',1):B('OWNED',0));
+}
+
 function analystCardHTML(){
-  const t=current.raw, a=current.auth;
-  const liq=+t.liquidity?.usd||0, vol=+t.volume?.h24||0;
-  const buys=t.txns?.h24?.buys||0, sells=t.txns?.h24?.sells||0;
-  const createdMs=t.pairCreatedAt?Date.now()-t.pairCreatedAt:null;
-  const info=t.info||{}, web=info.websites?.[0]?.url, soc=info.socials||[];
-  const A=analyst(t,a,current.onchain);
-  const score=A.score, F=A.flags, v=A.verdict;
-  const bs=(buys+sells)>0?Math.round(buys/(buys+sells)*100):50;
+  const t=current.raw, a=current.auth, info=t.info||{}, web=info.websites?.[0]?.url, soc=info.socials||[];
+  const fam=current.fam||'solana';
+  const A=fam==='solana'?analyst(t,a,current.onchain):fam==='evm'?analystEvm(t,current.sec):analystUnverified(t,current.chain);
+  const v=A.verdict;
+  const red=A.flags.filter(f=>f[0]==='H').length+A.stops.length;
+  const ICON={H:'🚨',M:'⚠️',G:'✅',I:'ℹ️'};
+  const row=f=>{const s=String(f[1]),i=s.indexOf(' — ');
+    return '<div class="chk"><span class="ci">'+ICON[f[0]]+'</span><div style="flex:1;min-width:0">'
+      +'<div class="ct">'+esc(i>0?s.slice(0,i):s)+'</div>'+(i>0?'<div class="cd">'+esc(s.slice(i+3))+'</div>':'')+'</div></div>';};
   return '<div class="card">'
-     +'<div class="row" style="margin-bottom:9px">'
-       +'<div style="display:flex;align-items:center;gap:10px">'
-         +'<div style="width:42px;height:42px;border-radius:11px;display:grid;place-items:center;'
-           +'font-size:21px;font-weight:900;color:'+v[2]+';border:2px solid '+v[2]+';background:rgba(255,255,255,.04)">'+A.grade+'</div>'
-         +'<div><div style="font-size:14px;font-weight:900;color:'+v[2]+'">'+v[0]+' '+v[1]+'</div>'
-         +'<div class="sub">Risk '+score+'/100 · analyst grade</div></div>'
-       +'</div>'+authBadges(effectiveAuth(a,current.onchain))+'</div>'
-     +'<div class="sub" style="margin-bottom:9px;font-style:italic">'+esc(v[3])+'</div>'
-     +(A.stops.length?'<div class="ttl" style="font-size:11px;color:var(--red)">⛔ Hard Stops</div>'
-        +A.stops.map(s=>'<div class="flag fH" style="border-width:2px"><b>'+esc(s)+'</b></div>').join(''):'')
-     +'<div class="press" style="height:6px;margin-bottom:10px"><i style="width:'+(100-score)+'%;background:#00ff9d"></i><i style="width:'+score+'%;background:#ff3864"></i></div>'
-     +'<div class="g4" style="margin-bottom:10px">'
-       +'<div class="stat"><div class="k">Liquidity</div><div class="v">'+usd(liq)+'</div></div>'
-       +'<div class="stat"><div class="k">24h Vol</div><div class="v">'+usd(vol)+'</div></div>'
-       +'<div class="stat"><div class="k">FDV</div><div class="v">'+(t.fdv?usd(t.fdv):'—')+'</div></div>'
-       +'<div class="stat"><div class="k">Pool Age</div><div class="v" style="font-size:12px">'+(createdMs!=null?ago(createdMs):'—')+'</div></div>'
-       +'<div class="stat"><div class="k">Top 10 Hold</div><div class="v" style="font-size:13px;color:'
-         +(current.onchain?.top10HolderPct>=70?'var(--red)':current.onchain?.top10HolderPct>=50?'var(--amb)':'var(--grn)')+'">'
-         +(current.onchainPending?'<span class="spin" style="width:11px;height:11px"></span>':current.onchain?.top10HolderPct!=null?current.onchain.top10HolderPct.toFixed(1)+'%':'—')+'</div></div>'
-     +'</div>'
-     +'<div class="row" style="margin-bottom:6px;font-size:11px;font-weight:800"><span class="up">'+buys+' buys</span><span class="dn">'+sells+' sells</span></div>'
-     +'<div class="press" style="margin-bottom:12px"><i style="width:'+bs+'%;background:#00ff9d"></i><i style="width:'+(100-bs)+'%;background:#ff3864"></i></div>'
-     +'<div class="ttl" style="font-size:11px">Findings</div>'
-     +F.map(f=>'<div class="flag f'+f[0]+'">'+f[1]+'</div>').join('')
-     +((web||soc.length)?'<div style="display:flex;gap:11px;flex-wrap:wrap;margin-top:8px;font-size:11px">'
-       +(web?'<a class="gold" href="'+esc(web)+'" target="_blank" rel="noreferrer">🌐 Website ↗</a>':'')
-       +soc.map(s=>'<a class="gold" href="'+esc(s.url)+'" target="_blank" rel="noreferrer" style="text-transform:capitalize">'+esc(s.type)+' ↗</a>').join('')+'</div>':'')
-     +'<div class="sub" style="margin-top:8px;font-size:10px">Reduces risk — does not eliminate it. Always DYOR.</div>'
-   +'</div>';
+    +'<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">'
+      +'<div style="display:flex;align-items:center;gap:11px">'
+        +'<div class="gradeBox" style="color:'+v[2]+';border-color:'+v[2]+'">'+A.grade+'</div>'
+        +'<div><div class="ttl" style="margin:0">🛡 SLAPBOT Safety Check</div>'
+        +'<div style="font-size:12px;font-weight:900;color:'+v[2]+'">'+v[0]+' '+v[1]+' · '+(red?red+' red flag'+(red>1?'s':''):'no red flags')+'</div></div>'
+      +'</div>'+(fam==='solana'?authBadges(effectiveAuth(a,current.onchain))
+        :fam==='evm'&&current.sec&&current.sec.ok?evmBadges(current.sec)
+        :fam==='evm'&&current.secPending?'<span class="badge bN">checking…</span>'
+        :'<span class="badge" style="color:#ffab00;border-color:rgba(255,171,0,.35);background:rgba(255,171,0,.08)">UNVERIFIED</span>')+'</div>'
+    +'<div class="sub" style="margin-bottom:6px;font-style:italic">'+esc(v[3])+(A.score!=null?' · Risk '+A.score+'/100':'')+'</div>'
+    +A.stops.map(s=>'<div class="flag fH" style="border-width:2px"><b>⛔ '+esc(s)+'</b></div>').join('')
+    +A.flags.map(row).join('')
+    +((web||soc.length)?'<div style="display:flex;gap:11px;flex-wrap:wrap;margin-top:10px;font-size:11px">'
+      +(web?'<a class="gold" href="'+esc(web)+'" target="_blank" rel="noreferrer">🌐 Website ↗</a>':'')
+      +soc.map(s=>'<a class="gold" href="'+esc(s.url)+'" target="_blank" rel="noreferrer" style="text-transform:capitalize">'+esc(s.type)+' ↗</a>').join('')+'</div>':'')
+    +'<div class="sub" style="margin-top:9px;font-size:10px">Reduces risk — does not eliminate it. Always DYOR.</div>'
+  +'</div>';
 }
 function refreshAnalyst(){
-  const box=$('#analystBox');
-  if(box&&current)box.innerHTML=analystCardHTML();
+  if(!current)return;
+  const ab=$('#analystBox'); if(ab)ab.innerHTML=analystCardHTML();
+  const sb=$('#statsBox'); if(sb)sb.innerHTML=statsHTML();
+}
+
+/* ══ TOKEN VIEW — drawn entirely by SLAPBOT: no embedded windows, no brand names ══ */
+let chartTf='5m', tokenLiveTimer=null;
+const safeSig=s=>(/^[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(s||'')||/^0x[0-9a-fA-F]{64}$/.test(s||''))?s:'';
+
+function statsHTML(){
+  const t=current.raw, oc=current.onchain;
+  const liq=+t.liquidity?.usd||0, vol=+t.volume?.h24||0;
+  const buys=t.txns?.h24?.buys||0, sells=t.txns?.h24?.sells||0, tot=buys+sells;
+  const createdMs=t.pairCreatedAt?Date.now()-t.pairCreatedAt:null;
+  const mc=+t.marketCap||+t.fdv||null;
+  const fam=current.fam||'solana', sec=current.sec;
+  const supply=fam==='solana'?(oc?.supply??null):null;
+  const w=fam==='solana'?(oc?.top10WalletPct??oc?.top10HolderPct??null):fam==='evm'&&sec&&sec.ok?sec.top10WalletPct:null;
+  const wPend=fam==='solana'?current.onchainPending:fam==='evm'?current.secPending:false;
+  const bs=tot>0?Math.round(buys/tot*100):null;
+  const spin='<span class="spin" style="width:11px;height:11px"></span>';
+  const S=(k,v,c)=>'<div class="stat"><div class="k">'+k+'</div><div class="v'+(c?' '+c:'')+'" style="font-size:13px">'+v+'</div></div>';
+  return '<div class="card"><div class="g4">'
+    +S('Market Cap',mc?usd(mc):'—')
+    +S('Liquidity',usd(liq),liq<1000?'dn':'')
+    +S('24h Volume',usd(vol))
+    +S(current.curve?'Launched':'Pair Age',createdMs!=null?ago(createdMs):'—')
+    +S('24h Trades',num(tot))
+    +(fam==='evm'?S('Holders',sec&&sec.ok&&sec.holderCount!=null?num(sec.holderCount):(current.secPending?spin:'—'))
+                 :S('Total Supply',supply!=null?num(supply):(current.onchainPending?spin:'—')))
+    +S('Top 10 Wallets',w!=null?w.toFixed(1)+'%':(wPend?spin:'—'),w==null?'':w>=70?'dn':w>=50?'':'up')
+    +S('Buy Pressure',bs!=null?bs+'%':'—',bs==null?'':bs>=50?'up':'dn')
+  +'</div>'
+  +(current.curve?'<div style="margin-top:12px">'
+    +'<div class="row" style="font-size:11.5px;font-weight:800;margin-bottom:6px"><span>🎓 Bonding curve</span><span class="gold">'+(+current.curve.progress).toFixed(1)+'% to graduation</span></div>'
+    +'<div class="press" style="height:9px"><i style="width:'+Math.min(100,+current.curve.progress)+'%;background:linear-gradient(90deg,#ffc528,#ff2d95)"></i></div>'
+    +'<div class="sub" style="font-size:10.5px;margin-top:6px">Priced live from the curve on-chain. When it fills, the token graduates to a full trading pool.</div></div>':'')
+  +'</div>';
 }
 
 function renderToken(){
   if(!current)return;
-  const t=current.raw, a=current.auth;
-  const liq=+t.liquidity?.usd||0, vol=+t.volume?.h24||0, ch24=+t.priceChange?.h24||0;
-  const buys=t.txns?.h24?.buys||0, sells=t.txns?.h24?.sells||0;
-  const createdMs=t.pairCreatedAt?Date.now()-t.pairCreatedAt:null;
-  const info=t.info||{}, web=info.websites?.[0]?.url, soc=info.socials||[];
-  const sym=t.baseToken.symbol;
-
-  const A=analyst(t,a,current.onchain);
-  const score=A.score, F=A.flags, v=A.verdict;
-  const bs=(buys+sells)>0?Math.round(buys/(buys+sells)*100):50;
-  const fav=inW(current.addr);
-
+  const t=current.raw, ch24=+t.priceChange?.h24||0, sym=t.baseToken.symbol, fav=inW(current.addr);
+  const logo=t.info?.imageUrl;
+  stopTokenLive();
   $('#tokenView').innerHTML=
    '<div class="card"><div class="row" style="flex-wrap:wrap;gap:10px">'
-    +'<div><div style="font-size:17px;font-weight:900" class="gold">'+esc(sym)+'</div>'
-    +'<div class="sub">'+esc(t.baseToken.name||'')+' · '+esc(t.dexId)+' · '+current.poolCount+' pool(s)</div></div>'
+    +'<div style="display:flex;align-items:center;gap:11px;min-width:0">'
+      +(logo?'<img src="'+esc(logo)+'" alt="" style="width:46px;height:46px;border-radius:12px;object-fit:cover;border:2px solid #ffc528;background:#12141f;flex:none" onerror="this.style.display=\'none\'">':'')
+      +'<div style="min-width:0"><div style="font-size:18px;font-weight:900" class="gold">'+esc(t.baseToken.name||sym)+'</div>'
+      +'<div class="sub">$'+esc(sym)+' · '+(!current.chain||current.chain==='solana'?'Solana SPL':esc(chainName(current.chain)))
+        +(current.fam==='other'?' · <span style="color:#ffab00">unverified chain</span>':'')+'</div>'
+      +(current.alsoOn&&current.alsoOn.length?'<div class="sub" style="font-size:10px">Also trading on '+current.alsoOn.slice(0,4).map(c=>esc(chainName(c))).join(', ')+'</div>':'')
+      +'</div></div>'
     +'<div style="display:flex;gap:8px;align-items:center">'
-      +'<div style="text-align:right"><div class="mono" style="font-size:18px;font-weight:900">$'+px(t.priceUsd)+'</div>'
-      +'<div class="'+cls(ch24)+'" style="font-weight:800">'+pct(ch24)+' 24h</div></div>'
+      +'<div style="text-align:right"><div class="mono" style="font-size:19px;font-weight:900">$'+px(t.priceUsd)+'</div>'
+      +'<div class="'+(current.curve?'gold':cls(ch24))+'" style="font-weight:800;font-size:12px">'+(current.curve?'🎓 on bonding curve':pct(ch24)+' · 24h')+'</div></div>'
       +'<button class="btn2" onclick="toggleW(\''+current.addr+'\',\''+esc(sym).replace(/'/g,"")+'\')">'+(fav?'★':'☆')+'</button>'
     +'</div></div>'
     +caBox(current.addr,'Token Address · tap to copy')
-    +(current.pairAddress?caBox(current.pairAddress,'Pool / Pair Address'):'')
-    +'</div>'
-
-   +'<div class="card">'
-     +'<div class="row" style="margin-bottom:8px">'
-       +'<div class="ttl" style="margin:0">📊 Live Chart</div>'
-       +'<div class="seg" style="width:auto"><button class="on" id="cDS">'+(ownerMode?'DexScreener':'Live')+'</button><button id="cDT">'+(ownerMode?'DEXTools':'Pro')+'</button></div>'
-     +'</div>'
-     +'<div id="chartBox"></div>'
    +'</div>'
-
+   +'<div id="statsBox">'+statsHTML()+'</div>'
+   +'<div class="card" id="liveCard">'
+     +'<div class="row" style="margin-bottom:9px"><div class="ttl" style="margin:0">📈 Live Chart &amp; Trades</div>'
+     +'<div class="seg" style="width:auto" id="tfSeg">'+['1m','5m','15m','1h'].map(x=>'<button data-tf="'+x+'"'+(x===chartTf?' class="on"':'')+'>'+x+'</button>').join('')+'</div></div>'
+     +'<div id="chartBox"></div>'
+     +'<div class="row" style="margin:13px 0 4px"><div class="ttl" style="margin:0;font-size:11px">⚡ Live Trades</div><span class="sub" id="tradesAt" style="font-size:10px"></span></div>'
+     +'<div id="tradesBox"></div>'
+   +'</div>'
    +'<div id="analystBox">'+analystCardHTML()+'</div>';
-
-  drawChart('ds');
-  $('#cDS').onclick=()=>{$('#cDS').classList.add('on');$('#cDT').classList.remove('on');drawChart('ds')};
-  $('#cDT').onclick=()=>{$('#cDT').classList.add('on');$('#cDS').classList.remove('on');drawChart('dt')};
+  $('#tfSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    chartTf=b.dataset.tf;[...$('#tfSeg').children].forEach(x=>x.classList.toggle('on',x===b));loadChart(true);});
+  startTokenLive();
 }
-function drawChart(src){
-  if(!current)return;const p=current.pairAddress;
-  $('#chartBox').innerHTML = src==='dt'
-   ? '<iframe src="https://www.dextools.io/widget-chart/en/solana/pe-light/'+p+'?theme=dark&chartType=2&chartResolution=15&drawingToolbars=false" style="height:400px" loading="lazy" title="Pro price chart"></iframe>'
-   : '<iframe src="https://dexscreener.com/solana/'+p+'?embed=1&theme=dark&trades=1&info=0" style="height:440px" loading="lazy" title="Live price chart"></iframe>';
+
+/* Candlestick chart, drawn by SLAPBOT from raw candles */
+function svgChart(cs){
+  if(!cs||!cs.length) return '<div class="empty">No candles yet for this timeframe.</div>';
+  const W=640,H=250,PT=10,PB=18,PR=62,VH=38, plotH=H-PT-PB-VH-6, n=cs.length, cw=(W-PR)/n;
+  let hi=-Infinity,lo=Infinity,vmax=0;
+  cs.forEach(k=>{hi=Math.max(hi,k.h);lo=Math.min(lo,k.l);vmax=Math.max(vmax,k.v)});
+  if(!(hi>lo)){hi=hi*1.01||1;lo=lo*0.99;}
+  const y=p=>PT+(hi-p)/(hi-lo)*plotH, bw=Math.max(1.5,cw*.7);
+  let g='';
+  [hi,(hi+lo)/2,lo].forEach(p=>{g+='<line x1="0" x2="'+(W-PR)+'" y1="'+y(p)+'" y2="'+y(p)+'" stroke="#1e2338"/>'
+    +'<text x="'+(W-PR+5)+'" y="'+(y(p)+3)+'" fill="#7a8299" font-size="10">'+px(p)+'</text>';});
+  cs.forEach((k,i)=>{
+    const x=i*cw+cw/2, col=k.c>=k.o?'#00ff9d':'#ff3864', bt=y(Math.max(k.o,k.c)), bb=y(Math.min(k.o,k.c));
+    g+='<line x1="'+x+'" x2="'+x+'" y1="'+y(k.h)+'" y2="'+y(k.l)+'" stroke="'+col+'"/>'
+      +'<rect x="'+(x-bw/2)+'" y="'+bt+'" width="'+bw+'" height="'+Math.max(1,bb-bt)+'" fill="'+col+'"/>';
+    if(vmax>0){const vh=Math.max(.5,k.v/vmax*VH);g+='<rect x="'+(x-bw/2)+'" y="'+(H-PB-vh)+'" width="'+bw+'" height="'+vh+'" fill="'+col+'" opacity=".32"/>';}
+  });
+  const last=cs[n-1], ly=y(last.c), lc=last.c>=last.o?'#00ff9d':'#ff3864';
+  g+='<line x1="0" x2="'+(W-PR)+'" y1="'+ly+'" y2="'+ly+'" stroke="'+lc+'" stroke-dasharray="3 3" opacity=".85"/>'
+    +'<rect x="'+(W-PR+1)+'" y="'+(ly-8)+'" width="'+(PR-2)+'" height="16" rx="3" fill="'+lc+'"/>'
+    +'<text x="'+(W-PR+5)+'" y="'+(ly+4)+'" fill="#05060b" font-size="10" font-weight="800">'+px(last.c)+'</text>';
+  const tl=t=>{const d=new Date(t*1000);return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')};
+  [[0,'start'],[Math.floor(n/2),'middle'],[n-1,'end']].forEach(([i,an])=>{
+    g+='<text x="'+(an==='start'?2:an==='end'?W-PR-2:i*cw+cw/2)+'" y="'+(H-4)+'" fill="#7a8299" font-size="9.5" text-anchor="'+an+'">'+tl(cs[i].t)+'</text>';});
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" role="img" aria-label="Price chart">'+g+'</svg>';
+}
+async function loadChart(force){
+  const box=$('#chartBox'); if(!box||!current)return;
+  const pool=current.pairAddress;
+  if(!pool){
+    box.innerHTML=current.curve
+      ?'<div class="empty">🎓 Still on the bonding curve — '+(+current.curve.progress).toFixed(1)+'% to graduation.<br>The full price chart starts once it has a trading pool.</div>'
+      :'<div class="empty">No trading pool yet, so there\'s nothing to chart.</div>';
+    return;
+  }
+  if(force||!box.innerHTML) box.innerHTML='<div class="empty"><span class="spin"></span> Loading chart…</div>';
+  try{
+    const d=await getJSON(BACKEND+'/api/chart/'+encodeURIComponent(pool)+'?tf='+chartTf+'&chain='+(current.chain||'solana'),force?0:15000,12000);
+    if(current?.pairAddress===pool) box.innerHTML=svgChart(d.candles);
+  }catch(e){ if(current?.pairAddress===pool) box.innerHTML='<div class="empty">Chart unavailable right now — it retries automatically.</div>'; }
+}
+async function loadTrades(){
+  const box=$('#tradesBox'); if(!box||!current)return;
+  const pool=current.pairAddress;
+  if(!pool){ box.innerHTML='<div class="sub" style="font-size:11px">Trades appear once the token has a trading pool.</div>'; return; }
+  try{
+    const d=await getJSON(BACKEND+'/api/trades/'+encodeURIComponent(pool)+'?chain='+(current.chain||'solana'),12000,12000);
+    const exp=EXPLORERS[current.chain||'solana'];
+    if(current?.pairAddress!==pool) return;
+    const ts=(d.trades||[]).slice(0,25);
+    const at=$('#tradesAt'); if(at) at.textContent='updated '+new Date().toLocaleTimeString();
+    box.innerHTML=ts.length?ts.map(t=>{
+      const w=safeAddr(t.wallet), sig=safeSig(t.tx), buy=t.kind==='buy';
+      const inner='<span class="badge '+(buy?'bG':'bR')+'" style="min-width:34px;text-align:center">'+(buy?'BUY':'SELL')+'</span>'
+        +'<span class="sub" style="font-size:10.5px;min-width:58px">'+(t.at?ago(Date.now()-t.at)+' ago':'')+'</span>'
+        +'<span class="mono" style="font-size:10.5px;flex:1;color:#b8bfd1">'+(w?short(w):'—')+'</span>'
+        +'<span class="'+(buy?'up':'dn')+'" style="font-weight:800">'+usd(t.usd)+'</span>';
+      return sig&&exp?'<a class="trd" href="'+exp+'/tx/'+sig+'" target="_blank" rel="noreferrer">'+inner+'</a>':'<div class="trd">'+inner+'</div>';
+    }).join(''):'<div class="sub" style="font-size:11px">No trades in the last 24 hours.</div>';
+  }catch(e){ if(current?.pairAddress===pool) box.innerHTML='<div class="sub" style="font-size:11px">Trades unavailable right now.</div>'; }
+}
+function startTokenLive(){ stopTokenLive(); loadChart(true); loadTrades();
+  tokenLiveTimer=setInterval(()=>{ if(!document.hidden&&view==='token'){loadChart(false);loadTrades();} },20000); }
+function stopTokenLive(){ if(tokenLiveTimer){clearInterval(tokenLiveTimer);tokenLiveTimer=null;} }
+
+/* Backend profile → the same shape DexScreener uses, so one analyst serves both */
+function profileToPair(p){
+  return {chainId:'solana',dexId:p.dex||'',pairAddress:p.poolAddress||'',
+    baseToken:{address:p.mint,symbol:p.symbol||short(p.mint),name:p.name||''},
+    priceUsd:String(p.price||0),priceChange:{h1:p.ch1||0,h24:p.ch24||0},volume:{h24:p.vol24||0},
+    liquidity:{usd:p.liq||0},txns:{h24:{buys:p.buys24||0,sells:p.sells24||0}},
+    fdv:p.mcap||null,marketCap:p.mcap||null,pairCreatedAt:p.createdAt||null,info:{imageUrl:p.logo||null}};
+}
+function profileToOnchain(p){
+  return p.onchainOk?{found:true,mintAuthority:p.mintAuthority,freezeAuthority:p.freezeAuthority,
+    supply:p.supply,top10HolderPct:p.top10Pct,top10WalletPct:p.top10WalletPct}:null;
 }
 
 
@@ -950,7 +1296,9 @@ function analyst(r,auth,onchain){
   if(auth?.freeze){
     stops.push('FREEZE AUTHORITY ACTIVE — the deployer can freeze your wallet and block you from ever selling. This is the single most reliable honeypot signal.');
   }
-  const top10=onchain?.top10HolderPct;
+  // Real-wallet concentration when available; pools & bonding curves excluded
+  const top10=onchain?.top10WalletPct ?? onchain?.top10HolderPct;
+  const top10All=onchain?.top10HolderPct;
   if(top10!=null && top10>=90){
     stops.push('TOP 10 WALLETS HOLD '+top10.toFixed(1)+'% — a handful of wallets control nearly the entire supply and can exit at any moment.');
   }
@@ -961,13 +1309,13 @@ function analyst(r,auth,onchain){
   const buys=r.txns?.h24?.buys||0, sells=r.txns?.h24?.sells||0;
   const createdMs=r.pairCreatedAt?Date.now()-r.pairCreatedAt:null;
 
-  const onCurve = /^pump(fun|\.fun)?$/i.test(r.dexId||'');
+  const onCurve = /pump[-.]?fun/i.test(r.dexId||'');
   if(onCurve && liq<1000){
     // Pre-graduation pump.fun tokens trade against a bonding-curve contract,
     // not an AMM pool, so DexScreener reports ~$0 "liquidity". You CAN sell
     // back to the curve — the real risk is how early and unproven it is.
     score+=15;
-    F.push(['M','On pump.fun bonding curve — not yet graduated to a DEX pool. Sells go back to the curve, '
+    F.push(['M','On a launchpad bonding curve — not yet graduated to a trading pool. Sells go back to the curve, '
       +'but it is early-stage and slippage on a thin curve can be heavy.']);
   }
   else if(liq<1000){score+=35;F.push(['H','Only '+usd(liq)+' liquidity — you may be unable to exit a position']);}
@@ -990,6 +1338,10 @@ function analyst(r,auth,onchain){
     else if(top10>=30){score+=6;F.push(['M','Top 10 wallets hold '+top10.toFixed(1)+'%']);}
     else F.push(['G','Top 10 wallets hold '+top10.toFixed(1)+'% — well distributed']);
   } else F.push(['I','Holder concentration unavailable — verify on Solscan']);
+  if(top10!=null && top10All!=null && onchain?.top10WalletPct!=null && top10All-top10>=15){
+    F.push(['I','Note on concentration — pools & bonding curves hold another '+(top10All-top10).toFixed(1)+'% of supply. '
+      +'They\'re programs, not people, so they\'re left out of the wallet figure above.']);
+  }
 
   if(createdMs!=null){const hrs=createdMs/36e5;
     if(hrs<6){score+=18;F.push(['H','Pool only '+ago(createdMs)+' old — peak rug window']);}
@@ -1182,6 +1534,24 @@ $('#clrW').onclick=()=>{if(confirm('Clear your entire watchlist?')){setW([]);ren
 /* ══ TOOLS ══ */
 function renderLinks(){
   const a=current?.addr,p=current?.pairAddress,s=current?.raw?.baseToken?.symbol;
+  const ch=current?.chain||'solana';
+  if(ch!=='solana'){
+    // Other chains: only links that are correct for THIS chain
+    const ex=EXPLORERS[ch], T2=[];
+    if(ex) T2.push(['🔍',chainName(ch)+' Explorer',a?ex+'/token/'+a:ex]);
+    T2.push(['📊','DexScreener',p?'https://dexscreener.com/'+ch+'/'+p:'https://dexscreener.com/'+ch]);
+    const SRC2=['DexScreener'];
+    const vis=T2.filter(t=>ownerMode||!SRC2.includes(t[1]));
+    $('#linkList').innerHTML=(vis.length?vis:[]).map(t=>'<a class="lnk" href="'+t[2]+'" target="_blank" rel="noreferrer">'
+      +'<div class="ico">'+t[0]+'</div><div style="flex:1"><div style="font-weight:800;font-size:13px">'+esc(t[1])+(s&&a?' — '+esc(s):'')+'</div></div><div class="dim">↗</div></a>').join('')
+      +(vis.length?'':'<div class="sub">No verified explorer for '+esc(chainName(ch))+' yet — the token address above is copyable.</div>');
+    return;
+  }
+  // Public: generic labels only. Owner: every third-party site by name.
+  const PUBLIC_T=[
+   ['🪙','Buy / Swap',a?'https://jup.ag/swap/SOL-'+a:'https://jup.ag'],
+   ['🔍','Block Explorer',a?'https://solscan.io/token/'+a:'https://solscan.io'],
+  ];
   const T=[
    ['📊','DexScreener',p?'https://dexscreener.com/solana/'+p:'https://dexscreener.com/solana'],
    ['🛠','DEXTools',p?'https://www.dextools.io/app/en/solana/pair-explorer/'+p:'https://www.dextools.io/app/en/solana'],
@@ -1192,9 +1562,7 @@ function renderLinks(){
    ['🪐','Jupiter',a?'https://jup.ag/swap/SOL-'+a:'https://jup.ag'],
    ['💊','pump.fun','https://pump.fun'],
   ];
-  // Data-source sites are owner-only; safety & trading tools stay public.
-  const SRC_SITES=['DexScreener','DEXTools','GeckoTerminal'];
-  $('#linkList').innerHTML=T.filter(t=>ownerMode||!SRC_SITES.includes(t[1])).map(t=>'<a class="lnk" href="'+t[2]+'" target="_blank" rel="noreferrer">'
+  $('#linkList').innerHTML=(ownerMode?T:PUBLIC_T).map(t=>'<a class="lnk" href="'+t[2]+'" target="_blank" rel="noreferrer">'
    +'<div class="ico">'+t[0]+'</div><div style="flex:1"><div style="font-weight:800;font-size:13px">'+t[1]+(s&&a?' — '+esc(s):'')+'</div></div><div class="dim">↗</div></a>').join('');
 }
 
@@ -1224,28 +1592,55 @@ document.body.classList.toggle('owner',ownerMode);
    scanner never grades its owner's coin more kindly than anyone else's. */
 const MAIN_TOKEN='9pn9N3S3QQUfkWpDzw98Jags6eWeSyti42DvHAsmpump';
 async function loadFeatured(){
+  // 1) Backend profile — prices pre-graduation tokens straight from the bonding curve
+  try{
+    const p=await getJSON(BACKEND+'/api/token/'+MAIN_TOKEN,45000,12000);
+    if(p && p.price>0){
+      if(p.logo){ $('#fLogo').src=p.logo; $('#fLogo').style.visibility='visible'; }
+      $('#fSym').textContent=(p.name||('$'+(p.symbol||'TOKEN')))+(p.name&&p.symbol?' · $'+p.symbol:'');
+      $('#fPx').textContent='$'+px(p.price);
+      const onCurve=p.source==='curve';
+      $('#fCh').textContent=(onCurve?'🎓 '+(+(p.curve?.progress||0)).toFixed(1)+'% bonded':pct(+p.ch24||0)+' 24h')+(p.mcap?' · MC '+usd(p.mcap):'');
+      $('#fCh').className=onCurve?'gold':((+p.ch24||0)>=0?'up':'dn');
+      return;
+    }
+  }catch(e){}
+  // 2) Graduated tokens also show from DexScreener if the backend is asleep
   try{
     const d=await getJSON(DS+'/latest/dex/tokens/'+MAIN_TOKEN,45000);
     const pairs=(d.pairs||[]).filter(p=>p.chainId==='solana');
-    if(!pairs.length){ $('#fSym').textContent='Official Token'; $('#fPx').textContent='Price loading soon'; return; }
+    if(!pairs.length) throw 0;
     const t=pairs.reduce((b,p)=>((p.liquidity?.usd)||0)>((b.liquidity?.usd)||0)?p:b,pairs[0]);
-    const ch=+t.priceChange?.h24||0;
+    const ch=+t.priceChange?.h24||0, mc=+t.marketCap||+t.fdv||0;
     if(t.info?.imageUrl){ $('#fLogo').src=t.info.imageUrl; $('#fLogo').style.visibility='visible'; }
-    $('#fSym').textContent='$'+(t.baseToken?.symbol||'TOKEN')+(t.baseToken?.name?' · '+t.baseToken.name:'');
+    const nm=t.baseToken?.name, sy=t.baseToken?.symbol; $('#fSym').textContent=(nm||('$'+(sy||'TOKEN')))+(nm&&sy?' · $'+sy:'');
     $('#fPx').textContent='$'+px(t.priceUsd);
-    $('#fCh').textContent=pct(ch)+' 24h'; $('#fCh').className=ch>=0?'up':'dn';
-    const mc=+t.marketCap||+t.fdv||0;
-    if(mc) $('#fCh').textContent+=' · MC '+usd(mc);
-  }catch(e){ $('#fSym').textContent='Official Token'; $('#fPx').textContent=''; }
+    $('#fCh').textContent=pct(ch)+' 24h'+(mc?' · MC '+usd(mc):''); $('#fCh').className=ch>=0?'up':'dn';
+  }catch(e){ $('#fSym').textContent='Official Token'; $('#fPx').textContent='Price loading soon'; $('#fCh').textContent=''; }
 }
 $('#fLogo').src=document.getElementById('hdrLogo')?.src||'';
 $('#fCa').innerHTML=copyChip(MAIN_TOKEN);
 $('#fScan').onclick=()=>scanToken(MAIN_TOKEN);
 loadFeatured();
 setInterval(()=>{ if(!document.hidden) loadFeatured(); },60000);
+/* watermark: one embedded logo, reused everywhere — no duplicate copies in the file */
+{ const src=$('#hdrLogo')?.src||'';
+  if(src){ document.documentElement.style.setProperty('--logo','url("'+src+'")'); $('#wmCornerImg').src=src; } }
 renderLinks();renderW();power(false,'IDLE');
 { const s=new URLSearchParams(location.search).get('scan');
   if(s && safeAddr(s)) setTimeout(()=>scanToken(s),300); }
+
+/* ── chain selector wiring ── */
+(function(){
+  const sel=$('#chainMore'), top=new Set(['all','solana','robinhood','bsc','base','ethereum','arbitrum','polygon']);
+  sel.innerHTML='<option value="">More chains…</option>'+Object.keys(CHAIN_NAMES).filter(c=>!top.has(c))
+    .map(c=>'<option value="'+c+'">'+CHAIN_NAMES[c]+(chainFam(c)==='other'?' (unverified)':'')+'</option>').join('');
+  $('#chainBar').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setChain(b.dataset.c);});
+  sel.addEventListener('change',()=>{ if(sel.value)setChain(sel.value); });
+  [...$('#chainBar').querySelectorAll('button')].forEach(b=>b.classList.toggle('on',b.dataset.c===chainSel));
+  if([...sel.options].some(o=>o.value===chainSel)) sel.value=chainSel;
+  $('#padSeg').style.display=chainSel==='solana'&&ownerMode?'':'none';
+})();
 loadFeed('trending');
 </script>
 </body>
