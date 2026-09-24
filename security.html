@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://slapbot-backend-production.up.railway.app; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<title>SLAPBOT — Security Scan</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#05060b;color:#eef0f8;font-size:14px;line-height:1.5;min-height:100vh;
+  background-image:radial-gradient(circle at 20% 10%,rgba(255,197,40,.12),transparent 40%),radial-gradient(circle at 85% 30%,rgba(255,45,149,.1),transparent 40%)}
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(5,6,11,.93);backdrop-filter:blur(12px);border-bottom:1px solid #1e2338}
+.brand{font-weight:900;font-size:15px;background:linear-gradient(100deg,#fff,#ffc528 40%,#ff2d95);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.back{margin-left:auto;font-size:11.5px;font-weight:700;color:#7a8299;border:1px solid #1e2338;padding:7px 11px;border-radius:9px;text-decoration:none}
+main{max-width:720px;margin:0 auto;padding:14px 12px 40px}
+.card{background:linear-gradient(160deg,rgba(20,23,38,.94),rgba(10,12,22,.97));border:1px solid #1e2338;border-radius:14px;padding:15px;margin-bottom:12px}
+.sub{font-size:11.5px;color:#7a8299;line-height:1.6}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#ffc528,#ff2d95);color:#12060a;text-transform:uppercase;letter-spacing:.3px}
+.btn:disabled{opacity:.5}
+label{display:flex;gap:9px;align-items:flex-start;font-size:12px;margin-top:11px;color:#c8cddb}
+label input{width:18px;height:18px;flex:none;accent-color:#ffc528;margin-top:1px}
+.grp{font-size:12px;font-weight:900;color:#ffc528;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.7px}
+.row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(30,35,56,.6);align-items:flex-start}
+.ic{flex:none;width:20px;text-align:center;font-size:14px}
+.t{font-size:12.5px;font-weight:800}.d{font-size:11px;color:#9aa2b8;margin-top:1px;word-break:break-word}
+.score{font-size:30px;font-weight:900}
+.spin{width:14px;height:14px;border:2px solid #1e2338;border-top-color:#ff2d95;border-radius:50%;animation:s .7s linear infinite;display:inline-block;vertical-align:-2px}
+@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header><div><div class="brand">🛡 SLAPBOT Security Scan</div><div class="sub" style="font-size:9px;letter-spacing:1.5px">LIVE · AUTOMATED · OWNER TOOL</div></div><a class="back" href="./">← Scanner</a></header>
+<main>
+  <div class="card" id="gateNote" style="display:none">
+    <div class="t">🔑 Owner tool</div>
+    <div class="sub" style="margin-top:4px">Turn on owner mode first: open the scanner and tap the logo 5 times, then come back.<br><br>
+    This isn't a lock — anyone could send these same test requests with other tools. It just keeps the button away from casual visitors.</div>
+  </div>
+  <div class="card" id="runCard">
+    <div class="sub">Attacks your <b>live</b> server the way a real hacker would — shadow endpoints, injection, broken sign-in, oversized requests, leaked errors — and reports what held. Every probe is read-only: nothing is changed or bought.</div>
+    <label><input type="checkbox" id="optRate"><span><b>Include rate-limit test.</b> Floods sign-in to prove it gets blocked. Your own sign-in on this phone is paused for about a minute afterward.</span></label>
+    <div id="authNote" class="sub" style="margin-top:10px"></div>
+    <button class="btn" id="run" style="margin-top:14px">▶ Run security scan</button>
+  </div>
+  <div class="card" id="summary" style="display:none"></div>
+  <div class="card" id="results" style="display:none"></div>
+</main>
+<script>
+"use strict";
+const BACKEND='https://slapbot-backend-production.up.railway.app';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const owner=(()=>{try{return localStorage.getItem('slapbot_owner')==='true'}catch{return false}})();
+const pass=(()=>{try{return localStorage.getItem('slapbot_x_pass')}catch{return null}})();
+if(!owner){ $('#gateNote').style.display=''; $('#runCard').style.display='none'; }
+$('#authNote').innerHTML=pass
+  ?'🔐 Signed-in session found on this phone — <b>authenticated tests will run</b> against your real login.'
+  :'🔓 No signed-in session on this phone, so authenticated tests will be skipped. Sign in on the Exclusive page first to include them.';
+
+/* One probe. Records every response so we can check them all for leaked internals afterwards. */
+const SEEN=[];
+async function hit(path,opt={},timeoutMs=12000){
+  // A slow or hung Railway instance must never freeze this tool for the real user.
+  const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),timeoutMs);
+  try{ const r=await fetch(BACKEND+path,{...opt,cache:'no-store',signal:ctrl.signal}); const text=await r.text();
+       const out={status:r.status,headers:r.headers,text}; SEEN.push(out); return out; }
+  catch(e){ return {status:0,headers:new Headers(),text:'',neterr:true,timedOut:e.name==='AbortError'}; }
+  finally{ clearTimeout(t); }
+}
+const LEAK=/at\s+\S+\s+\(|\.js:\d+|\/home\/|\/app\/|node_modules|"stack"|Error:\s|Cannot (GET|POST)|<html/i;
+const POOL='HMzvsEEmtzHhvZNw9uwbaG85HCTmFnkbhzUx16cy7ca3';
+
+let R=[];
+const add=(grp,ok,title,detail,skip)=>R.push({grp,ok,title,detail,skip});
+
+async function scan(){
+  R=[]; SEEN.length=0;
+  // 0. reachable?
+  const h=await hit('/api/health');
+  if(h.status!==200){ add('Server',false,'Server unreachable','Health check returned '+(h.neterr?'no response':h.status)+'. Check Railway, then scan again.'); return; }
+
+  // 1. API discovery — shadow & zombie endpoints must not exist
+  const shadow=['/admin','/.env','/api/admin','/api/debug','/package.json','/server.js','/.git/config','/api/users','/swagger.json','/graphql',
+    '/api/verify-holder?wallet='+POOL,'/api/wallet-swaps/'+POOL,'/api/copy-size','/api/prices','/api/scan/'+POOL];
+  const open=[]; for(const p of shadow){ const r=await hit(p); if(r.status!==404) open.push(p.split('?')[0]+' → '+r.status); }
+  add('API discovery',!open.length,open.length?open.length+' unexpected endpoint(s) exposed':'No shadow or zombie endpoints',
+      open.length?open.join(', '):shadow.length+' hidden-path probes all returned 404.');
+  const nf=SEEN[SEEN.length-1];
+  add('API discovery',!/Cannot GET|<html|Express/i.test(nf.text),'Unknown routes reveal nothing','404s are plain JSON — no framework fingerprint.');
+
+  // 2. Security headers (exposed via CORS so this page can read them)
+  const want={'x-content-type-options':v=>v==='nosniff','x-frame-options':v=>v==='DENY','referrer-policy':v=>v==='no-referrer',
+    'strict-transport-security':v=>/max-age=\d+/.test(v||''),'content-security-policy':v=>/default-src 'none'/.test(v||'')};
+  const miss=Object.keys(want).filter(k=>!want[k](h.headers.get(k)));
+  add('Headers',!miss.length,miss.length?'Missing security headers':'All 5 security headers present',miss.length?'Missing: '+miss.join(', '):'nosniff, frame DENY, no-referrer, HSTS, CSP.');
+
+  // 3. Injection & traversal — every input refused, never crashes, never echoes
+  const P=['../../etc/passwd',"' OR '1'='1",'<scr'+'ipt>x</scr'+'ipt>','__proto__','{{7*7}}'];
+  const T=[p=>'/api/mint-check/'+encodeURIComponent(p),p=>'/api/token/'+encodeURIComponent(p),p=>'/api/chart/'+encodeURIComponent(p),
+           p=>'/api/chart/'+POOL+'?chain='+encodeURIComponent(p),p=>'/api/feed/trending?chain='+encodeURIComponent(p)];
+  let crash=[],echo=[],n=0;
+  for(const t of T) for(const p of P){ n++; const r=await hit(t(p));
+    if(r.status>=500||r.status===0||(r.status===200&&!/"covered":false/.test(r.text))) crash.push(t(p).slice(0,34)+' → '+r.status);
+    if(p.length>4&&r.text.includes(p)) echo.push(t(p).slice(0,34)); }
+  add('Injection',!crash.length,crash.length?'Some attack payloads were not refused':n+' attack payloads all refused',crash.length?crash.slice(0,4).join(', '):'Traversal, SQL-style, script, prototype and template payloads → 4xx.');
+  add('Injection',!echo.length,echo.length?'Payload echoed back':'Nothing reflected back',echo.length?echo.slice(0,3).join(', '):'No attack string ever appears in a response.');
+  const tc=await hit('/api/chart/'+POOL+'?chain%5B%24gt%5D=');
+  add('Injection',tc.status===400,'Type confusion refused','?chain[$gt]= (object instead of text) → '+tc.status+'.');
+
+  // 4. Authentication — unauthenticated attacks
+  const a1=await hit('/api/exclusive/me'), a2=await hit('/api/exclusive/me',{headers:{Authorization:'Bearer forged.garbage'}});
+  add('Authentication',a1.status===401&&a2.status===401,'Exclusive data needs a real pass','No pass → '+a1.status+', forged pass → '+a2.status+'.');
+  const J={method:'POST',headers:{'Content-Type':'application/json'}};
+  const b1=await hit('/api/auth/verify',{...J,body:'{not json'}), b2=await hit('/api/auth/verify',{...J,body:JSON.stringify({wallet:{$ne:null},signature:'x'})});
+  const b3=await hit('/api/auth/verify',{...J,body:JSON.stringify({wallet:'x',signature:'y',pad:'z'.repeat(9000)})});
+  const b4=await hit('/api/auth/verify',{...J,body:JSON.stringify({wallet:POOL,signature:'A'.repeat(88)})});
+  add('Authentication',b1.status===400&&b2.status===400,'Malformed sign-ins rejected','Broken JSON → '+b1.status+', object-injection body → '+b2.status+'.');
+  add('Authentication',b3.status===413,'Oversized requests blocked','9 KB sign-in body → '+b3.status+' (limit 8 KB).');
+  add('Authentication',b4.status===400,'No sign-in without a challenge','Signature with no issued challenge → '+b4.status+'.');
+
+  // 5. Authenticated attacks — uses YOUR real session from the Exclusive page
+  if(pass){
+    const me=await hit('/api/exclusive/me',{headers:{Authorization:'Bearer '+pass}});
+    let who=null; try{who=JSON.parse(me.text).wallet}catch{}
+    if(me.status===200&&who){
+      add('Authenticated',true,'Your real session works','Signed in as '+who.slice(0,4)+'…'+who.slice(-4)+'.');
+      const [pb,pm]=pass.split('.');
+      const tamp=await hit('/api/exclusive/me',{headers:{Authorization:'Bearer '+pb+'.'+(pm||'').slice(0,-3)+'AAA'}});
+      add('Authenticated',tamp.status===401,'Tampered session rejected','Your pass with its signature altered → '+tamp.status+'.');
+      let swapped=pb; try{ const o=JSON.parse(atob(pb.replace(/-/g,'+').replace(/_/g,'/'))); o.w=POOL;
+        swapped=btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }catch{}
+      const sw=await hit('/api/exclusive/me',{headers:{Authorization:'Bearer '+swapped+'.'+pm}});
+      add('Authenticated',sw.status===401,'Identity swap rejected','Your pass rewritten to claim another wallet → '+sw.status+'.');
+      const bola=await hit('/api/exclusive/me?wallet='+POOL,{headers:{Authorization:'Bearer '+pass}});
+      let w2=null; try{w2=JSON.parse(bola.text).wallet}catch{}
+      add('Authenticated',w2===who,'Can\'t read other users\' data (BOLA)','Asking for another wallet returned '+(w2===who?'only your own':'SOMEONE ELSE\'S data')+'.');
+    } else add('Authenticated',true,'Saved session expired','Sign in on the Exclusive page again to run these.',true);
+  } else add('Authenticated',true,'Skipped — not signed in on this phone','Sign in on the Exclusive page, then scan again.',true);
+
+  // 6. Rate limiting (opt-in)
+  if($('#optRate').checked){
+    let got=false; for(let i=0;i<16&&!got;i++){ const r=await hit('/api/auth/challenge?wallet=probe'); if(r.status===429) got=true; }
+    add('Rate limiting',got,got?'Sign-in flood blocked':'Sign-in flood NOT blocked',got?'Rapid sign-in requests hit the limit and were refused.':'16 rapid requests all went through.');
+  } else add('Rate limiting',true,'Skipped','Tick the box above to include it.',true);
+
+  // 7. Leakage across every response seen
+  const leaked=SEEN.filter(r=>LEAK.test(r.text));
+  add('Leakage',!leaked.length,leaked.length?'Internal details leaked':'No internal details leaked',
+      leaked.length?leaked.length+' response(s) contained stack traces or file paths.':'Checked all '+SEEN.length+' responses: no stack traces, file paths or framework errors.');
+}
+
+function render(){
+  const real=R.filter(x=>!x.skip), passed=real.filter(x=>x.ok).length, failed=real.length-passed;
+  const pct=real.length?Math.round(passed/real.length*100):0, col=failed?'#ff3864':'#00ff9d';
+  $('#summary').style.display=''; $('#summary').innerHTML=
+    '<div style="display:flex;align-items:center;gap:14px"><div class="score" style="color:'+col+'">'+pct+'%</div>'
+    +'<div><div class="t">'+(failed?failed+' issue'+(failed>1?'s':'')+' found':'Every check passed')+'</div>'
+    +'<div class="sub">'+passed+' of '+real.length+' checks held · '+new Date().toLocaleString()+'</div></div></div>';
+  let html='', g='';
+  for(const x of R){ if(x.grp!==g){ g=x.grp; html+='<div class="grp">'+esc(g)+'</div>'; }
+    html+='<div class="row"><span class="ic">'+(x.skip?'⏭️':x.ok?'✅':'🚨')+'</span><div><div class="t">'+esc(x.title)+'</div><div class="d">'+esc(x.detail)+'</div></div></div>'; }
+  $('#results').style.display=''; $('#results').innerHTML=html;
+}
+$('#run').onclick=async function(){
+  if(!owner) return;
+  this.disabled=true; this.innerHTML='<span class="spin"></span> Attacking your server…';
+  try{ await scan(); render(); } finally { this.disabled=false; this.innerHTML='▶ Run security scan again'; }
+};
+</script>
+</body>
+</html>
