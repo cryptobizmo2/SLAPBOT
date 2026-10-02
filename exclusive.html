@@ -85,6 +85,7 @@ header img{border-radius:50%!important;border:0!important;box-shadow:0 0 0 1px r
 .inside h3{font-size:13px;font-weight:800;color:#F4EFE6;margin-top:12px}
 .inside p{font-size:12px;color:#A39B8C;line-height:1.55;margin-top:2px}
 @media(prefers-reduced-motion:reduce){*,body::before{animation:none!important}}
+.badge.dbl{background:linear-gradient(180deg,#FFD978,#E3A92E)!important;color:#140E02!important;border-color:transparent!important;box-shadow:0 0 18px rgba(242,193,78,.45)}
 </style>
 </head>
 <body>
@@ -195,9 +196,11 @@ function showLocked(msgHtml){
 function showUnlocked(me){
   $('#locked').classList.add('hide'); $('#unlocked').classList.remove('hide');
   const bal=me.isOwner?'Owner'
-    :(me.gold&&me.key)?[me.gold.ok?'🥇 Gold Key':'',me.key.ok?'🔑 Holder Key':''].filter(Boolean).join(' + ')||'Holder'
+    :(me.gold&&me.key)?((me.gold.ok&&me.key.ok)?'👑 Double Holder':[me.gold.ok?'🥇 Gold Key':'',me.key.ok?'🔑 Holder Key':''].filter(Boolean).join(' + ')||'Holder')
     :(me.balance!=null?(+me.balance).toLocaleString(undefined,{maximumFractionDigits:2})+' '+GATE.symbol:'Holder');
   $('#holderBadge').textContent='✓ '+bal+(me.wallet?' · '+short(me.wallet):'');
+  // Both keys: recognition, never a requirement — Exclusive stays either/or as promised.
+  $('#holderBadge').classList.toggle('dbl',!!(me.gold&&me.key&&me.gold.ok&&me.key.ok));
 }
 
 async function api(path,opt={}){
