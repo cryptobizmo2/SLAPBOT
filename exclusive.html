@@ -86,6 +86,17 @@ header img{border-radius:50%!important;border:0!important;box-shadow:0 0 0 1px r
 .inside p{font-size:12px;color:#A39B8C;line-height:1.55;margin-top:2px}
 @media(prefers-reduced-motion:reduce){*,body::before{animation:none!important}}
 .badge.dbl{background:linear-gradient(180deg,#FFD978,#E3A92E)!important;color:#140E02!important;border-color:transparent!important;box-shadow:0 0 18px rgba(242,193,78,.45)}
+.slapBanner{display:flex;align-items:center;gap:14px;padding:16px!important;border-color:rgba(242,193,78,.36)!important;
+  background:linear-gradient(120deg,rgba(242,193,78,.17),rgba(242,193,78,.02) 62%),rgba(8,8,10,.62)!important}
+.sbHero{width:66px;height:66px;flex:none;background:var(--emblem) center/contain no-repeat;filter:drop-shadow(0 0 16px rgba(242,193,78,.4))}
+.sbTitle{font-size:25px;font-weight:900;letter-spacing:-.03em;line-height:1.05;background-image:linear-gradient(180deg,#FFF6DD,#F2C14E 72%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sbSub{font-size:12px;color:#A39B8C;font-weight:600;margin-top:3px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px;border:1px solid}
+.chip.red{color:#FF8A98;background:rgba(255,90,110,.1);border-color:rgba(255,90,110,.35)}
+.chip.amb{color:#F2C46B;background:rgba(242,169,59,.08);border-color:rgba(242,169,59,.3)}
+.chip.gold{color:#140E02;background:linear-gradient(180deg,#FFD978,#E3A92E);border-color:transparent}
 </style>
 </head>
 <body>
@@ -143,15 +154,21 @@ header img{border-radius:50%!important;border:0!important;box-shadow:0 0 0 1px r
       </div>
       <div class="sub" id="meta" style="margin-top:10px"></div>
     </div>
-    <div class="card">
-      <div class="row" style="margin-bottom:4px"><div class="ttl" style="margin:0">🛡 Verified Launches</div><button class="btn2" id="refresh">↻</button></div>
-      <div class="sub" style="margin-bottom:6px">Passed on-chain safety: mint &amp; freeze revoked, top-10 wallets under 60%.</div>
-      <div id="verified"><div class="empty"><span class="spin"></span> Screening launches on-chain…</div></div>
+    <div class="card slapBanner">
+      <div class="sbHero" aria-hidden="true"></div>
+      <div><div class="sbTitle">The Daily Slap</div><div class="sbSub">picked by SLAPBOT</div></div>
     </div>
     <div class="card">
-      <div class="ttl">🔥 Momentum</div>
-      <div class="sub" style="margin-bottom:6px">Rising in the last hour with 55%+ buy pressure.</div>
-      <div id="momentum"><div class="empty"><span class="spin"></span> Loading…</div></div>
+      <div class="row" style="margin-bottom:4px"><div class="ttl" style="margin:0">🖐 The Daily Slap</div><button class="btn2" id="refresh">↻</button></div>
+      <div class="sub" style="margin-bottom:6px">Today's best tokens that passed every on-chain safety check: nobody can print more or freeze wallets, and no small group holds most of the supply.</div>
+      <div id="firstNote"></div>
+      <div id="daily"><div class="empty"><span class="spin"></span> Screening tokens on-chain…</div></div>
+      <button class="btn hide" id="shareSlap" style="margin-top:10px">Share today's Slap</button>
+    </div>
+    <div class="card">
+      <div class="ttl">🚨 No Seatbelt</div>
+      <div class="sub" style="margin-bottom:6px">Moving right now, but every one has at least one real red flag, printed on its card. Not safe, just moving.</div>
+      <div id="noSeatbelt"><div class="empty"><span class="spin"></span> Loading…</div></div>
     </div>
     <div class="sub" style="text-align:center;padding:0 10px">Automated screening reduces risk — it doesn't eliminate it. Not financial advice. Always DYOR.</div>
   </section>
@@ -288,8 +305,11 @@ $('#connectBtn').onclick=async function(){
 $('#signOut').onclick=()=>{ setPass(null); try{wallet()?.disconnect?.()}catch{} showLocked('<div class="flag fI">Signed out.</div>'); };
 
 /* ── Holder feed ── */
-function tokRow(t,verified){
-  const a=safeAddr(t.addr);
+function tokRow(t,kind){
+  const a=safeAddr(t.addr), verified=kind!=='risky';
+  const chips=(t.firstSlap?'<span class="chip gold">🥇 First Slap</span>':'')
+    +(!verified?(t.flags||[]).map(f=>'<span class="chip red">🚩 '+esc(f)+'</span>').join(''):'')
+    +(t.cautions||[]).map(x=>'<span class="chip amb">'+esc(x)+'</span>').join('');
   return '<div class="tok"><div class="row" style="align-items:flex-start">'
    +'<div style="display:flex;gap:10px;min-width:0">'
      +(t.logo?'<img src="'+esc(t.logo)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">':'<img alt="" style="visibility:hidden">')
@@ -298,6 +318,7 @@ function tokRow(t,verified){
      +(a?'<span class="cp" onclick="copyAddr(\''+a+'\')">'+short(a)+' <b>⧉</b></span>':'')+'</div></div>'
    +'<div style="text-align:right;flex:none"><div style="font-weight:800;font-family:ui-monospace,monospace;font-size:12.5px">$'+px(t.price)+'</div>'
      +'<div class="'+(t.ch1>=0?'up':'dn')+'" style="font-size:11px;font-weight:700">'+pct(t.ch1)+' 1h</div></div></div>'
+   +(chips?'<div class="chips">'+chips+'</div>':'')
    +'<div class="stats">'
      +'<div class="st"><div class="k">Liquidity</div><div class="v">'+usd(t.liq)+'</div></div>'
      +'<div class="st"><div class="k">24h Vol</div><div class="v">'+usd(t.vol)+'</div></div>'
@@ -309,26 +330,42 @@ function tokRow(t,verified){
    +'</div>';
 }
 
-let lastAt=0;
+let lastAt=0, lastDaily=[];
+const hrs=n=>n===1?'1 hour':n+' hours';
 async function loadPicks(){
-  $('#verified').innerHTML='<div class="empty"><span class="spin"></span> Screening launches on-chain…</div>';
+  $('#daily').innerHTML='<div class="empty"><span class="spin"></span> Screening tokens on-chain…</div>';
   const r=await api('/api/exclusive/picks',{timeout:30000});
   if(r.status===401){ setPass(null); showLocked('<div class="flag fI">Your session ended — connect again to continue.</div>'); return; }
   if(r.status===403){ setPass(null); showLocked('<div class="flag fM">'+esc(r.d.error)+'</div>'); return; }
   if(!r.ok){
-    $('#verified').innerHTML='<div class="flag fM">'+esc(r.d.error||'Couldn\'t load right now.')+' Tap ↻ to retry.</div>';
-    $('#momentum').innerHTML=''; return;
+    $('#daily').innerHTML='<div class="flag fM">'+esc(r.d.error||'Couldn\'t load right now.')+' Tap ↻ to retry.</div>';
+    $('#noSeatbelt').innerHTML=''; return;
   }
   const d=r.d; lastAt=d.updated||Date.now();
-  $('#verified').innerHTML=d.verified?.length
-    ? d.verified.map(t=>tokRow(t,true)).join('')
-    : '<div class="empty">No fresh launch passed every safety check right now'
-      +(d.checked?' ('+d.checked+' screened).':'.')+'<br>That\'s the filter doing its job — check back shortly.</div>';
-  $('#momentum').innerHTML=d.momentum?.length
-    ? d.momentum.map(t=>tokRow(t,false)).join('')
-    : '<div class="empty">Nothing meets the momentum bar right now.</div>';
+  const daily=d.daily||d.verified||[], risky=d.noSeatbelt||[];
+  lastDaily=daily;
+  $('#daily').innerHTML=daily.length
+    ? daily.map(t=>tokRow(t,'daily')).join('')
+    : '<div class="empty">Nothing passed every safety check right now'+(d.checked?' ('+d.checked+' screened).':'.')+'<br>That\'s the filter doing its job. Check back shortly.</div>';
+  $('#noSeatbelt').innerHTML=risky.length
+    ? risky.map(t=>tokRow(t,'risky')).join('')
+    : '<div class="empty">Nothing risky is moving hard right now.</div>';
+  const fs=d.firstSlap;
+  $('#firstNote').innerHTML=!fs?''
+    :fs.early?(daily.concat(risky).some(t=>t.firstSlap)?'<div class="flag fG" style="margin-bottom:8px">🥇 <b>First Slap.</b> Picks tagged 🥇 are new. Holder Key holders see them '+hrs(fs.hours)+' after you.</div>':'')
+    :fs.heldBack?'<div class="flag fM" style="margin-bottom:8px">🥇 <b>'+fs.heldBack+' new pick'+(fs.heldBack>1?'s are':' is')+' in First Slap.</b> Gold Key holders see new picks the moment they appear; yours unlock '+hrs(fs.hours)+' later. <a href="'+buyUrl((GATE.gold&&GATE.gold.mint)||'4R7Hbdhh3YeVqZaESRA3qPJ8Z3xh3Qedsw88RDjxL1Q9')+'" target="_blank" rel="noreferrer" style="color:var(--gold);font-weight:800">Get the Gold Key</a></div>':'';
+  $('#shareSlap').classList.toggle('hide',!daily.length);
   tickMeta();
 }
+$('#shareSlap').onclick=async()=>{
+  const top=lastDaily.slice(0,3).map(t=>'$'+String(t.sym).replace(/^\$/,'')).join('  ');
+  const url=location.origin+location.pathname;
+  const text='🖐 The Daily Slap, picked by SLAPBOT\n\n'+top+'\n\nEvery pick passed on-chain safety checks. The full list is for holders.';
+  try{ if(navigator.share){ await navigator.share({title:'The Daily Slap',text,url}); return; } }
+  catch(e){ if(e&&e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(text+'\n'+url); toast('Copied. Paste it anywhere.'); }
+  catch{ toast('Couldn\'t copy on this device.'); }
+};
 function tickMeta(){
   if(!lastAt)return;
   const s=Math.floor((Date.now()-lastAt)/1000);
