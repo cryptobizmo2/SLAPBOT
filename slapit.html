@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SLAP IT N YA MOUF · Check it before it checks you</title>
+<meta name="description" content="SLAPBOT reads the contract, the holders and the volume before you buy. Free, on any token.">
+<meta name="theme-color" content="#05070D">
+<meta property="og:title" content="SLAP IT N YA MOUF">
+<meta property="og:description" content="Check it before it checks you. SLAPBOT reads the contract, the holders and the volume before you buy.">
+<meta property="og:image" content="https://cryptobizmo2.github.io/SLAPBOT/slapit-art.jpeg">
+<meta property="og:url" content="https://cryptobizmo2.github.io/SLAPBOT/slapit.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="48x48" href="slapit-favicon-48.png">
+<link rel="icon" type="image/png" sizes="512x512" href="slapit-favicon-512.png">
+<link rel="apple-touch-icon" href="slapit-favicon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#05070D; --redLight:#FF4D5E; --red:#E0182D; --redDeep:#8E0B16; --purple:#7B2FF2; --bone:#F4EFE6; --ash:#9A93A6;
+  --up:#3DDC97; --down:#FF5A6E;
+  --glass:rgba(244,239,230,.045); --edge:rgba(224,24,45,.35);
+  --display:'Anton','Impact','HelveticaNeue-CondensedBlack','Arial Narrow Bold',sans-serif;
+  --body:'Archivo',-apple-system,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--black);-webkit-text-size-adjust:100%}
+body{font-family:var(--body);color:var(--bone);background:var(--black);line-height:1.55;font-size:16px;min-height:100vh;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--purple);outline-offset:3px;border-radius:4px}
+
+/* the art glows through behind every panel */
+.glow{position:fixed;inset:-10%;z-index:-1;background:url(slapit-art.jpeg) center/cover;filter:blur(60px) saturate(1.5);opacity:.3;pointer-events:none}
+
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+
+/* top bar */
+.bar{position:sticky;top:0;z-index:10;background:rgba(5,7,13,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(224,24,45,.3)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+.brand{font-family:var(--display);font-size:20px;letter-spacing:.02em;color:var(--redLight);text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--body);text-decoration:none;border-radius:999px;padding:12px 20px;border:1px solid var(--red);cursor:pointer;transition:background .15s,color .15s}
+.btn-main{background:linear-gradient(180deg,#FF2D42,var(--red) 55%,var(--redDeep));color:#fff;box-shadow:0 6px 22px rgba(224,24,45,.35),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-main:hover{filter:brightness(1.1)}
+.btn-line{background:transparent;color:var(--bone);border-color:rgba(244,239,230,.35)}
+.btn-line:hover{background:rgba(123,47,242,.2);border-color:var(--purple)}
+.btn-sm{padding:8px 14px;font-size:14px}
+
+/* hero: the art is the face */
+.hero{position:relative;max-width:720px;margin:0 auto}
+.art{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:cover}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:38%;background:linear-gradient(to bottom,transparent,var(--black));pointer-events:none}
+.hero-copy{position:relative;z-index:2;margin-top:-26vw}
+@media(min-width:720px){.hero-copy{margin-top:-190px}}
+h1{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(46px,13vw,92px);line-height:.92;letter-spacing:.005em;color:var(--red);background:linear-gradient(180deg,#FF7A86,var(--red) 50%,#A10E1B);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 24px rgba(0,0,0,.9))}
+.lede{margin-top:16px;font-size:18px;max-width:34ch;color:var(--bone)}
+.verbs{margin-top:14px;color:var(--ash);font-size:15px;letter-spacing:.04em}
+
+/* crew row */
+.crew{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin:34px 0 8px}
+.mate{flex:1;text-align:center;min-width:0}
+.mate .ico{width:56px;height:56px;margin:15px auto 8px;border-radius:50%;display:grid;place-items:center;font-size:26px;background:var(--glass);border:1px solid var(--edge)}
+.mate b{display:block;font-size:13px;line-height:1.2}
+.mate span{display:block;font-size:12px;color:var(--ash);line-height:1.3;margin-top:2px}
+.mate.boss .ico{margin-top:0;width:86px;height:86px;border:2px solid var(--red);overflow:hidden;box-shadow:0 0 30px rgba(224,24,45,.5)}
+.mate.boss .ico img{width:170%;height:170%;object-fit:cover;object-position:28% 32%}
+.mate.boss b{color:var(--redLight);font-size:15px}
+
+/* glass panels */
+.panel{background:var(--glass);border:1px solid var(--edge);border-radius:22px;padding:24px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+section{padding:44px 0 0}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(32px,8vw,48px);line-height:1;color:var(--bone);text-transform:uppercase}
+h3{font-size:19px;font-weight:700}
+.sub{color:var(--ash);margin-top:10px;max-width:52ch}
+
+/* buy strip */
+.buy h3{color:var(--redLight)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.stat{background:rgba(5,7,13,.55);border-radius:14px;padding:12px}
+.stat strong{display:block;font-size:19px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat small{color:var(--ash);font-size:13px}
+.track{height:6px;border-radius:6px;background:rgba(244,239,230,.1);margin-top:8px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--purple));transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.row .btn{flex:1 1 auto}
+.ca{margin-top:14px;font-size:12.5px;color:var(--ash);word-break:break-all;font-variant-numeric:tabular-nums}
+.ch{font-size:13px;margin-left:6px}
+.up{color:var(--up)}.down{color:var(--down)}
+
+/* example scan */
+.split{display:grid;gap:18px;margin-top:22px}
+@media(min-width:640px){.split{grid-template-columns:1fr 1fr;align-items:center}}
+.result{background:rgba(0,0,0,.55);border:1px solid rgba(61,220,151,.35);border-radius:18px;padding:20px}
+.grade{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.grade .g{font-family:var(--display);font-size:54px;line-height:1;color:var(--up)}
+.grade b{display:block;font-size:17px}
+.grade span{color:var(--ash);font-size:14px}
+.checks{list-style:none;display:grid;gap:8px;font-size:15px}
+.tag{margin-top:14px;font-size:12px;color:var(--ash)}
+
+/* crew cards */
+.cards{display:grid;gap:14px;margin-top:22px}
+@media(min-width:640px){.cards{grid-template-columns:1fr 1fr}}
+.card{background:var(--glass);border:1px solid rgba(244,239,230,.08);border-radius:18px;padding:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.card .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.card .head i{font-style:normal;font-size:24px}
+.card q{display:block;color:#FF4D5E;font-weight:500;margin-bottom:8px;quotes:"“" "”"}
+.card p{color:var(--ash);font-size:15px}
+
+/* keys */
+.keys{display:grid;gap:14px;margin-top:22px}
+@media(min-width:640px){.keys{grid-template-columns:1fr 1fr}}
+.key{border-radius:18px;padding:20px;background:rgba(5,7,13,.55);border:1px solid var(--red)}
+.key .need{color:#FF4D5E}
+.key.slapgold{border-color:var(--purple);background:linear-gradient(160deg,rgba(123,47,242,.22),rgba(5,7,13,.55) 60%)}
+.key h3{margin-bottom:4px}
+.key .need{font-weight:700;margin-bottom:8px}
+.key.slapgold .need{color:#B98BFF}
+.key p{color:var(--ash);font-size:15px}
+.double{margin:18px 0;font-weight:500}
+
+/* list */
+.count{display:flex;align-items:baseline;gap:10px;margin:20px 0}
+.count strong{font-family:var(--display);font-size:64px;line-height:1;color:var(--red);font-weight:400;font-variant-numeric:tabular-nums}
+.count span{color:var(--ash)}
+.fine{margin-top:16px;font-size:13px;color:var(--ash)}
+
+/* close + footer */
+.close{text-align:center;padding:60px 0 20px}
+.close .sub{margin:10px auto 22px}
+footer{border-top:1px solid rgba(244,239,230,.08);margin-top:40px;padding:28px 0 40px}
+.links{display:flex;flex-wrap:wrap;gap:10px 20px;font-size:15px}
+.links a{color:var(--bone);text-decoration:none}
+.links a:hover{color:#FF4D5E}
+.legal{margin-top:18px;font-size:13px;color:var(--ash)}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--red);color:#fff;font-weight:700;padding:10px 18px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top">SLAP IT N YA MOUF</a>
+    <a class="btn btn-main btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/">Open SLAPBOT</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <img class="art" src="slapit-art.jpeg" alt="SLAP IT N YA MOUF: a glossy red mouth with grills, a stack of cash, a gold watch and a purple sports car on a wet city street at night" width="1080" height="1080">
+  </div>
+
+  <div class="wrap">
+    <div class="hero-copy">
+      <h1>Check it before it checks you.</h1>
+      <p class="lede">SLAPBOT reads the contract, the holders and the volume before you buy. Free, on any token.</p>
+      <p class="verbs">scan / screen / hunt / hold</p>
+    </div>
+
+    <div class="crew" aria-label="The crew">
+      <div class="mate"><div class="ico">🔬</div><b>Scanner</b><span>Reads every contract.</span></div>
+      <div class="mate"><div class="ico">🎯</div><b>Micro Bot</b><span>Watches new launches.</span></div>
+      <div class="mate boss"><div class="ico"><img src="slapit-art.jpeg" alt=""></div><b>SLAPBOT</b><span>Runs the crew.</span></div>
+      <div class="mate"><div class="ico">🖐</div><b>Daily Slap</b><span>Picks with receipts.</span></div>
+      <div class="mate"><div class="ico">🚨</div><b>No Seatbelt</b><span>Shows you the flags.</span></div>
+    </div>
+
+    <!-- live buy strip -->
+    <section>
+      <div class="panel buy">
+        <h3>Get SLAP IT N YA MOUF</h3>
+        <div class="stats">
+          <div class="stat"><strong id="price">—</strong><small>price<span id="chg" class="ch"></span></small></div>
+          <div class="stat"><strong id="mc">—</strong><small>market cap</small></div>
+          <div class="stat"><strong id="bonded">—</strong><small>bonded</small><div class="track"><div class="fill" id="fill"></div></div></div>
+        </div>
+        <div class="row">
+          <a class="btn btn-main" id="buyBtn" href="#" target="_blank" rel="noopener">Buy</a>
+          <a class="btn btn-line" id="chartBtn" href="#" target="_blank" rel="noopener">View chart</a>
+          <button class="btn btn-line" id="copyBtn" type="button">Copy CA</button>
+        </div>
+        <p class="ca" id="ca"></p>
+      </div>
+    </section>
+
+    <!-- example scan -->
+    <section>
+      <h2>Paste any token. Get a straight answer.</h2>
+      <div class="split">
+        <div>
+          <p class="sub" style="margin-top:0">The Scanner checks whether the creator can print more or freeze your wallet, who really holds the supply, and whether the volume is real. Then it gives you a grade and the reasons behind it.</p>
+          <p style="margin-top:18px"><a class="btn btn-main" href="https://cryptobizmo2.github.io/SLAPBOT/">Scan a token</a></p>
+        </div>
+        <div class="result" aria-label="Example scan result">
+          <div class="grade"><div class="g">A</div><div><b>Low risk</b><span>No red flags found</span></div></div>
+          <ul class="checks">
+            <li>✅ Nobody can print more</li>
+            <li>✅ Nobody can freeze wallets</li>
+            <li>✅ Top 10 wallets hold 22%</li>
+            <li>⚠️ Under a day old</li>
+          </ul>
+          <p class="tag">Example result</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- crew personalities -->
+    <section>
+      <h2>Never sleeps. Never hypes.</h2>
+      <p class="sub">Four jobs, one crew. Every answer comes with the reason.</p>
+      <div class="cards">
+        <div class="card"><div class="head"><i>🔬</i><h3>Scanner</h3></div><q>Reads the fine print nobody reads.</q><p>Paste any token on 64 chains. It checks who can print more, who can freeze wallets, and who's really holding.</p></div>
+        <div class="card"><div class="head"><i>🎯</i><h3>Micro Bot</h3></div><q>Has seen every launch today. Trusts none of them.</q><p>Watches fresh Solana launches and volume spikes, and only flags the ones that pass the basics.</p></div>
+        <div class="card"><div class="head"><i>🖐</i><h3>The Daily Slap</h3></div><q>Only picks what passes. No favors.</q><p>For holders: today's best tokens, each one cleared every on-chain safety check.</p></div>
+        <div class="card"><div class="head"><i>🚨</i><h3>No Seatbelt</h3></div><q>Rides the risky ones and tells you why.</q><p>For holders: what's moving fast right now, with every red flag printed on the card.</p></div>
+      </div>
+    </section>
+
+    <!-- keys -->
+    <section>
+      <h2>Two keys. One door.</h2>
+      <p class="sub">Hold either one to open SLAPBOT Exclusive. You keep your tokens; holding them is the key.</p>
+      <div class="keys">
+        <div class="key"><h3>🔑 Holder Key</h3><p class="need">Hold $25 of SLAP IT N YA MOUF</p><p>The token amount follows the price, so it always costs the same in dollars.</p></div>
+        <div class="key slapgold"><h3>🥇 Gold Key</h3><p class="need">Or hold 5 $SLAPGOLD</p><p>BIG MOUF ($SLAPGOLD) is a separate token. Only 2,000 Gold Keys can ever exist, and Gold Key holders see new picks first.</p></div>
+      </div>
+      <p class="double">Hold both tokens and you're a 👑 Double Holder.</p>
+      <a class="btn btn-line" href="https://cryptobizmo2.github.io/SLAPBOT/exclusive.html">Open Exclusive</a>
+    </section>
+
+    <!-- allocation list -->
+    <section>
+      <div class="panel">
+        <h2>Hold SLAP IT N YA MOUF. Get on the BIG MOUF list.</h2>
+        <p class="sub">BIG MOUF ($SLAPGOLD) is a separate token. Hold $25 or more of SLAP IT N YA MOUF to join its allocation list, and at the reveal, $SLAPGOLD goes out to the list, split by what each wallet holds.</p>
+        <div class="count"><strong id="listed">—</strong><span>wallets on the list</span></div>
+        <a class="btn btn-main" href="https://cryptobizmo2.github.io/SLAPBOT/claim.html">Join the list</a>
+        <p class="fine">Your share depends on what you hold at the snapshot, not when you joined. Being on the list isn't a promise of what $SLAPGOLD will be worth.</p>
+      </div>
+    </section>
+
+    <div class="close">
+      <h2>Meet your crew.</h2>
+      <p class="sub">Free to use on any token. Holders get the rest.</p>
+      <a class="btn btn-main" href="https://cryptobizmo2.github.io/SLAPBOT/">Open SLAPBOT</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav class="links" aria-label="Links">
+      <a href="https://cryptobizmo2.github.io/SLAPBOT/">SLAPBOT</a>
+      <a href="https://cryptobizmo2.github.io/SLAPBOT/exclusive.html">Exclusive</a>
+      <a href="https://cryptobizmo2.github.io/SLAPBOT/claim.html">Allocation list</a>
+      <a href="https://slapitgold.tokly.io/">BIG MOUF ($SLAPGOLD)</a>
+      <a href="https://x.com/slapitnyamouf">@slapitnyamouf</a>
+    </nav>
+    <p class="legal">Not financial advice. Holding a token gives you access, not a promise of value.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var MINT='9pn9N3S3QQUfkWpDzw98Jags6eWeSyti42DvHAsmpump';
+  var HEALTH='https://slapbot-backend-production.up.railway.app/api/health';
+  var SUPPLY=1e9, CURVE_TOKENS=793100000e6; // pump.fun: 1B supply, 793.1M sold on the curve
+  var $=function(id){return document.getElementById(id)};
+
+  $('ca').textContent=MINT;
+  $('buyBtn').href='https://jup.ag/swap/SOL-'+MINT;
+  $('chartBtn').href='https://dexscreener.com/solana/'+MINT;
+
+  function toast(t){var el=$('toast');el.textContent=t;el.classList.add('on');setTimeout(function(){el.classList.remove('on')},1800)}
+  $('copyBtn').onclick=function(){
+    var done=function(){toast('Contract address copied')};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(MINT).then(done,fallback)}else fallback();
+    function fallback(){var t=document.createElement('textarea');t.value=MINT;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');done()}catch(e){toast('Hold to copy the address below')}document.body.removeChild(t)}
+  };
+
+  function price(p){
+    if(!(p>0))return '—';
+    if(p>=1)return '$'+p.toFixed(2);
+    if(p>=0.01)return '$'+p.toFixed(4);
+    var s=p.toExponential(3).split('e-'),z=+s[1]-1;
+    return '$0.'+'0'.repeat(z)+Math.round(+s[0].replace('.','').slice(0,4));
+  }
+  function money(n){
+    if(!(n>0))return '—';
+    if(n>=1e9)return '$'+(n/1e9).toFixed(2)+'B';
+    if(n>=1e6)return '$'+(n/1e6).toFixed(2)+'M';
+    if(n>=1e3)return '$'+(n/1e3).toFixed(1)+'K';
+    return '$'+n.toFixed(0);
+  }
+  function setBonded(pct){
+    if(pct==null||isNaN(pct))return;
+    pct=Math.max(0,Math.min(100,pct));
+    $('bonded').textContent=pct>=100?'Graduated':pct.toFixed(1)+'%';
+    $('fill').style.width=pct+'%';
+  }
+  function getJSON(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+
+  function loadMarket(){
+    var gotPrice=false;
+    // Bonding curve first: price, market cap and progress
+    getJSON('https://frontend-api-v3.pump.fun/coins/'+MINT).then(function(c){
+      if(c.complete)setBonded(100);
+      else if(c.real_token_reserves!=null)setBonded((1-c.real_token_reserves/CURVE_TOKENS)*100);
+      if(c.usd_market_cap>0&&!gotPrice){$('mc').textContent=money(c.usd_market_cap);$('price').textContent=price(c.usd_market_cap/SUPPLY)}
+    }).catch(function(){});
+    // Pool data: live price, market cap and 24h change
+    getJSON('https://api.dexscreener.com/latest/dex/tokens/'+MINT).then(function(d){
+      var ps=(d.pairs||[]).filter(function(p){return p.chainId==='solana'});
+      if(!ps.length)return;
+      ps.sort(function(a,b){return ((b.liquidity||{}).usd||0)-((a.liquidity||{}).usd||0)});
+      var p=ps[0],pr=+p.priceUsd;
+      if(pr>0){gotPrice=true;$('price').textContent=price(pr);$('mc').textContent=money(p.marketCap||pr*SUPPLY)}
+      var ch=p.priceChange&&p.priceChange.h24;
+      if(ch!=null){var el=$('chg');el.textContent=(ch>=0?' +':' ')+ch.toFixed(1)+'%';el.className='ch '+(ch>=0?'up':'down')}
+    }).catch(function(){});
+  }
+
+  function loadList(){
+    getJSON(HEALTH).then(function(h){
+      var n=h.listed!=null?h.listed:(h.allocationList&&h.allocationList.listed);
+      if(typeof n==='number')$('listed').textContent=n.toLocaleString();
+    }).catch(function(){});
+  }
+
+  loadMarket();loadList();
+  setInterval(loadMarket,60000);
+  setInterval(loadList,120000);
+})();
+</script>
+</body>
+</html>
