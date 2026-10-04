@@ -54,6 +54,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* ── tickers ── */
 .cbbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--line2);background:linear-gradient(90deg,rgba(0,82,255,.16),rgba(5,6,11,0) 70%)}
 .btn-cb{flex:none;background:linear-gradient(180deg,#2E74FF,#0052FF 60%,#003DC2);border-color:#0052FF;color:#fff;box-shadow:0 0 16px rgba(0,82,255,.45);font-size:12px;padding:9px 14px}
+.cbca{flex:1 1 100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid rgba(0,82,255,.5);background:rgba(0,82,255,.08);padding:8px 10px;border-radius:3px}
+.cbca .cbl{flex:1 1 100%;font-size:9px;color:var(--ash);letter-spacing:.07em}
+.cbca code{flex:1;min-width:0;font:800 12.5px var(--mono);color:#fff;word-break:break-all;user-select:all;-webkit-user-select:all}
 .cbbar small{color:var(--ash);font-size:10.5px;flex:1;min-width:180px}
 .ticker{display:flex;align-items:center;border-bottom:1px solid var(--line2);background:#07080F;overflow:hidden;height:26px}
 .ticker .tag{flex:none;background:var(--red);color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:0 10px;height:100%;display:flex;align-items:center;gap:6px}
@@ -267,7 +270,7 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
   <div class="clock"><span id="clk">--:--:--</span> UTC<small id="clkd"></small></div>
 </header>
 
-<div class="cbbar"><button class="btn btn-cb" id="cbBtn" type="button">Get it on Coinbase</button><small>Copies the contract address and opens Coinbase. Paste it into Coinbase search, then tap Buy.</small></div>
+<div class="cbbar"><button class="btn btn-cb" id="cbBtn" type="button">Get it on Coinbase</button><small>Copies the contract address and opens Coinbase. Paste it into Coinbase search, then tap Buy.</small><div class="cbca"><span class="cbl">CONTRACT ADDRESS · SOLANA</span><code id="cbCa">9pn9N3S3QQUfkWpDzw98Jags6eWeSyti42DvHAsmpump</code><button class="btn btn-line btn-sm" id="cbCopy" type="button">Copy</button></div></div>
 
 <div class="ticker"><div class="tag"><span class="dot"></span>LIVE FEED</div><div class="tk"><div class="tk-in" id="tk"><span>LOADING SOLANA TRENDING…</span></div></div></div>
 
@@ -465,6 +468,7 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
     var go=function(){setTimeout(function(){location.href='https://www.coinbase.com/'},900)};
     (navigator.clipboard?navigator.clipboard.writeText(MINT):Promise.reject()).then(function(){toast('Address copied. Paste it in Coinbase search');go()},function(){toast('Copy the address under the Buy button first');go()});
   };
+  $('cbCopy').onclick=function(){(navigator.clipboard?navigator.clipboard.writeText(MINT):Promise.reject()).then(function(){toast('Contract address copied')},function(){toast('Press and hold the address to copy')})};
   $('scanIn').oninput=function(){var v=this.value.trim();$('scanGo').href='https://cryptobizmo2.github.io/SLAPBOT/'+(v?'?token='+encodeURIComponent(v):'')};
 
   // shared live model, also feeds the neural shell
