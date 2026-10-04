@@ -445,7 +445,7 @@ main,header{position:relative;z-index:1}
     var f=follows.indexOf(r.wallet)>=0;
     return '<div class="row" data-w="'+esc(r.wallet)+'"><div class="top">'+
       '<div class="rank">'+(r.rank?'#'+r.rank:'·')+'</div>'+
-      '<div class="grow"><div class="addr">'+short(r.wallet)+'<small>'+r.winRate+'% wins · '+r.positions+' tokens · active '+ago(r.last)+'</small></div></div>'+
+      '<div class="grow"><div class="addr">'+short(r.wallet)+(r.tier==='early'?' <span class="chip lite" style="margin:0">early read</span>':'')+'<small>'+r.winRate+'% wins · '+r.positions+' token'+(r.positions===1?'':'s')+' · active '+ago(r.last)+'</small></div></div>'+
       '<div class="pnl '+(r.pnl>=0?'up':'down')+'">'+(r.pnl>=0?'+':'')+money(r.pnl)+'<small>'+(r.roi>=0?'+':'')+r.roi+'% return</small></div></div>'+
       (r.best&&r.best.length?'<div class="chips">'+r.best.map(function(b){return '<span class="chip">'+esc(b.sym)+' '+(b.roi>=0?'+':'')+b.roi+'%</span>'}).join('')+'</div>':'')+
       '<div class="acts"><button class="btn btn-ink btn-sm" data-act="follow">'+(f?'★ Following':'☆ Follow')+'</button>'+
@@ -455,8 +455,8 @@ main,header{position:relative;z-index:1}
   }
   function buyRow(b){
     return '<div class="row buy" data-w="'+esc(b.wallet)+'" data-t="'+esc(b.token)+'"><div class="top">'+
-      '<div class="rank">'+(b.rank?'#'+b.rank:'★')+'</div>'+
-      '<div class="grow"><div class="addr">'+short(b.wallet)+' bought '+esc(b.sym)+'<small>'+money(b.usd)+' · '+ago(b.at)+(b.followed?' · following':'')+'</small></div></div></div>'+
+      '<div class="rank">'+(b.rank?'#'+b.rank:b.big?'🐋':'★')+'</div>'+
+      '<div class="grow"><div class="addr">'+short(b.wallet)+' bought '+esc(b.sym)+'<small>'+money(b.usd)+' · '+ago(b.at)+(b.followed?' · following':'')+(b.big?' · big buy':'')+'</small></div></div></div>'+
       '<div class="acts"><button class="btn btn-ink btn-sm" data-act="ca">Copy CA</button>'+
       '<a class="btn btn-line btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/?token='+encodeURIComponent(b.token)+'">Scan it</a>'+
       '<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(b.tx)+'">Explorer</a></div></div>';
@@ -464,9 +464,9 @@ main,header{position:relative;z-index:1}
   function render(){
     var L=$('list'),h='';
     if(S.tab==='top'){
-      h=S.top.length?S.top.map(walletRow).join(''):'<p class="empty">SLAPBOT is still learning. Wallets show up here once they\'ve won on 3 or more tokens it watched. Check back in a few hours.</p>';
+      h=S.top.length?S.top.map(walletRow).join(''):'<p class="empty">SLAPBOT is warming up. The first wallets show up within a few minutes; refresh shortly.</p>';
     }else if(S.tab==='buys'){
-      h=S.buys.length?S.buys.map(buyRow).join(''):'<p class="empty">No buys from top wallets in the last 6 hours yet.</p>';
+      h=S.buys.length?S.buys.map(buyRow).join(''):'<p class="empty">No big or smart buys in the last few hours yet. New ones appear here automatically.</p>';
     }else{
       if(!follows.length)h='<p class="empty">You\'re not following anyone yet. Tap ☆ Follow on any wallet in Top wallets.</p>';
       else{
