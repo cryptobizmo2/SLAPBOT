@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://slapbot-backend-production.up.railway.app; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SLAPBOT · Low Supply</title>
+<meta name="description" content="Small-supply tokens on every chain, found live by SLAPBOT. Supply, price, liquidity and age at a glance.">
+<meta name="theme-color" content="#F2C14E">
+<link rel="icon" href="favicon-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#F2C14E;--gold2:#E6B23C;--ink:#0B0B0B;--ink2:#3A2F18;--line:rgba(11,11,11,.16);--up:#0B6B3A;--down:#A3122A;
+  --display:'Anton','Impact','HelveticaNeue-CondensedBlack',sans-serif;--body:'Archivo',-apple-system,system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--gold);color:var(--ink);font-family:var(--body);line-height:1.5;-webkit-text-size-adjust:100%}
+a{color:inherit}button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:6px}
+.wrap{max-width:860px;margin:0 auto;padding:0 18px;position:relative;z-index:1}
+.wm{position:fixed;left:50%;top:55%;width:min(78vw,560px);transform:translate(-50%,-50%);pointer-events:none;z-index:0}
+.bar{position:sticky;top:0;z-index:5;background:rgba(242,193,78,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:2px solid var(--ink)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{font-family:var(--display);font-size:22px;text-decoration:none}
+.nav{display:flex;gap:14px;font-weight:800;font-size:14px}
+.nav a{text-decoration:none}
+h1{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(48px,13vw,96px);line-height:.9;margin-top:30px}
+.lede{font-size:18px;margin-top:12px;max-width:42ch;font-weight:500}
+.small{font-size:13px}.muted{color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13.5px;border-radius:999px;padding:8px 14px;text-decoration:none;border:2px solid var(--ink);background:none;cursor:pointer}
+.btn-ink{background:var(--ink);color:var(--gold)}
+/* zcash card */
+.zec{margin-top:24px;background:var(--ink);color:var(--gold);border-radius:20px;padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center}
+.zec .zi{width:52px;height:52px;border-radius:50%;background:#F4B728;color:#0B0B0B;display:grid;place-items:center;font-family:var(--display);font-size:24px;grid-row:span 2}
+.zec b{font-family:var(--display);font-weight:400;font-size:26px}
+.zec .px{font-size:15px;font-weight:800;color:#F4EFE6}
+.zec p{grid-column:1/-1;color:#B9AE8E;font-size:13px;margin-top:6px}
+/* controls */
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;align-items:center}
+.seg{display:flex;background:var(--gold2);border-radius:999px;padding:4px;gap:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:7px 11px;font-weight:800;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--gold)}
+select{border:2px solid var(--ink);background:var(--gold2);border-radius:999px;padding:7px 12px;font-weight:800;font-size:13px}
+.count{margin-top:12px;font-weight:700;font-size:14px}
+/* list */
+.list{display:grid;gap:10px;margin-top:12px}
+.tok{background:var(--gold2);border:2px solid var(--ink);border-radius:18px;padding:14px 16px}
+.tok .top{display:flex;gap:12px;align-items:flex-start}
+.tok .sym{font-family:var(--display);font-size:26px;line-height:1}
+.tok .nm{font-size:13px;color:var(--ink2);font-weight:600}
+.chip{display:inline-block;background:var(--ink);color:var(--gold);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;margin:4px 4px 0 0}
+.chip.lite{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.supply{margin-left:auto;text-align:right}
+.supply b{font-family:var(--display);font-weight:400;font-size:26px;line-height:1}
+.supply small{display:block;font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.04em}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.grid4 div{border-top:1.5px solid var(--line);padding-top:6px}
+.grid4 small{display:block;font-size:11px;font-weight:700;color:var(--ink2)}
+.grid4 b{font-size:14px;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.empty{text-align:center;padding:30px 10px;font-weight:600;color:var(--ink2)}
+footer{margin:40px 0 50px;font-size:13px;color:var(--ink2)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--gold);font-weight:800;padding:10px 18px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:480px){.grid4{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<img class="wm" src="logo-watermark.png" alt="" aria-hidden="true" onerror="this.remove()">
+<header class="bar"><div class="wrap">
+  <a class="brand" href="https://cryptobizmo2.github.io/SLAPBOT/">SLAPBOT</a>
+  <nav class="nav"><a href="https://cryptobizmo2.github.io/SLAPBOT/">Scanner</a><a href="https://cryptobizmo2.github.io/SLAPBOT/smart.html">Smart Wallets</a></nav>
+</div></header>
+
+<main class="wrap">
+  <h1>Low Supply</h1>
+  <p class="lede">Small-supply tokens on every chain, found live. Fewer coins, scarcer bags, like <b>$SLAPGOLD</b>'s 10,000.</p>
+
+  <section class="zec" id="zec">
+    <div class="zi">Z</div><div><b>Zcash (ZEC)</b></div>
+    <div class="px" id="zecPx">—</div>
+    <p id="zecNote">Checking the Zcash network…</p>
+  </section>
+
+  <div class="ctrl">
+    <div class="seg" id="maxSeg" role="group" aria-label="Max supply">
+      <button data-max="1000" aria-pressed="false">≤1K</button>
+      <button data-max="10000" aria-pressed="false">≤10K</button>
+      <button data-max="100000" aria-pressed="false">≤100K</button>
+      <button data-max="1000000" aria-pressed="true">≤1M</button>
+    </div>
+    <select id="chain" aria-label="Chain"><option value="all">All chains</option></select>
+    <select id="sort" aria-label="Sort">
+      <option value="new">Newest</option><option value="vol">Most volume</option><option value="liq">Most liquidity</option>
+      <option value="mcap">Biggest market cap</option><option value="supply">Smallest supply</option>
+    </select>
+  </div>
+  <p class="count" id="count">Loading…</p>
+  <div class="list" id="list"></div>
+
+  <footer>
+    SLAPBOT sweeps the newest and trending pools on every chain, reads each token's real total supply, and keeps the ones with real liquidity. Low supply doesn't mean safe. Tap Scan it before you buy. Not financial advice.
+  </footer>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var API='https://slapbot-backend-production.up.railway.app';
+  var $=function(id){return document.getElementById(id)};
+  var Q={max:1000000,chain:'all',sort:'new'},chainsLoaded=false;
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function toast(t){var e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(function(){e.classList.remove('on')},1800)}
+  function money(n){if(!(n>0))return '—';var s=n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':n>=1?n.toFixed(2):n.toPrecision(3);return '$'+s}
+  function num(n){return n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(n>=1e4?0:1)+'K':(+n.toFixed(2)).toLocaleString()}
+  function ago(t){if(!t)return '—';var m=Math.max(0,Math.round((Date.now()-t)/60000));return m<60?m+'m':m<1440?Math.round(m/60)+'h':Math.round(m/1440)+'d'}
+  function pct(n){return n==null?'—':(n>=0?'+':'')+n.toFixed(1)+'%'}
+  function pretty(c){return String(c).replace(/^./,function(x){return x.toUpperCase()})}
+
+  function load(){
+    fetch(API+'/api/lowsupply?max='+Q.max+'&chain='+encodeURIComponent(Q.chain)+'&sort='+Q.sort,{cache:'no-store'})
+      .then(function(r){return r.json()}).then(render).catch(function(){$('count').textContent='Couldn\'t reach SLAPBOT. Retrying…'});
+  }
+  function render(d){
+    var z=d.zcash||{};
+    $('zecPx').innerHTML=z.price?'$'+z.price.toLocaleString(undefined,{maximumFractionDigits:2})+' <span class="'+(z.ch24>=0?'up':'down')+'" style="filter:brightness(1.8)">'+pct(z.ch24)+'</span>':'—';
+    $('zecNote').textContent=z.note||'';
+    if(!chainsLoaded&&d.chains){chainsLoaded=true;var s=$('chain');Object.keys(d.chains).sort(function(a,b){return d.chains[b]-d.chains[a]}).forEach(function(c){
+      var o=document.createElement('option');o.value=c;o.textContent=pretty(c)+' ('+d.chains[c]+')';s.appendChild(o)})}
+    var t=d.tokens||[];
+    $('count').textContent=t.length+' token'+(t.length===1?'':'s')+' at or under '+num(d.max)+' supply · '+(d.total||0)+' found so far across '+Object.keys(d.chains||{}).length+' chains';
+    $('list').innerHTML=t.length?t.map(function(k){
+      var scan='https://cryptobizmo2.github.io/SLAPBOT/?token='+encodeURIComponent(k.addr)+'&chain='+encodeURIComponent(k.chain);
+      return '<div class="tok" data-a="'+esc(k.addr)+'"><div class="top"><div><div class="sym">'+esc(k.sym)+'</div><div class="nm">'+esc(k.name||'')+'</div>'+
+        '<span class="chip">'+esc(pretty(k.chain))+'</span>'+(k.graded?'<span class="chip lite">safety graded</span>':'<span class="chip lite">unverified</span>')+'</div>'+
+        '<div class="supply"><small>TOTAL SUPPLY</small><b>'+num(k.supply)+'</b></div></div>'+
+        '<div class="grid4"><div><small>PRICE</small><b>'+money(k.price)+'</b></div><div><small>MARKET CAP</small><b>'+money(k.mcap)+'</b></div>'+
+        '<div><small>LIQUIDITY</small><b>'+money(k.liq)+'</b></div><div><small>24H · AGE</small><b class="'+(k.ch24>=0?'up':'down')+'">'+pct(k.ch24)+'</b> <b>· '+ago(k.createdAt)+'</b></div></div>'+
+        '<div class="acts"><button class="btn btn-ink" data-act="ca">Copy CA</button><a class="btn" href="'+scan+'">Scan it</a>'+
+        '<a class="btn" target="_blank" rel="noopener" href="https://dexscreener.com/'+encodeURIComponent(k.chain)+'/'+encodeURIComponent(k.pool)+'">Chart</a></div></div>'}).join('')
+      :'<p class="empty">Nothing at this supply yet. SLAPBOT sweeps every 2 minutes, so check back soon or widen the filter.</p>';
+  }
+  $('list').onclick=function(e){var b=e.target.closest('[data-act=ca]');if(!b)return;var a=b.closest('.tok').dataset.a;
+    (navigator.clipboard?navigator.clipboard.writeText(a):Promise.reject()).then(function(){toast('Contract address copied')},function(){toast('Copy failed')})};
+  $('maxSeg').onclick=function(e){var b=e.target.closest('button');if(!b)return;Q.max=+b.dataset.max;
+    this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});load()};
+  $('chain').onchange=function(){Q.chain=this.value;load()};
+  $('sort').onchange=function(){Q.sort=this.value;load()};
+  load();setInterval(load,60000);
+})();
+</script>
+</body>
+</html>

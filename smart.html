@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://slapbot-backend-production.up.railway.app; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SLAPBOT · Smart Wallets</title>
 <meta name="description" content="See which wallets keep winning on Solana memecoins, and what they're buying right now.">
@@ -84,6 +86,50 @@ footer{margin:40px 0 50px;font-size:13px;color:var(--ink2)}
 footer a{font-weight:700;color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--gold);font-weight:800;padding:10px 18px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+/* live alerts */
+.alertbox{margin-top:16px;background:var(--ink);color:var(--gold);border-radius:20px;padding:14px;border:2px solid var(--ink)}
+.alertbox .ah{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.alertbox h2{font-size:24px;color:var(--gold)}
+.alertbox .live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#7CF0B8}
+.alertbox .live i{width:8px;height:8px;border-radius:50%;background:#3DDC97;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.alertbox .btn-ink{background:var(--gold);color:var(--ink)}
+.al{display:flex;gap:10px;align-items:flex-start;border-top:1px solid rgba(242,193,78,.2);padding:10px 2px}
+.al:first-of-type{border-top:0}
+.al .who{font-family:var(--display);font-size:22px;min-width:40px;line-height:1}
+.al .what{flex:1;min-width:0;color:#F4EFE6;font-size:14px;font-weight:600}
+.al .what b{color:var(--gold)}
+.al .what small{display:block;color:#B9AE8E;font-size:12px;font-weight:500;margin-top:2px}
+.al .stack{display:inline-block;background:#FF5A6E;color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:4px}
+.al .acts{margin-top:8px}
+.al .acts .btn{padding:6px 12px;font-size:12.5px}
+.al .acts .btn-line{border-color:var(--gold);color:var(--gold)}
+.al.new{animation:alin 1.6s ease-out}
+@keyframes alin{from{background:rgba(242,193,78,.35)}}
+.alerts-empty{color:#B9AE8E;font-size:13px;padding:8px 2px}
+/* order flow 3D */
+.flowbox{margin-top:16px;background:#0B0B0B;color:var(--gold);border-radius:20px;border:2px solid var(--ink);overflow:hidden}
+.flowbox .fh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 14px 0}
+.flowbox h2{font-size:24px;color:var(--gold)}
+.flowbox .fh small{color:#B9AE8E;font-size:12px;font-weight:600}
+.stage3d{position:relative;height:360px;touch-action:none;cursor:grab}
+.stage3d canvas{position:absolute;inset:0;width:100%;height:100%}
+.tip{position:absolute;pointer-events:none;background:rgba(242,193,78,.96);color:#0B0B0B;border-radius:12px;padding:8px 10px;font-size:12.5px;font-weight:700;max-width:220px;transform:translate(-50%,-115%);display:none;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.tip small{display:block;font-weight:600;color:#3A2F18}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(242,193,78,.18);border-top:1px solid rgba(242,193,78,.18)}
+@media(min-width:600px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpis div{background:#0B0B0B;padding:10px 14px}
+.kpis small{display:block;color:#B9AE8E;font-size:11px;font-weight:700;letter-spacing:.04em}
+.kpis b{font-family:var(--display);font-weight:400;font-size:26px;color:var(--gold);line-height:1.1}
+.inflow{padding:12px 14px 16px;border-top:1px solid rgba(242,193,78,.18)}
+.inflow h3{font-size:13px;color:#B9AE8E;letter-spacing:.04em;margin-bottom:8px}
+.ib{display:grid;grid-template-columns:76px 1fr 64px;gap:8px;align-items:center;font-size:13px;font-weight:700;color:#F4EFE6;margin:6px 0}
+.ib .tr{height:12px;border-radius:999px;background:rgba(242,193,78,.12);overflow:hidden}
+.ib .tr i{display:block;height:100%;border-radius:999px;transition:width .8s}
+.ib span:last-child{text-align:right;color:var(--gold)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}
+.legend span{font-size:11.5px;font-weight:700;color:#F4EFE6;display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:50%}
 [hidden]{display:none!important}
 .wm{position:fixed;left:50%;top:55%;width:min(78vw,560px);transform:translate(-50%,-50%);pointer-events:none;z-index:0;opacity:.9}
 main,header{position:relative;z-index:1}
@@ -115,6 +161,11 @@ main,header{position:relative;z-index:1}
       <a class="btn btn-line" id="openWallet" hidden>Open in your wallet app</a>
     </p>
     <p class="msg" id="signMsg" role="status"></p>
+    <p style="margin-top:18px"><button class="small" id="ownerToggle" type="button" style="text-decoration:underline;font-weight:700">Owner sign-in</button></p>
+    <div id="ownerBox" hidden style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <input id="ownerCode" type="password" autocomplete="current-password" placeholder="Owner code" style="flex:1;min-width:180px;font:600 16px var(--body);padding:12px 14px;border-radius:999px;border:2px solid var(--ink);background:var(--gold2);color:var(--ink)">
+      <button class="btn btn-ink" id="ownerGo" type="button">Sign in</button>
+    </div>
   </section>
 
   <!-- 2. paywall -->
@@ -132,6 +183,24 @@ main,header{position:relative;z-index:1}
   <!-- 3. the app -->
   <section id="vApp" hidden>
     <p class="learn" id="learn">Learning…</p>
+    <div class="alertbox">
+      <div class="ah"><h2>Live buys</h2><span class="live"><i></i><span id="liveN">connecting…</span></span></div>
+      <p class="small" style="color:#B9AE8E;margin:6px 0 10px">Buys by top wallets and wallets you follow, seconds after they land. 🔥 means 2+ smart wallets bought the same token in 30 minutes.</p>
+      <button class="btn btn-ink btn-sm" id="alertOn" type="button">🔔 Turn on sound alerts</button>
+      <div id="alertList" style="margin-top:8px"><p class="alerts-empty">Listening… new buys show up here.</p></div>
+    </div>
+    <div class="flowbox">
+      <div class="fh"><h2>Order flow · 3D</h2><small id="flowNote">last 6 hours · drag to spin</small></div>
+      <div class="stage3d" id="stage3d"><canvas id="flow3d"></canvas><div class="tip" id="tip"></div></div>
+      <div class="legend" id="legend"></div>
+      <div class="kpis">
+        <div><small>SMART BUYS</small><b id="kB">—</b></div>
+        <div><small>BUY VOLUME</small><b id="kV">—</b></div>
+        <div><small>WALLETS ACTIVE</small><b id="kW">—</b></div>
+        <div><small>BIGGEST BUY</small><b id="kX">—</b></div>
+      </div>
+      <div class="inflow"><h3>WHERE SMART MONEY IS GOING</h3><div id="inflow"><p class="alerts-empty">Waiting for buys…</p></div></div>
+    </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-tab="top">Top wallets</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="buys">Live buys</button>
@@ -142,7 +211,7 @@ main,header{position:relative;z-index:1}
 
   <footer>
     Results are worked out from trades SLAPBOT has seen on the chain, and past wins don't promise future ones. Not financial advice.
-    <br><br><a href="https://cryptobizmo2.github.io/SLAPBOT/">Scanner</a> &nbsp; <a href="https://cryptobizmo2.github.io/SLAPBOT/exclusive.html">Exclusive</a>
+    <br><br><a href="https://cryptobizmo2.github.io/SLAPBOT/">Scanner</a> &nbsp; <a href="https://cryptobizmo2.github.io/SLAPBOT/exclusive.html">Exclusive</a> &nbsp; <a href="https://cryptobizmo2.github.io/SLAPBOT/lowsupply.html">Low Supply</a>
   </footer>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -200,6 +269,17 @@ main,header{position:relative;z-index:1}
     this.disabled=false;
   };
 
+  $('ownerToggle').onclick=function(){$('ownerBox').hidden=!$('ownerBox').hidden;if(!$('ownerBox').hidden)$('ownerCode').focus()};
+  $('ownerCode').onkeydown=function(e){if(e.key==='Enter')$('ownerGo').click()};
+  $('ownerGo').onclick=async function(){
+    var m=$('signMsg'),c=$('ownerCode').value;m.className='msg';if(!c)return;
+    this.disabled=true;m.textContent='Checking…';
+    var v=await api('/api/auth/owner',{method:'POST',body:JSON.stringify({code:c})});
+    $('ownerCode').value='';this.disabled=false;
+    if(!v.pass){m.textContent=v.error||'Wrong code.';m.className='msg err';return}
+    S.pass=v.pass;S.wallet=v.wallet;localStorage.setItem('smartSession',JSON.stringify({pass:v.pass,wallet:v.wallet,exp:Date.now()+11.5*3600e3}));
+    $('ownerBox').hidden=true;m.textContent='';setWho();loadStatus();
+  };
   async function loadStatus(){
     var s=await api('/api/smart/status');
     if(s._status===401){localStorage.removeItem('smartSession');S.pass=null;show('vSign');return}
@@ -214,8 +294,6 @@ main,header{position:relative;z-index:1}
   }
 
   // ── pay ──
-  function loadWeb3(){return new Promise(function(ok,no){if(window.solanaWeb3)return ok();var s=document.createElement('script');
-    s.src='https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
   $('payBtn').onclick=async function(){
     var p=provider(),m=$('payMsg');m.className='msg';
     if(!p){m.textContent='Open this page inside your wallet app to pay.';m.className='msg err';return}
@@ -226,13 +304,9 @@ main,header{position:relative;z-index:1}
       if(!q.message)throw new Error(q.error||'Couldn\'t prepare the payment.');
       m.textContent='Approve '+q.sol+' SOL (about $'+q.usd+') in your wallet…';
       var sig;
-      try{var r=await p.request({method:'signAndSendTransaction',params:{message:q.message}});sig=r.signature}
-      catch(e1){
-        if(e1&&(e1.code===4001||/reject|cancel/i.test(e1.message||'')))throw e1;
-        await loadWeb3();
-        var raw=Uint8Array.from(atob(q.transaction),function(c){return c.charCodeAt(0)});
-        var r2=await p.signAndSendTransaction(window.solanaWeb3.Transaction.from(raw));sig=r2.signature;
-      }
+      try{var r=await p.request({method:'signAndSendTransaction',params:{message:q.message}});sig=r&&r.signature}
+      catch(e1){if(e1&&(e1.code===4001||/reject|cancel/i.test(e1.message||'')))throw e1;throw new Error('Your wallet couldn\'t open the payment. Update Phantom and try again.')}
+      if(!sig)throw new Error('No payment signature came back. Nothing was charged.');
       localStorage.setItem('smartSig:'+S.wallet,sig);
       m.textContent='Payment sent. Confirming on-chain…';
       for(var i=0;i<12;i++){
@@ -247,18 +321,121 @@ main,header{position:relative;z-index:1}
   };
 
   // ── app ──
+  // ── live alerts: checks every 5 seconds ──
+  var lastSeen=0,alertsOn=localStorage.getItem('smartAlerts')==='1',audio=null,alertTimer=null,shown=[],baseTitle=document.title;
+  function beep(){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();[0,.18].forEach(function(d){var o=audio.createOscillator(),g=audio.createGain();
+    o.frequency.value=d?1320:880;o.connect(g);g.connect(audio.destination);g.gain.setValueAtTime(.0001,audio.currentTime+d);g.gain.exponentialRampToValueAtTime(.25,audio.currentTime+d+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d+.16);o.start(audio.currentTime+d);o.stop(audio.currentTime+d+.18)})}catch(e){}}
+  function setAlertBtn(){$('alertOn').textContent=alertsOn?'🔔 Sound alerts on (tap to mute)':'🔔 Turn on sound alerts'}
+  $('alertOn').onclick=function(){alertsOn=!alertsOn;localStorage.setItem('smartAlerts',alertsOn?'1':'0');setAlertBtn();if(alertsOn){beep();toast('Alerts on. Keep this page open.')}};
+  setAlertBtn();
+  function alertRow(a,isNew){
+    return '<div class="al'+(isNew?' new':'')+'" data-w="'+esc(a.wallet)+'" data-t="'+esc(a.token)+'"><div class="who">'+(a.rank?'#'+a.rank:'★')+'</div><div class="what">'+
+      short(a.wallet)+' bought <b>'+esc(a.sym)+'</b> '+money(a.usd)+(a.stack>1?'<span class="stack">🔥 '+a.stack+' smart wallets in</span>':'')+
+      '<small>'+ago(a.at)+(a.followed?' · you follow':'')+' · '+esc(a.token.slice(0,4))+'…'+esc(a.token.slice(-4))+'</small>'+
+      '<div class="acts"><button class="btn btn-ink btn-sm" data-act="ca">Copy CA</button> '+
+      '<a class="btn btn-line btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/?token='+encodeURIComponent(a.token)+'">Scan it</a> '+
+      '<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://jup.ag/swap/SOL-'+encodeURIComponent(a.token)+'">Buy</a></div></div></div>';
+  }
+  async function pollAlerts(){
+    var d=await api('/api/smart/alerts?since='+(lastSeen||0)+'&follow='+follows.slice(-25).join(','));
+    if(d._status===402||d._status===401)return;
+    $('liveN').textContent='live · '+(d.live||0)+' wallets';
+    mergeFlow(d.alerts);
+    var fresh=(d.alerts||[]).filter(function(a){return !shown.some(function(s){return s.tx===a.tx})});
+    if(fresh.length){
+      var first=!lastSeen;
+      fresh.forEach(function(a){lastSeen=Math.max(lastSeen,a.seen)});
+      shown=fresh.concat(shown).slice(0,25);
+      $('alertList').innerHTML=shown.map(function(a){return alertRow(a,!first&&fresh.indexOf(a)>=0)}).join('');
+      if(!first){
+        if(alertsOn)beep();
+        if(navigator.vibrate)navigator.vibrate([120,60,120]);
+        var top=fresh[0];document.title='🔔 '+top.sym+' · '+money(top.usd)+' · SLAPBOT';setTimeout(function(){document.title=baseTitle},8000);
+      }
+    }
+  }
+  $('alertList').onclick=function(e){var b=e.target.closest('[data-act=ca]');if(b)copy(b.closest('.al').dataset.t,'Contract address')};
+
+  // ── 3D order flow: x = time, height = buy size, depth = wallet rank ──
+  var FLOW=[],PAL=['#FF4D5E','#3DDC97','#A979FF','#4FC3FF','#FFB547','#FF7AD9','#9BE15D','#F2C14E'],tokColor={},rotY=-.6,rotX=.42,drag=null,auto=true,pick=null;
+  function colorFor(t){if(!tokColor[t])tokColor[t]=PAL[Object.keys(tokColor).length%PAL.length];return tokColor[t]}
+  function mergeFlow(list){
+    var seen={};FLOW.forEach(function(f){seen[f.tx]=1});
+    (list||[]).forEach(function(b){if(b.tx&&!seen[b.tx]){seen[b.tx]=1;FLOW.push({tx:b.tx,w:b.wallet,rank:b.rank,t:b.token,sym:b.sym,usd:+b.usd||0,at:b.at,born:performance.now()})}});
+    var cut=Date.now()-6*3600e3;FLOW=FLOW.filter(function(f){return f.at>cut}).slice(-400);analytics();
+  }
+  function analytics(){
+    var vol=0,ws={},big=null,by={};
+    FLOW.forEach(function(f){vol+=f.usd;ws[f.w]=1;if(!big||f.usd>big.usd)big=f;var k=by[f.t]||(by[f.t]={sym:f.sym,t:f.t,usd:0,n:0,w:{}});k.usd+=f.usd;k.n++;k.w[f.w]=1});
+    $('kB').textContent=FLOW.length;$('kV').textContent=money(vol);$('kW').textContent=Object.keys(ws).length;$('kX').textContent=big?money(big.usd):'—';
+    var tops=Object.keys(by).map(function(k){return by[k]}).sort(function(a,b){return b.usd-a.usd}).slice(0,6),mx=tops.length?tops[0].usd:1;
+    $('inflow').innerHTML=tops.length?tops.map(function(k){var n=Object.keys(k.w).length;
+      return '<div class="ib"><span>'+esc(k.sym)+'</span><span class="tr"><i style="width:'+Math.max(4,k.usd/mx*100)+'%;background:'+colorFor(k.t)+'"></i></span><span>'+money(k.usd)+'</span></div>'+
+        '<div class="small" style="color:#B9AE8E;margin:-2px 0 6px 84px">'+n+' wallet'+(n>1?'s':'')+' · '+k.n+' buy'+(k.n>1?'s':'')+(n>1?' · 🔥':'')+'</div>'}).join(''):'<p class="alerts-empty">Waiting for buys…</p>';
+    $('legend').innerHTML=tops.map(function(k){return '<span><i style="background:'+colorFor(k.t)+'"></i>'+esc(k.sym)+'</span>'}).join('');
+  }
+  (function(){
+    var cv=$('flow3d'),cx=cv.getContext('2d'),st=$('stage3d'),W=0,H=0,proj=[];
+    function size(){var d=Math.min(2,window.devicePixelRatio||1);W=st.clientWidth;H=st.clientHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0)}
+    size();window.addEventListener('resize',size);
+    function P(x,y,z){var cy=Math.cos(rotY),sy=Math.sin(rotY),cxr=Math.cos(rotX),sx=Math.sin(rotX);
+      var x1=x*cy-z*sy,z1=x*sy+z*cy,y1=y*cxr-z1*sx,z2=y*sx+z1*cxr,f=3.4/(3.4+z2),s=Math.min(W,H*1.5)*.36;
+      return [W/2+x1*s*f,H*.66-y1*s*f*.9,z2,f]}
+    function line(a,b,c,w){cx.strokeStyle=c;cx.lineWidth=w||1;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke()}
+    st.addEventListener('pointerdown',function(e){drag={x:e.clientX,y:e.clientY,ry:rotY,rx:rotX,moved:0};auto=false;st.setPointerCapture(e.pointerId)});
+    st.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.abs(dx)+Math.abs(dy);
+      rotY=drag.ry+dx*.01;rotX=Math.max(.05,Math.min(1.2,drag.rx+dy*.006))});
+    st.addEventListener('pointerup',function(e){var r=st.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+      if(drag&&drag.moved<6){var best=null,bd=28;proj.forEach(function(p){var d=Math.hypot(p.x-mx,p.y-my);if(d<bd){bd=d;best=p}});pick=best;showTip()}
+      drag=null;setTimeout(function(){if(!drag)auto=true},6000)});
+    function showTip(){var t=$('tip');if(!pick){t.style.display='none';return}var f=pick.f;
+      t.innerHTML=(f.rank?'#'+f.rank+' ':'★ ')+short(f.w)+' bought <span style="color:'+colorFor(f.t)+';filter:brightness(.6)">'+esc(f.sym)+'</span><small>'+money(f.usd)+' · '+ago(f.at)+'</small>';
+      t.style.left=pick.x+'px';t.style.top=pick.y+'px';t.style.display='block'}
+    function frame(now){
+      if(auto&&!drag)rotY+=.0025;
+      cx.clearRect(0,0,W,H);
+      var T1=Date.now(),T0=T1-6*3600e3,maxU=Math.max(100,FLOW.reduce(function(m,f){return Math.max(m,f.usd)},0)),lmax=Math.log10(maxU+1);
+      // floor grid: time runs left → right, rank runs back → front
+      for(var i=0;i<=6;i++){var x=-1+i/3;line(P(x,0,-1),P(x,0,1),'rgba(242,193,78,'+(i%3?.08:.18)+')')}
+      for(var j=0;j<=4;j++){var z=-1+j/2;line(P(-1,0,z),P(1,0,z),'rgba(242,193,78,.08)')}
+      line(P(-1,0,1),P(-1,1.2,1),'rgba(242,193,78,.25)');
+      cx.fillStyle='rgba(185,174,142,.85)';cx.font='700 10px Archivo, sans-serif';
+      var a=P(-1,0,1.15),b=P(1,0,1.15),c=P(-1,1.25,1);cx.fillText('6h ago',a[0]-14,a[1]+4);cx.fillText('now',b[0]-8,b[1]+4);cx.fillText('$ size',c[0]-14,c[1]);
+      proj=[];
+      var pts=FLOW.map(function(f){var x=-1+2*(f.at-T0)/(T1-T0),y=Math.log10(f.usd+1)/lmax*1.1,z=f.rank?-1+2*Math.min(1,(f.rank-1)/99):.9;
+        var top=P(x,y,z),base=P(x,0,z);return {f:f,top:top,base:base}}).sort(function(p,q){return q.top[2]-p.top[2]});
+      pts.forEach(function(p){var col=colorFor(p.f.t),age=(now-p.f.born)/1000,grow=Math.min(1,age/.8),pulse=age<4?1+Math.sin(age*8)*.4*(1-age/4):1;
+        var y=p.base[1]+(p.top[1]-p.base[1])*grow;
+        cx.globalAlpha=.55;line(p.base,[p.top[0],y],col,1.2);cx.globalAlpha=1;
+        var r=(2+Math.log10(p.f.usd+1)*1.15)*p.top[3]*pulse;
+        cx.fillStyle=col;cx.shadowColor=col;cx.shadowBlur=10;cx.beginPath();cx.arc(p.top[0],y,r,0,7);cx.fill();cx.shadowBlur=0;
+        cx.globalAlpha=.25;cx.beginPath();cx.ellipse(p.base[0],p.base[1],r*1.2,r*.45,0,0,7);cx.fill();cx.globalAlpha=1;
+        proj.push({x:p.top[0],y:y,f:p.f})});
+      // stacking: link buys of the same token
+      var byT={};pts.forEach(function(p){(byT[p.f.t]=byT[p.f.t]||[]).push(p)});
+      Object.keys(byT).forEach(function(k){var g=byT[k];if(g.length<2)return;g.sort(function(a,b){return a.f.at-b.f.at});
+        cx.globalAlpha=.35;cx.setLineDash([3,4]);for(var i=1;i<g.length;i++)line(g[i-1].top,g[i].top,colorFor(k),1);cx.setLineDash([]);cx.globalAlpha=1});
+      if(!FLOW.length){cx.fillStyle='rgba(185,174,142,.9)';cx.font='600 13px Archivo, sans-serif';var m='Smart buys will rise up here as they land.';cx.fillText(m,(W-cx.measureText(m).width)/2,H*.3)}
+      if(pick)showTip();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
   var timer=null;
   function startApp(s){
     show('vApp');
     var via={owner:'Owner access',gold:'🥇 Gold Key: free',paid:'Paid access until '+(s.until?new Date(s.until).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'}):'')}[s.via]||'';
     $('learn').textContent=via+' · Learning since '+new Date(s.learningSince).toLocaleDateString([], {month:'short',day:'numeric'})+', tracking '+(s.tracked||0).toLocaleString()+' wallets. Rankings sharpen the longer SLAPBOT watches.';
     refresh();clearInterval(timer);timer=setInterval(refresh,60000);
+    pollAlerts();clearInterval(alertTimer);alertTimer=setInterval(pollAlerts,5000);
   }
   async function refresh(){
     var a=await Promise.all([api('/api/smart/top'),api('/api/smart/feed?follow='+follows.join(','))]);
     if(a[0]._status===402||a[1]._status===402){clearInterval(timer);loadStatus();return}
     if(a[0]._status===401){localStorage.removeItem('smartSession');location.reload();return}
-    S.top=a[0].wallets||[];S.buys=a[1].buys||[];render();
+    S.top=a[0].wallets||[];S.buys=a[1].buys||[];render();mergeFlow(S.buys);
   }
   document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){
     S.tab=t.dataset.tab;document.querySelectorAll('.tab').forEach(function(x){x.setAttribute('aria-selected',x===t)});render();
