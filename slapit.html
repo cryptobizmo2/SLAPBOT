@@ -35,6 +35,13 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .up{color:var(--up)}.down{color:var(--down)}.gold{color:var(--gold)}.red{color:var(--redL)}.ash{color:var(--ash)}.pur{color:var(--purpleL)}
 
+/* ── sticky top bar, like before ── */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(5,6,11,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(224,24,45,.35)}
+.topbar img{width:30px;height:30px;border-radius:6px;object-fit:cover;border:1px solid var(--red)}
+.topbar .nm{font-family:var(--display);font-size:19px;letter-spacing:.02em;color:var(--redL);text-decoration:none;white-space:nowrap}
+.topbar .px{margin-left:auto;font-weight:800;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.topbar .btn{flex:none;padding:7px 12px;font-size:11px}
+@media(max-width:420px){.topbar .px{display:none}.topbar .nm{font-size:17px}}
 /* ── header ── */
 .hdr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,#0B0D18,#06070D)}
 .logo{width:42px;height:42px;border-radius:8px;border:1px solid var(--red);object-fit:cover;box-shadow:0 0 14px rgba(224,24,45,.45)}
@@ -57,6 +64,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .cbca{flex:1 1 100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid rgba(0,82,255,.5);background:rgba(0,82,255,.08);padding:8px 10px;border-radius:3px}
 .cbca .cbl{flex:1 1 100%;font-size:9px;color:var(--ash);letter-spacing:.07em}
 .cbca code{flex:1;min-width:0;font:800 12.5px var(--mono);color:#fff;word-break:break-all;user-select:all;-webkit-user-select:all}
+.cbbar .btn-cb,.cbca .btn{flex:none}
 .cbbar small{color:var(--ash);font-size:10.5px;flex:1;min-width:180px}
 .ticker{display:flex;align-items:center;border-bottom:1px solid var(--line2);background:#07080F;overflow:hidden;height:26px}
 .ticker .tag{flex:none;background:var(--red);color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:0 10px;height:100%;display:flex;align-items:center;gap:6px}
@@ -109,6 +117,17 @@ canvas{display:block;width:100%}
 .pressure{display:flex;height:6px;margin-top:6px}
 .pressure i{display:block;height:100%}
 
+/* hero: art + headline, first thing on the page */
+.hero{position:relative;max-width:760px;margin:0 auto}
+.hero .art{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:cover}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.hero-copy{position:relative;z-index:2;margin-top:-28vw;padding:0 16px 22px}
+@media(min-width:760px){.hero-copy{margin-top:-210px}}
+.hero h2{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(46px,13vw,96px);line-height:.92;
+  background:linear-gradient(180deg,#FF7A86,var(--red) 50%,#A10E1B);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 24px rgba(0,0,0,.9))}
+.hero .lede{font-family:var(--mono);font-size:14px;margin-top:12px;max-width:44ch}
+.hero .lede b{color:var(--gold)}
+.hero .verbs{color:var(--ash);font-size:12px;margin-top:8px;letter-spacing:.08em}
 /* brand */
 .brand{position:relative;overflow:hidden}
 .brand img{display:block;width:100%;aspect-ratio:1/1;height:auto;object-fit:cover}
@@ -245,14 +264,25 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .tick{animation:tickf .6s ease-out}
 @keyframes tickf{from{color:var(--gold)}}
-@media(max-width:899px){.brand{order:-1}.ttl .k em{display:none}.fills .fill:nth-child(n+6){display:none}#tape tr:nth-child(n+11){display:none}.shell .cap{display:none}.shell .stage{min-height:400px}}
+@media(max-width:899px){.ttl .k em{display:none}.fills .fill:nth-child(n+6){display:none}#tape tr:nth-child(n+11){display:none}.shell .cap{display:none}.shell .stage{min-height:400px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
 <img class="wm" src="slapit-logo-watermark.png" alt="" aria-hidden="true" onerror="this.remove()">
-<header class="hdr">
+<div class="topbar"><img src="slapit-favicon-512.png" alt=""><a class="nm" href="#top">SLAP IT N YA MOUF</a><span class="px" id="tbPrice">—</span><a class="btn btn-bot" href="https://cryptobizmo2.github.io/SLAPBOT/">Open SLAPBOT</a></div>
+
+<section class="hero">
+  <img class="art" src="slapit-art.jpeg" alt="SLAP IT N YA MOUF: a glossy red mouth with grills, a stack of cash, a watch and a purple sports car on a wet city street at night" width="1080" height="1080">
+  <div class="hero-copy">
+    <h2>Check it before it checks you.</h2>
+    <p class="lede"><b>SLAPBOT</b> reads the contract, the holders and the volume before you buy. Free, on any token.</p>
+    <p class="verbs">scan / screen / hunt / hold</p>
+  </div>
+</section>
+
+<header class="hdr" id="top">
   <img class="logo" src="slapit-favicon-512.png" alt="SLAP IT N YA MOUF">
   <div class="ttl">
     <div class="k">SCAN · SCREEN · HUNT · HOLD <em>CHECK IT BEFORE IT CHECKS YOU</em></div>
@@ -277,7 +307,7 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
 <main class="grid">
 
   <!-- token -->
-  <section class="panel slap c4">
+  <section class="panel slap c6">
     <div class="ph">◆ Token · SLAP IT N YA MOUF <span class="live">LIVE</span></div>
     <div class="pb">
       <div class="ash" style="font-size:9.5px;letter-spacing:.06em">PRICE (USD)</div>
@@ -301,7 +331,7 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
   </section>
 
   <!-- chart -->
-  <section class="panel c4">
+  <section class="panel c6">
     <div class="ph">◆ Spot · 5m <span id="cNote">candles</span></div>
     <div class="pb">
       <canvas id="chart" height="190"></canvas>
@@ -310,16 +340,6 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
         <div><small>SELLS 24H</small><b class="down" id="fS">—</b></div>
       </div>
       <div class="pressure"><i id="pB" style="background:var(--up);width:50%"></i><i id="pS" style="background:var(--down);width:50%"></i></div>
-    </div>
-  </section>
-
-  <!-- brand -->
-  <section class="panel c4 brand">
-    <img src="slapit-art.jpeg" alt="SLAP IT N YA MOUF: a glossy red mouth with grills, a stack of cash, a watch and a purple sports car on a wet city street at night" width="1080" height="1080">
-    <div class="over">
-      <h2>Check it before it checks you.</h2>
-      <p><b>SLAPBOT</b> reads the contract, the holders and the volume before you buy. Free, on any token.</p>
-      <p class="verbs">scan / screen / hunt / hold</p>
     </div>
   </section>
 
@@ -480,7 +500,7 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
     get('/api/token/'+MINT).then(function(t){
       M.price=t.price;M.mc=t.mcap;M.ch=t.ch24;M.top10=t.top10WalletPct!=null?t.top10WalletPct:t.top10Pct;
       M.bond=t.curve?t.curve.progress:(t.source==='pool'?100:null);
-      set('hPrice',price(t.price));set('tPrice',price(t.price));
+      set('hPrice',price(t.price));set('tbPrice',price(t.price));set('tPrice',price(t.price));
       set('hMc',money(t.mcap));set('tMc',money(t.mcap));
       set('hCh',pct(t.ch24),t.ch24>=0?'up':'down');set('tCh',pct(t.ch24),t.ch24>=0?'up':'down');
       set('tVol',money(t.vol24));set('tLiq',money(t.liq));set('tBs',(t.buys24||0)+' / '+(t.sells24||0));
@@ -580,8 +600,8 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
   var cv=$('torus'),cx=cv.getContext('2d'),W=0,H=0,dpr=1,pulse=0;
   var mob=window.innerWidth<700,NU=mob?96:140,NV=mob?24:30,P=[],R=1,r=.36;
   for(var iu=0;iu<NU;iu++)for(var iv=0;iv<NV;iv++){var q=Math.random(),u=(iu+(iv%2)*.5)/NU*Math.PI*2,v=iv/NV*Math.PI*2;
-    P.push({u:u,v:v,c:q<.6?[230,40+Math.random()*30|0,58]:q<.85?[140+Math.random()*40|0,80,255]:[242,193,78],
-      s:q>.85?2.1:1.5,sp:q>.975?8+Math.random()*16:0})}
+    P.push({u:u,v:v,c:q<.74?[255,22+Math.random()*26|0,44]:q<.9?[150+Math.random()*40|0,70,255]:[242,193,78],
+      s:q>.9?2.3:(q<.74?2.1:1.7),sp:q>.975?8+Math.random()*16:0})}
   var N=P.length;
   var INPUTS=[
     {k:'PRICE',v:function(){return price(M.price)},c:'#FF4D5E'},
@@ -596,15 +616,16 @@ footer{padding:14px 12px 30px;color:var(--dim);font-size:10.5px}
   var rot=0,t0=performance.now();
   function frame(now){
     var t=(now-t0)/1000;rot+=reduce?0:.0035+pulse*.02;pulse*=.96;
-    cx.clearRect(0,0,W,H);
+    cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';
     var wide=W>560,ox=wide?W*.58:W*.5,oy=wide?H*.44:H*.64,sc=Math.min(wide?W*.25:W*.34,H*.36),tilt=1.18+Math.sin(t*.3)*.05;
     var ct=Math.cos(tilt),st=Math.sin(tilt),cr=Math.cos(rot),sr=Math.sin(rot),scr=new Array(N);
     for(var i=0;i<N;i++){var p=P[i],rr=R+r*Math.cos(p.v),x=rr*Math.cos(p.u+rot*0),y=rr*Math.sin(p.u),z=r*Math.sin(p.v);
       var x1=x*cr-y*sr,y1=x*sr+y*cr;var y2=y1*ct-z*st,z2=y1*st+z*ct;
       var f=3.2/(3.2-z2),X=ox+x1*sc*f,Y=oy+y2*sc*f;scr[i]=[X,Y,z2];
-      var a=Math.max(.07,Math.min(1,.5+z2*.9));
+      var a=Math.max(.16,Math.min(1,.62+z2*.9));
       cx.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+a+')';var s=p.s*f*(1+pulse*.6);cx.fillRect(X,Y,s,s);
       if(p.sp&&z2>-.1){cx.strokeStyle='rgba(242,193,78,'+(a*.6)+')';cx.lineWidth=.6;cx.beginPath();cx.moveTo(X,Y);cx.lineTo(X+(X-ox)/sc*p.sp,Y+(Y-oy)/sc*p.sp);cx.stroke()}}
+    cx.globalCompositeOperation='source-over';
     // inputs → shell
     var lx=10,gap=Math.min(62,(H-60)/INPUTS.length),top0=wide?Math.max(18,(H-gap*INPUTS.length)/2):14;
     cx.font='700 9.5px JetBrains Mono, monospace';
