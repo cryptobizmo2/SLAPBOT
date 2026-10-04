@@ -85,10 +85,13 @@ footer a{font-weight:700;color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--gold);font-weight:800;padding:10px 18px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+.wm{position:fixed;left:50%;top:55%;width:min(78vw,560px);transform:translate(-50%,-50%);pointer-events:none;z-index:0;opacity:.9}
+main,header{position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+<img class="wm" src="logo-watermark.png" alt="" aria-hidden="true" onerror="this.remove()">
 <header class="bar">
   <div class="wrap">
     <a class="brand" href="https://cryptobizmo2.github.io/SLAPBOT/">SLAPBOT</a>
@@ -153,7 +156,7 @@ footer a{font-weight:700;color:var(--ink)}
 
   function toast(t){var e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(function(){e.classList.remove('on')},1800)}
   function show(v){['vSign','vPay','vApp'].forEach(function(id){$(id).hidden=id!==v})}
-  function short(w){return w.slice(0,4)+'…'+w.slice(-4)}
+  function short(w){w=String(w||'');return esc(w.slice(0,4))+'…'+esc(w.slice(-4))}
   function money(n){var a=Math.abs(n);var s=a>=1e6?(a/1e6).toFixed(2)+'M':a>=1e3?(a/1e3).toFixed(1)+'K':a.toFixed(0);return (n<0?'−$':'$')+s}
   function ago(t){var m=Math.max(0,Math.round((Date.now()-t)/60000));return m<1?'just now':m<60?m+'m ago':Math.round(m/60)+'h ago'}
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
