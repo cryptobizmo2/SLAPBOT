@@ -51,9 +51,9 @@
     var icon = { danger: "⛔", risk: "🚨", caution: "⚠️" };
     var list = flags.length ? "<ul>" + flags.map(function (f) { return "<li>" + (icon[f.level] || "•") + " " + esc(f.text) + "</li>"; }).join("") + "</ul>" : "";
     if (v.verdict === "DANGER")
-      return { cls: "rk-danger rk-flash", html: '<div class="rh rk-blink">⚠️ ALERT ALERT: RISKY · DO NOT BUY</div>SLAPBOT found serious scam signs on this token. The Buy link is hidden for your protection.' + list + '<div class="rs">Score ' + v.score + "/100 · checked just now</div>" };
+      return { cls: "rk-danger", html: '<div class="rh">⚠️ ALERT ALERT: RISKY · DO NOT BUY</div>SLAPBOT found serious scam signs on this token. The Buy link is hidden for your protection.' + list + '<div class="rs">Score ' + v.score + "/100 · checked just now</div>" };
     if (v.verdict === "RISKY")
-      return { cls: "rk-danger rk-flash", html: '<div class="rh rk-blink">⚠️ ALERT ALERT: RISKY</div>This token has real red flags. Most people should pass.' + list + '<div class="rs">Score ' + v.score + "/100 · checked just now</div>" };
+      return { cls: "rk-danger", html: '<div class="rh">⚠️ ALERT ALERT: RISKY</div>This token has real red flags. Most people should pass.' + list + '<div class="rs">Score ' + v.score + "/100 · checked just now</div>" };
     if (v.verdict === "UNVERIFIED")
       return { cls: "rk-caution", html: '<div class="rh">⚠️ Can\'t verify: treat as risky</div>SLAPBOT couldn\'t confirm this contract is safe.' + list };
     if (v.verdict === "CAUTION")
@@ -90,13 +90,19 @@
         if (keyOf(scan() || {}) !== k) return;           // user moved on to another token
         verdict = { key: k, data: d };
         place();
-        if (d.verdict === "DANGER" || d.verdict === "RISKY") screenFlash();
       })
       .catch(function () { lastKey = ""; })                 // try again on the next tick
       .then(function () { busy = false; });
   }
 
+  // $SLAPGOLD's home is the GitHub page now: re-point any old Tokly links on the scanner
+  function fixGoldLinks() {
+    var links = document.querySelectorAll('a[href*="slapitgold.tokly.io"]');
+    for (var i = 0; i < links.length; i++) links[i].href = "https://cryptobizmo2.github.io/SLAPBOT/slapgold.html";
+  }
+
   function start() {
+    fixGoldLinks();
     var view = document.getElementById("tokenView");
     if (view && window.MutationObserver) new MutationObserver(function () { if (verdict) place(); }).observe(view, { childList: true });
     setInterval(check, 800);
