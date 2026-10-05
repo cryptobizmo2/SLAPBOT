@@ -59,8 +59,8 @@ h2{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size
 
 /* app */
 .learn{margin-top:22px;border:2px solid var(--ink);border-radius:16px;padding:12px 16px;font-size:14px;font-weight:500}
-.tabs{display:flex;gap:6px;margin:22px 0 14px;background:var(--gold2);border-radius:999px;padding:5px}
-.tab{flex:1;padding:10px 4px;border-radius:999px;font-weight:800;font-size:13.5px}
+.tabs{display:flex;gap:4px;margin:22px 0 14px;background:var(--gold2);border-radius:999px;padding:5px;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;padding:10px 11px;border-radius:999px;font-weight:800;font-size:13.5px;white-space:nowrap}
 .tab[aria-selected="true"]{background:var(--ink);color:var(--gold)}
 .list{display:grid;gap:10px}
 .row{background:var(--gold2);border:2px solid var(--ink);border-radius:18px;padding:14px 16px}
@@ -150,6 +150,16 @@ footer a{font-weight:700;color:var(--ink)}
 .tok{color:inherit;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:800}
 .tok::after{content:" ↗";font-size:.8em;text-decoration:none;display:inline-block}
 .al .tok{color:var(--gold)}.dc .tok{color:#FF6B7D}
+.er{background:var(--gold2);border:2px solid var(--ink);border-radius:18px;padding:14px 16px;margin-bottom:10px}
+.er.backed{border-color:#0B6B3A;box-shadow:0 0 0 2px rgba(11,107,58,.25) inset}
+.er h3{font-family:var(--display);font-weight:400;font-size:24px;line-height:1.1}
+.er .g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.er .g div{border-top:1.5px solid var(--line);padding-top:5px}
+.er .g small{display:block;font-size:11px;font-weight:700;color:var(--ink2)}
+.er .g b{font-size:14px}
+@media(max-width:420px){.er .g{grid-template-columns:repeat(2,1fr)}}
+.sf{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;margin:8px 6px 0 0}
+.sf.ok{background:#0B6B3A;color:#fff}.sf.bad{background:#A3122A;color:#fff}.sf.mid{background:#B26B00;color:#fff}
 [hidden]{display:none!important}
 .wm{position:fixed;left:50%;top:55%;width:min(78vw,560px);transform:translate(-50%,-50%);pointer-events:none;z-index:0;opacity:.9}
 main,header{position:relative;z-index:1}
@@ -222,9 +232,10 @@ main,header{position:relative;z-index:1}
       <div class="inflow"><h3>WHERE SMART MONEY IS GOING</h3><div id="inflow"><p class="alerts-empty">Waiting for buys…</p></div></div>
     </div>
     <div class="tabs" role="tablist">
-      <button class="tab" role="tab" aria-selected="true" data-tab="top">Top wallets</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="buys">Live trades</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="dont">🚫 Don't chase</button>
+      <button class="tab" role="tab" aria-selected="true" data-tab="top">Top</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="buys">Live</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="early">🌱 Early</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="dont">🚫 Dumping</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="follow">Following</button>
     </div>
     <div class="list" id="list"></div>
@@ -458,10 +469,10 @@ main,header{position:relative;z-index:1}
     pollAlerts();clearInterval(alertTimer);alertTimer=setInterval(pollAlerts,5000);
   }
   async function refresh(){
-    var a=await Promise.all([api('/api/smart/top'),api('/api/smart/feed?follow='+follows.join(','))]);
+    var a=await Promise.all([api('/api/smart/top'),api('/api/smart/feed?follow='+follows.join(',')),api('/api/smart/early?follow='+follows.join(','))]);
     if(a[0]._status===402||a[1]._status===402){clearInterval(timer);loadStatus();return}
     if(a[0]._status===401){localStorage.removeItem('smartSession');location.reload();return}
-    S.top=a[0].wallets||[];S.buys=a[1].buys||[];S.trades=a[1].trades||S.buys;S.dont=a[1].dontChase||[];
+    S.top=a[0].wallets||[];S.buys=a[1].buys||[];S.trades=a[1].trades||S.buys;S.dont=a[1].dontChase||[];S.early=(a[2]&&a[2].tokens)||[];
     render();mergeFlow(S.buys);
   }
   document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){
@@ -506,6 +517,21 @@ main,header{position:relative;z-index:1}
           isDont(b.token)?'<span class="xbad soft">🚫 Other smart wallets are selling this</span>':'')+
       '</div></div>'+acts(b.token,{tx:b.tx,tweet:!sell&&!dont})+'</div>';
   }
+  function ageOf(t){if(!t)return '—';var m=Math.max(0,Math.round((Date.now()-t)/60000));return m<60?m+'m':Math.round(m/60)+'h'}
+  function earlyRow(e){
+    var s=e.safety,flags='';
+    if(s){flags=(s.canPrint?'<span class="sf bad">Creator can print more</span>':'<span class="sf ok">Can\'t print more</span>')+
+      (s.canFreeze?'<span class="sf bad">Creator can freeze wallets</span>':'<span class="sf ok">Can\'t freeze</span>')+
+      (s.top10!=null?'<span class="sf '+(s.top10>=60?'bad':s.top10>=35?'mid':'ok')+'">Top 10 hold '+Math.round(s.top10)+'%</span>':'')}
+    var tot=e.buys+e.sells,bp=tot?Math.round(e.buys/tot*100):null;
+    return '<div class="er'+(e.backed?' backed':'')+'" data-t="'+esc(e.token)+'" data-sym="'+esc(e.sym)+'">'+
+      '<h3>'+tokLink(e.token,e.sym)+'</h3>'+
+      '<p style="font-weight:700;margin-top:4px">'+(e.backed?'🧠 '+e.smartBuyers+' smart wallet'+(e.smartBuyers===1?'':'s')+' in, '+money(e.smartUsd)+' · first smart buy '+ago(e.firstSmartBuy):'🌱 Just launched, real buying, no smart wallet in yet')+'</p>'+
+      (e.smartSelling?'<span class="xbad">🚫 A smart wallet is already selling this</span>':'')+
+      '<div class="g"><div><small>MARKET CAP</small><b>'+money(e.mcap)+'</b></div><div><small>VOLUME 24H</small><b>'+money(e.vol)+'</b></div>'+
+      '<div><small>LIQUIDITY</small><b>'+money(e.liq)+'</b></div><div><small>AGE · BUYS</small><b>'+ageOf(e.createdAt)+(bp!=null?' · '+bp+'%':'')+'</b></div></div>'+
+      flags+'<span class="cafull">'+esc(e.token)+'</span>'+acts(e.token,{tweet:e.backed&&!e.smartSelling&&!(s&&(s.canPrint||s.canFreeze))})+'</div>';
+  }
   function dontRow(d){
     return '<div class="dc" data-t="'+esc(d.token)+'" data-sym="'+esc(d.sym)+'" style="margin-bottom:10px"><h3>🚫 Don\'t chase '+tokLink(d.token,d.sym)+'</h3>'+
       '<p style="margin-top:6px;font-weight:600">'+d.sellers+' smart wallet'+(d.sellers===1?'':'s')+' sold '+money(d.soldUsd)+(d.buyers?' while '+d.buyers+' bought '+money(d.boughtUsd):' and none are buying')+' · last sell '+ago(d.last)+'</p>'+
@@ -517,6 +543,9 @@ main,header{position:relative;z-index:1}
       h=S.top.length?S.top.map(walletRow).join(''):'<p class="empty">SLAPBOT is warming up. The first wallets show up within a few minutes; refresh shortly.</p>';
     }else if(S.tab==='buys'){
       h=(S.trades||[]).length?S.trades.map(tradeRow).join(''):'<p class="empty">No smart or big trades in the last few hours yet. New ones appear here automatically.</p>';
+    }else if(S.tab==='early'){
+      h='<p class="small" style="margin:0 0 10px;font-weight:600">Tiny, young tokens (under a day old, under $150K market cap) that smart wallets are buying, smallest first. This is where the early runs start. It\'s also where most rugs live: check the red flags, and only risk what you can lose.</p>'+
+        ((S.early||[]).length?S.early.map(earlyRow).join(''):'<p class="empty">Nothing early right now. New launches show up here within minutes.</p>');
     }else if(S.tab==='dont'){
       h='<p class="small" style="margin:0 0 10px;font-weight:600">Tokens smart wallets are selling right now, in the last 3 hours. When the smart money is walking out, don\'t be the one walking in.</p>'+
         ((S.dont||[]).length?S.dont.map(dontRow).join(''):'<p class="empty">No smart-money dumps right now. ✅</p>');
