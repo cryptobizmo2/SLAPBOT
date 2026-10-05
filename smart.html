@@ -60,7 +60,7 @@ h2{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size
 /* app */
 .learn{margin-top:22px;border:2px solid var(--ink);border-radius:16px;padding:12px 16px;font-size:14px;font-weight:500}
 .tabs{display:flex;gap:6px;margin:22px 0 14px;background:var(--gold2);border-radius:999px;padding:5px}
-.tab{flex:1;padding:10px 6px;border-radius:999px;font-weight:800;font-size:15px}
+.tab{flex:1;padding:10px 4px;border-radius:999px;font-weight:800;font-size:13.5px}
 .tab[aria-selected="true"]{background:var(--ink);color:var(--gold)}
 .list{display:grid;gap:10px}
 .row{background:var(--gold2);border:2px solid var(--ink);border-radius:18px;padding:14px 16px}
@@ -130,6 +130,23 @@ footer a{font-weight:700;color:var(--ink)}
 .legend{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}
 .legend span{font-size:11.5px;font-weight:700;color:#F4EFE6;display:inline-flex;align-items:center;gap:5px}
 .legend i{width:9px;height:9px;border-radius:50%}
+/* sells, exits, position status */
+.xbad{display:inline-block;background:#A3122A;color:#fff;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;margin-top:6px}
+.xbad.soft{background:transparent;color:#A3122A;border:1.5px solid #A3122A}
+.row.sell{border-color:#A3122A;background:linear-gradient(90deg,rgba(163,18,42,.14),var(--gold2) 60%)}
+.al.sell .what b{color:#FF8C9A}
+.st{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:4px;vertical-align:1px}
+.st.hold{background:#0B6B3A;color:#fff}.st.part{background:#B26B00;color:#fff}.st.sold{background:#A3122A;color:#fff}
+.cafull{display:block;font:600 11.5px ui-monospace,Menlo,monospace;color:var(--ink2);word-break:break-all;margin-top:4px;-webkit-user-select:all;user-select:all}
+.al .cafull{color:#B9AE8E}
+.posx{border-top:1.5px solid var(--line);padding:10px 0}
+.posx .ln{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.posx small{display:block;color:var(--ink2);font-size:12px;margin-top:2px}
+.dc{background:#1A0508;color:#FFD7DD;border:2px solid #A3122A;border-radius:18px;padding:14px 16px}
+.dc h3{font-family:var(--display);font-weight:400;font-size:22px;color:#FF6B7D;line-height:1.1}
+.dc .cafull{color:#E7A5AF}
+.dc .btn-line{border-color:#FF8C9A;color:#FFD7DD}
+.dc .btn-ink{background:#FF6B7D;color:#1A0508}
 [hidden]{display:none!important}
 .wm{position:fixed;left:50%;top:55%;width:min(78vw,560px);transform:translate(-50%,-50%);pointer-events:none;z-index:0;opacity:.9}
 main,header{position:relative;z-index:1}
@@ -184,8 +201,8 @@ main,header{position:relative;z-index:1}
   <section id="vApp" hidden>
     <p class="learn" id="learn">Learning…</p>
     <div class="alertbox">
-      <div class="ah"><h2>Live buys</h2><span class="live"><i></i><span id="liveN">connecting…</span></span></div>
-      <p class="small" style="color:#B9AE8E;margin:6px 0 10px">Buys by top wallets and wallets you follow, seconds after they land. 🔥 means 2+ smart wallets bought the same token in 30 minutes.</p>
+      <div class="ah"><h2>Live trades</h2><span class="live"><i></i><span id="liveN">connecting…</span></span></div>
+      <p class="small" style="color:#B9AE8E;margin:6px 0 10px">Buys and sells by top wallets and wallets you follow, seconds after they land. 🔥 means 2+ smart wallets bought the same token in 30 minutes. 🚫 means smart money is selling: don't chase it.</p>
       <button class="btn btn-ink btn-sm" id="alertOn" type="button">🔔 Turn on sound alerts</button>
       <div id="alertList" style="margin-top:8px"><p class="alerts-empty">Listening… new buys show up here.</p></div>
     </div>
@@ -203,7 +220,8 @@ main,header{position:relative;z-index:1}
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-tab="top">Top wallets</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="buys">Live buys</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="buys">Live trades</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="dont">🚫 Don't chase</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="follow">Following</button>
     </div>
     <div class="list" id="list"></div>
@@ -330,18 +348,23 @@ main,header{position:relative;z-index:1}
   $('alertOn').onclick=function(){alertsOn=!alertsOn;localStorage.setItem('smartAlerts',alertsOn?'1':'0');setAlertBtn();if(alertsOn){beep();toast('Alerts on. Keep this page open.')}};
   setAlertBtn();
   function alertRow(a,isNew){
-    return '<div class="al'+(isNew?' new':'')+'" data-w="'+esc(a.wallet)+'" data-t="'+esc(a.token)+'"><div class="who">'+(a.rank?'#'+a.rank:'★')+'</div><div class="what">'+
-      short(a.wallet)+' bought <b>'+esc(a.sym)+'</b> '+money(a.usd)+(a.stack>1?'<span class="stack">🔥 '+a.stack+' smart wallets in</span>':'')+
-      '<small>'+ago(a.at)+(a.followed?' · you follow':'')+' · '+esc(a.token.slice(0,4))+'…'+esc(a.token.slice(-4))+'</small>'+
+    var sell=a.kind==='sell';
+    return '<div class="al'+(sell?' sell':'')+(isNew?' new':'')+'" data-w="'+esc(a.wallet)+'" data-t="'+esc(a.token)+'" data-sym="'+esc(a.sym)+'"><div class="who">'+(a.rank?'#'+a.rank:'★')+'</div><div class="what">'+
+      short(a.wallet)+(sell?' <b style="color:#FF8C9A">SOLD</b> ':' bought ')+'<b>'+esc(a.sym)+'</b> '+money(a.usd)+
+      (!sell&&a.stack>1?'<span class="stack">🔥 '+a.stack+' smart wallets in</span>':'')+
+      '<small>'+ago(a.at)+(a.followed?' · you follow':'')+(sell&&a.soldPct!=null?' · sold '+a.soldPct+'% of their bag':'')+'</small>'+
+      '<span class="cafull">'+esc(a.token)+'</span>'+
+      (sell?'<span class="xbad">🚫 Smart money is selling. Don\'t chase it.</span>':a.exit?'<span class="xbad">🚫 Sold '+a.exit.soldPct+'% '+ago(a.exit.at)+' · don\'t chase</span>':'')+
       '<div class="acts"><button class="btn btn-ink btn-sm" data-act="ca">Copy CA</button> '+
-      '<a class="btn btn-line btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/?token='+encodeURIComponent(a.token)+'">Scan it</a> '+
-      '<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://jup.ag/swap/SOL-'+encodeURIComponent(a.token)+'">Buy</a></div></div></div>';
+      '<a class="btn btn-line btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/?scan='+encodeURIComponent(a.token)+'">Scan it</a> '+
+      '<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://dexscreener.com/solana/'+encodeURIComponent(a.token)+'">Chart</a>'+
+      (!sell&&!a.exit?' <button class="btn btn-line btn-sm" data-act="tweet">Post on 𝕏</button>':'')+'</div></div></div>';
   }
   async function pollAlerts(){
     var d=await api('/api/smart/alerts?since='+(lastSeen||0)+'&follow='+follows.slice(-25).join(','));
     if(d._status===402||d._status===401)return;
     $('liveN').textContent='live · '+(d.live||0)+' wallets';
-    mergeFlow(d.alerts);
+    mergeFlow((d.alerts||[]).filter(function(x){return x.kind!=='sell'}));
     var fresh=(d.alerts||[]).filter(function(a){return !shown.some(function(s){return s.tx===a.tx})});
     if(fresh.length){
       var first=!lastSeen;
@@ -355,7 +378,7 @@ main,header{position:relative;z-index:1}
       }
     }
   }
-  $('alertList').onclick=function(e){var b=e.target.closest('[data-act=ca]');if(b)copy(b.closest('.al').dataset.t,'Contract address')};
+  $('alertList').onclick=function(e){var b=e.target.closest('[data-act]');if(!b)return;var r=b.closest('.al');if(b.dataset.act==='ca')copy(r.dataset.t,'Contract address');else if(b.dataset.act==='tweet')tweet(r.dataset.t,r.dataset.sym)};
 
   // ── 3D order flow: x = time, height = buy size, depth = wallet rank ──
   var FLOW=[],PAL=['#FF4D5E','#3DDC97','#A979FF','#4FC3FF','#FFB547','#FF7AD9','#9BE15D','#F2C14E'],tokColor={},rotY=-.6,rotX=.42,drag=null,auto=true,pick=null;
@@ -435,43 +458,69 @@ main,header{position:relative;z-index:1}
     var a=await Promise.all([api('/api/smart/top'),api('/api/smart/feed?follow='+follows.join(','))]);
     if(a[0]._status===402||a[1]._status===402){clearInterval(timer);loadStatus();return}
     if(a[0]._status===401){localStorage.removeItem('smartSession');location.reload();return}
-    S.top=a[0].wallets||[];S.buys=a[1].buys||[];render();mergeFlow(S.buys);
+    S.top=a[0].wallets||[];S.buys=a[1].buys||[];S.trades=a[1].trades||S.buys;S.dont=a[1].dontChase||[];
+    render();mergeFlow(S.buys);
   }
   document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){
     S.tab=t.dataset.tab;document.querySelectorAll('.tab').forEach(function(x){x.setAttribute('aria-selected',x===t)});render();
   }});
 
+  function acts(t,opts){
+    opts=opts||{};
+    return '<div class="acts"><button class="btn btn-ink btn-sm" data-act="ca">Copy CA</button>'+
+      '<a class="btn btn-line btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/?scan='+encodeURIComponent(t)+'">Scan it</a>'+
+      '<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://dexscreener.com/solana/'+encodeURIComponent(t)+'">Chart</a>'+
+      (opts.tx?'<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(opts.tx)+'">Explorer</a>':'')+
+      (opts.tweet?'<button class="btn btn-line btn-sm" data-act="tweet">Post on 𝕏</button>':'')+'</div>';
+  }
+  function statusChip(s){return s==='sold all'?'<span class="st sold">sold all</span>':s==='sold part'?'<span class="st part">sold part</span>':'<span class="st hold">holding</span>'}
   function walletRow(r){
     var f=follows.indexOf(r.wallet)>=0;
     return '<div class="row" data-w="'+esc(r.wallet)+'"><div class="top">'+
       '<div class="rank">'+(r.rank?'#'+r.rank:'·')+'</div>'+
-      '<div class="grow"><div class="addr">'+short(r.wallet)+(r.tier==='early'?' <span class="chip lite" style="margin:0">early read</span>':'')+'<small>'+r.winRate+'% wins · '+r.positions+' token'+(r.positions===1?'':'s')+' · active '+ago(r.last)+'</small></div></div>'+
+      '<div class="grow"><div class="addr">'+short(r.wallet)+(r.tier==='early'?' <span class="chip lite" style="margin:0">early read</span>':'')+
+        '<small>'+r.winRate+'% wins · '+r.positions+' token'+(r.positions===1?'':'s')+' · '+(r.holding!=null?r.holding+' still held · ':'')+'active '+ago(r.last)+'</small>'+
+        (r.realized!=null?'<small>Cashed out '+(r.realized>=0?'+':'')+money(r.realized)+' · still in '+money(r.openValue)+'</small>':'')+'</div></div>'+
       '<div class="pnl '+(r.pnl>=0?'up':'down')+'">'+(r.pnl>=0?'+':'')+money(r.pnl)+'<small>'+(r.roi>=0?'+':'')+r.roi+'% return</small></div></div>'+
-      (r.best&&r.best.length?'<div class="chips">'+r.best.map(function(b){return '<span class="chip">'+esc(b.sym)+' '+(b.roi>=0?'+':'')+b.roi+'%</span>'}).join('')+'</div>':'')+
+      (r.best&&r.best.length?'<div class="chips">'+r.best.map(function(b){return '<span class="chip">'+esc(b.sym)+' '+(b.roi>=0?'+':'')+b.roi+'%'+(b.status==='sold all'?' · sold':'')+'</span>'}).join('')+'</div>':'')+
       '<div class="acts"><button class="btn btn-ink btn-sm" data-act="follow">'+(f?'★ Following':'☆ Follow')+'</button>'+
-      '<button class="btn btn-line btn-sm" data-act="detail">'+(S.open[r.wallet]?'Hide':'Details')+'</button>'+
-      '<button class="btn btn-line btn-sm" data-act="copy">Copy</button></div>'+
+      '<button class="btn btn-line btn-sm" data-act="detail">'+(S.open[r.wallet]?'Hide':'Everything')+'</button>'+
+      '<button class="btn btn-line btn-sm" data-act="copy">Copy wallet</button></div>'+
       (S.open[r.wallet]?'<div class="detail" data-detail>Loading…</div>':'')+'</div>';
   }
-  function buyRow(b){
-    return '<div class="row buy" data-w="'+esc(b.wallet)+'" data-t="'+esc(b.token)+'"><div class="top">'+
+  function smartCount(t){var s={};(S.trades||[]).forEach(function(x){if(x.token===t&&x.kind==='buy')s[x.wallet]=1});return Object.keys(s).length}
+  function isDont(t){return (S.dont||[]).some(function(d){return d.token===t})}
+  function tradeRow(b){
+    var sell=b.kind==='sell',dont=!sell&&(b.exit||isDont(b.token));
+    return '<div class="row buy'+(sell?' sell':'')+'" data-w="'+esc(b.wallet)+'" data-t="'+esc(b.token)+'" data-sym="'+esc(b.sym)+'"><div class="top">'+
       '<div class="rank">'+(b.rank?'#'+b.rank:b.big?'🐋':'★')+'</div>'+
-      '<div class="grow"><div class="addr">'+short(b.wallet)+' bought '+esc(b.sym)+'<small>'+money(b.usd)+' · '+ago(b.at)+(b.followed?' · following':'')+(b.big?' · big buy':'')+'</small></div></div></div>'+
-      '<div class="acts"><button class="btn btn-ink btn-sm" data-act="ca">Copy CA</button>'+
-      '<a class="btn btn-line btn-sm" href="https://cryptobizmo2.github.io/SLAPBOT/?token='+encodeURIComponent(b.token)+'">Scan it</a>'+
-      '<a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(b.tx)+'">Explorer</a></div></div>';
+      '<div class="grow"><div class="addr">'+short(b.wallet)+(sell?' <span style="color:#A3122A">SOLD</span> ':' bought ')+esc(b.sym)+
+        '<small>'+money(b.usd)+' · '+ago(b.at)+(b.followed?' · following':'')+(b.big?(sell?' · big sell':' · big buy'):'')+'</small></div>'+
+        '<span class="cafull">'+esc(b.token)+'</span>'+
+        (sell?'<span class="xbad">🚫 Smart money is selling. Don\'t chase it.</span>':
+          b.exit?'<span class="xbad">🚫 They sold '+b.exit.soldPct+'% '+ago(b.exit.at)+' · don\'t chase</span>':
+          isDont(b.token)?'<span class="xbad soft">🚫 Other smart wallets are selling this</span>':'')+
+      '</div></div>'+acts(b.token,{tx:b.tx,tweet:!sell&&!dont})+'</div>';
+  }
+  function dontRow(d){
+    return '<div class="dc" data-t="'+esc(d.token)+'" data-sym="'+esc(d.sym)+'" style="margin-bottom:10px"><h3>🚫 Don\'t chase '+esc(d.sym)+'</h3>'+
+      '<p style="margin-top:6px;font-weight:600">'+d.sellers+' smart wallet'+(d.sellers===1?'':'s')+' sold '+money(d.soldUsd)+(d.buyers?' while '+d.buyers+' bought '+money(d.boughtUsd):' and none are buying')+' · last sell '+ago(d.last)+'</p>'+
+      '<span class="cafull">'+esc(d.token)+'</span>'+acts(d.token)+'</div>';
   }
   function render(){
     var L=$('list'),h='';
     if(S.tab==='top'){
       h=S.top.length?S.top.map(walletRow).join(''):'<p class="empty">SLAPBOT is warming up. The first wallets show up within a few minutes; refresh shortly.</p>';
     }else if(S.tab==='buys'){
-      h=S.buys.length?S.buys.map(buyRow).join(''):'<p class="empty">No big or smart buys in the last few hours yet. New ones appear here automatically.</p>';
+      h=(S.trades||[]).length?S.trades.map(tradeRow).join(''):'<p class="empty">No smart or big trades in the last few hours yet. New ones appear here automatically.</p>';
+    }else if(S.tab==='dont'){
+      h='<p class="small" style="margin:0 0 10px;font-weight:600">Tokens smart wallets are selling right now, in the last 3 hours. When the smart money is walking out, don\'t be the one walking in.</p>'+
+        ((S.dont||[]).length?S.dont.map(dontRow).join(''):'<p class="empty">No smart-money dumps right now. ✅</p>');
     }else{
       if(!follows.length)h='<p class="empty">You\'re not following anyone yet. Tap ☆ Follow on any wallet in Top wallets.</p>';
       else{
-        var mine=S.buys.filter(function(b){return follows.indexOf(b.wallet)>=0});
-        h='<h2 style="margin:6px 0 10px">Their latest buys</h2>'+(mine.length?mine.map(buyRow).join(''):'<p class="empty">No buys from wallets you follow in the last 6 hours.</p>')+
+        var mine=(S.trades||[]).filter(function(b){return follows.indexOf(b.wallet)>=0});
+        h='<h2 style="margin:6px 0 10px">Their latest trades</h2>'+(mine.length?mine.map(tradeRow).join(''):'<p class="empty">No trades from wallets you follow in the last 6 hours.</p>')+
           '<h2 style="margin:22px 0 10px">Wallets you follow</h2>'+follows.map(function(w){
             var r=S.top.find(function(x){return x.wallet===w})||{wallet:w,rank:null,winRate:'—',positions:'—',last:Date.now(),pnl:0,roi:0};
             return walletRow(r)}).join('');
@@ -483,17 +532,34 @@ main,header{position:relative;z-index:1}
   async function loadDetail(w,el){
     var d=await api('/api/smart/wallet/'+encodeURIComponent(w));
     if(!d.known){el.textContent='SLAPBOT hasn\'t seen this wallet trade yet.';return}
-    el.innerHTML='<b>'+d.positions+' tokens tracked · '+d.winRate+'% wins · '+(d.pnl>=0?'+':'')+money(d.pnl)+' on '+money(d.spent)+' spent</b>'+
-      d.list.slice(0,12).map(function(p){return '<div class="pos"><span>'+esc(p.sym)+(p.stillHolding?' <span class="chip lite">holding</span>':'')+'</span><span class="'+(p.pnl>=0?'up':'down')+'"><b>'+(p.pnl>=0?'+':'')+money(p.pnl)+'</b> ('+(p.roi>=0?'+':'')+p.roi+'%)</span></div>'}).join('');
+    el.innerHTML='<span class="cafull" style="font-size:12.5px">'+esc(w)+'</span>'+
+      '<div class="acts"><a class="btn btn-line btn-sm" target="_blank" rel="noopener" href="https://solscan.io/account/'+encodeURIComponent(w)+'">Wallet on Explorer</a></div>'+
+      '<p style="margin-top:10px"><b>'+(d.pnl>=0?'+':'')+money(d.pnl)+'</b> total on '+money(d.spent)+' spent · '+d.winRate+'% wins · '+d.positions+' tokens</p>'+
+      '<p class="small">Cashed out '+(d.realized>=0?'+':'')+money(d.realized)+' · still holding '+money(d.openValue)+' across '+d.holding+' token'+(d.holding===1?'':'s')+'</p>'+
+      d.list.slice(0,20).map(function(p){
+        return '<div class="posx" data-t="'+esc(p.token)+'" data-sym="'+esc(p.sym)+'"><div class="ln"><span><b>'+esc(p.sym)+'</b>'+statusChip(p.status)+'</span>'+
+          '<span class="'+(p.pnl>=0?'up':'down')+'"><b>'+(p.pnl>=0?'+':'')+money(p.pnl)+'</b> ('+(p.roi>=0?'+':'')+p.roi+'%)</span></div>'+
+          '<small>Spent '+money(p.spent)+' · got back '+money(p.gotBack)+' · still worth '+money(p.stillWorth)+'</small>'+
+          '<small>Bought '+ago(p.lastBuy)+(p.lastSell?' · sold '+p.soldPct+'% · last sell '+ago(p.lastSell):' · hasn\'t sold')+'</small>'+
+          '<span class="cafull">'+esc(p.token)+'</span>'+acts(p.token)+'</div>';
+      }).join('');
+  }
+  function tweet(t,sym){
+    var n=smartCount(t),stack=n>1;
+    var text='🖐 SLAPBOT smart-money pick: $'+String(sym||'').replace(/^\$/,'')+'\n'+
+      (n?n+' smart wallet'+(n===1?'':'s')+' bought in the last 6 hours'+(stack?' 🔥':''):'Spotted by SLAPBOT\'s wallet tracker')+'\n'+
+      'CA: '+t+'\nScan it free before you buy: https://cryptobizmo2.github.io/SLAPBOT/?scan='+t+'\nNot financial advice. #SLAPBOT #Solana';
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text),'_blank','noopener');
   }
   $('list').onclick=function(e){
     var b=e.target.closest('[data-act]');if(!b)return;
-    var row=b.closest('.row'),w=row.dataset.w,act=b.dataset.act;
+    var holder=b.closest('[data-t]'),row=b.closest('.row'),w=row?row.dataset.w:null,act=b.dataset.act;
     if(act==='follow'){var i=follows.indexOf(w);if(i>=0)follows.splice(i,1);else follows.push(w);follows=follows.slice(-50);
-      localStorage.setItem('smartFollow',JSON.stringify(follows));toast(i>=0?'Unfollowed':'Following '+short(w));render();refresh()}
+      localStorage.setItem('smartFollow',JSON.stringify(follows));toast(i>=0?'Unfollowed':'Following');render();refresh()}
     else if(act==='detail'){S.open[w]=!S.open[w];render()}
     else if(act==='copy')copy(w,'Wallet');
-    else if(act==='ca')copy(row.dataset.t,'Contract address');
+    else if(act==='ca'&&holder)copy(holder.dataset.t,'Contract address');
+    else if(act==='tweet'&&holder)tweet(holder.dataset.t,holder.dataset.sym);
   };
 })();
 </script>
