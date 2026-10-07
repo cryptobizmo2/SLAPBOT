@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://slapbot-backend-production.up.railway.app; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MasterPeace</title>
+<meta name="theme-color" content="#07060D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07060D;--panel:#100E1A;--panel2:#171428;--line:rgba(167,139,250,.16);--line2:rgba(167,139,250,.32);
+  --ink:#EEEAF8;--ash:#9A93B5;--dim:#635C7E;--vio:#A78BFA;--mint:#4EF0B5;--gold:#F2C14E;--up:#3DDC97;--down:#FF5A6E;
+  --head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--head);-webkit-text-size-adjust:100%}
+body{background:radial-gradient(80% 50% at 80% -10%,rgba(167,139,250,.18),transparent 60%),radial-gradient(60% 40% at 0% 10%,rgba(78,240,181,.08),transparent 60%),var(--bg);min-height:100vh}
+a{color:inherit}button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+.up{color:var(--up)}.down{color:var(--down)}.ash{color:var(--ash)}
+
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0 16px}
+.logo{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.logo span{background:linear-gradient(90deg,var(--vio),var(--mint));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.badge{font:800 11px var(--mono);letter-spacing:.08em;padding:5px 10px;border-radius:999px;border:1px solid var(--line2)}
+.badge.paper{color:var(--gold);border-color:rgba(242,193,78,.5);background:rgba(242,193,78,.08)}
+.feed{display:inline-flex;align-items:center;gap:6px;font:700 12px var(--mono);color:var(--ash)}
+.feed i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.feed.on i{background:var(--mint);box-shadow:0 0 10px var(--mint);animation:b 1.4s infinite}
+@keyframes b{50%{opacity:.35}}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:700 13px var(--head);padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;text-decoration:none}
+.btn.pri{background:linear-gradient(135deg,var(--vio),#7C5CF0);border-color:transparent;color:#fff}
+.btn.mint{background:var(--mint);color:#04140D;border-color:transparent}
+.btn.warn{border-color:rgba(255,90,110,.5);color:#FFB3BD}
+
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:760px){.cards{grid-template-columns:repeat(5,1fr)}}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:14px}
+.card small{display:block;font:700 10.5px var(--mono);letter-spacing:.06em;color:var(--ash);text-transform:uppercase}
+.card b{display:block;font:800 22px var(--mono);margin-top:6px;font-variant-numeric:tabular-nums}
+.card em{font-style:normal;font:500 11px var(--mono);color:var(--dim)}
+
+.grid{display:grid;gap:12px;margin-top:12px}
+@media(min-width:900px){.grid{grid-template-columns:1.25fr 1fr}}
+.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700}
+.ph span{font:500 11px var(--mono);color:var(--ash)}
+.pb{padding:10px 14px}
+.row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(167,139,250,.08);font:500 12.5px var(--mono)}
+.row:last-child{border-bottom:0}
+.row .s{font:700 14px var(--head)}
+.row .s a{text-decoration:underline;text-underline-offset:3px}
+.row small{display:block;color:var(--ash);font-size:11px;margin-top:2px}
+.row .r{text-align:right;font-weight:800}
+.tag{display:inline-block;font:800 10.5px var(--mono);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.tag.buy{background:rgba(78,240,181,.14);color:var(--mint)}.tag.skip{background:rgba(154,147,181,.12);color:var(--ash)}
+.bar{height:8px;border-radius:999px;background:rgba(167,139,250,.12);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--vio),var(--mint))}
+.empty{color:var(--dim);font:500 12px var(--mono);padding:14px 0;text-align:center}
+
+.set{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.set label{font:700 11px var(--mono);color:var(--ash);letter-spacing:.03em}
+.set input{display:block;width:100%;margin-top:4px;background:#0B0A14;border:1px solid var(--line2);border-radius:10px;padding:9px 10px;font:700 14px var(--mono)}
+.note{font:500 11.5px var(--mono);color:var(--dim);margin-top:10px;line-height:1.55}
+
+.gate{max-width:420px;margin:12vh auto;text-align:center}
+.gate h1{font-size:44px;letter-spacing:-.03em}
+.gate input{width:100%;margin:18px 0 10px;background:#0B0A14;border:1px solid var(--line2);border-radius:12px;padding:13px 14px;font:700 16px var(--mono);text-align:center}
+.msg{min-height:1.4em;font:700 13px var(--mono);color:var(--down);margin-top:8px}
+footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px 0 40px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="gate" id="gate">
+    <h1 class="logo">Master<span>Peace</span></h1>
+    <p class="ash" style="margin-top:6px">Private launch sniper. Owner only.</p>
+    <input id="code" type="password" autocomplete="current-password" placeholder="Owner code">
+    <button class="btn pri" id="go" type="button" style="width:100%">Unlock</button>
+    <p class="msg" id="gmsg" role="status"></p>
+  </section>
+
+  <main id="app" hidden>
+    <header>
+      <div class="logo">Master<span>Peace</span></div>
+      <span class="badge paper">PAPER MODE · NO REAL MONEY</span>
+      <span class="feed" id="feed"><i></i><span>connecting…</span></span>
+      <span class="sp"></span>
+      <button class="btn" id="toggle" type="button">Pause</button>
+      <button class="btn" id="out" type="button">Lock</button>
+    </header>
+
+    <div class="cards">
+      <div class="card"><small>Launches seen</small><b id="cSeen">—</b><em id="cQueue"></em></div>
+      <div class="card"><small>Paper trades</small><b id="cTrades">—</b><em id="cOpen"></em></div>
+      <div class="card"><small>Win rate</small><b id="cWin">—</b><em id="cBest"></em></div>
+      <div class="card"><small>Paper P&amp;L</small><b id="cPnl">—</b><em id="cPnlUsd"></em></div>
+      <div class="card"><small>Running</small><b id="cUp">—</b><em id="cSol"></em></div>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="ph">Open paper positions <span id="openN"></span></div>
+        <div class="pb" id="open"><p class="empty">Nothing open. MasterPeace buys only what passes every filter.</p></div>
+      </section>
+      <section class="panel">
+        <div class="ph">Why launches were skipped <span>the filters at work</span></div>
+        <div class="pb" id="funnel"><p class="empty">Waiting for launches…</p></div>
+      </section>
+      <section class="panel">
+        <div class="ph">Live decisions <span>every launch it judged</span></div>
+        <div class="pb" id="decisions"><p class="empty">Waiting for launches…</p></div>
+      </section>
+      <section class="panel">
+        <div class="ph">Closed paper trades <span>after fees, tips and slippage</span></div>
+        <div class="pb" id="closed"><p class="empty">No closed trades yet.</p></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph">Rules <span>change anytime, applies to the next launch</span></div>
+        <div class="pb">
+          <div class="set" id="set"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+            <button class="btn mint" id="save" type="button">Save rules</button>
+            <button class="btn warn" id="reset" type="button">Reset paper results</button>
+          </div>
+          <p class="note">Paper mode: MasterPeace watches every new pump.fun launch, waits, runs the filters, and pretends to buy the ones that pass. Results include the pump.fun fee, priority fee, Jito tip and slippage, so they're honest. No key is stored and nothing is ever sent. Live mode comes only after paper results prove the rules.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>MasterPeace · private · built on SLAPBOT's scam checks</footer>
+</div>
+
+<script>
+(function(){
+  var API='https://slapbot-backend-production.up.railway.app';
+  var $=function(id){return document.getElementById(id)};
+  var pass=null,timer=null,state=null;
+  var FIELDS=[['sizeSol','Paper size (SOL)'],['waitSec','Wait before judging (sec)'],['minProgress','Min % bonded by then'],['maxDevPct','Max creator holding %'],
+    ['maxTop10Pct','Max top-10 wallets %'],['maxTop1Pct','Max single wallet %'],['tpPct','Take profit %'],['slPct','Stop loss %'],
+    ['maxHoldMin','Max hold (minutes)'],['maxOpen','Max open positions'],['maxEvalPerMin','Launches judged per minute']];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function api(p,opt){opt=opt||{};opt.headers={'Content-Type':'application/json',Authorization:'Bearer '+pass};
+    return fetch(API+p,opt).then(function(r){return r.json().catch(function(){return{}}).then(function(j){j._s=r.status;return j})})}
+  function ago(t){var s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?s+'s':s<3600?Math.round(s/60)+'m':Math.round(s/3600)+'h'}
+  function scan(m,sym){return '<a href="https://cryptobizmo2.github.io/SLAPBOT/?scan='+encodeURIComponent(m)+'">'+esc(sym||'?')+'</a>'}
+  function sol(n){return (n>=0?'+':'')+(+n).toFixed(4)+' SOL'}
+
+  var saved=null;try{saved=JSON.parse(localStorage.getItem('mpSession')||'null')}catch(e){}
+  if(saved&&saved.exp>Date.now()){pass=saved.pass;start()}
+  $('code').onkeydown=function(e){if(e.key==='Enter')$('go').click()};
+  $('go').onclick=async function(){
+    var c=$('code').value;if(!c)return;this.disabled=true;$('gmsg').textContent='';
+    var r=await fetch(API+'/api/auth/owner',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:c})}).then(function(r){return r.json()}).catch(function(){return{}});
+    $('code').value='';this.disabled=false;
+    if(!r.pass){$('gmsg').textContent=r.error||'Wrong code.';return}
+    pass=r.pass;localStorage.setItem('mpSession',JSON.stringify({pass:pass,exp:Date.now()+11.5*3600e3}));start();
+  };
+  $('out').onclick=function(){localStorage.removeItem('mpSession');location.reload()};
+
+  function start(){$('gate').hidden=true;$('app').hidden=false;load();clearInterval(timer);timer=setInterval(load,5000)}
+  async function load(){
+    var d=await api('/api/mp/state');
+    if(d._s===403||d._s===401){localStorage.removeItem('mpSession');location.reload();return}
+    if(!d.settings)return;state=d;render(d);
+  }
+  function render(d){
+    var f=$('feed');f.className='feed'+(d.on&&d.feed.connected?' on':'');f.querySelector('span').textContent=!d.on?'paused':d.feed.connected?'live · pump.fun':'connecting…';
+    $('toggle').textContent=d.on?'Pause':'Resume';
+    $('cSeen').textContent=d.seen.toLocaleString();$('cQueue').textContent=d.queued+' waiting to be judged';
+    $('cTrades').textContent=d.stats.trades;$('cOpen').textContent=d.open.length+' open';
+    $('cWin').textContent=d.stats.winRate==null?'—':d.stats.winRate+'%';$('cBest').textContent=d.stats.best==null?'':'best '+d.stats.best+'% · worst '+d.stats.worst+'%';
+    $('cPnl').textContent=sol(d.stats.pnlSol);$('cPnl').className=d.stats.pnlSol>=0?'up':'down';$('cPnlUsd').textContent=d.stats.pnlUsd==null?'':'≈ $'+d.stats.pnlUsd;
+    $('cUp').textContent=ago(d.startedAt);$('cSol').textContent=d.solUsd?'SOL $'+Math.round(d.solUsd):'';
+    $('openN').textContent=d.open.length+' / '+d.settings.maxOpen;
+    $('open').innerHTML=d.open.length?d.open.map(function(p){return '<div class="row"><div><div class="s">'+scan(p.mint,p.symbol)+'</div><small>bought at '+(+p.progressAtBuy).toFixed(1)+'% bonded · '+p.ageMin+'m ago · dev '+(p.devPct==null?'?':(+p.devPct).toFixed(1)+'%')+'</small></div><div class="r '+(p.chPct>=0?'up':'down')+'">'+(p.chPct>=0?'+':'')+p.chPct+'%</div></div>'}).join(''):'<p class="empty">Nothing open. MasterPeace buys only what passes every filter.</p>';
+    var sk=Object.keys(d.skips).map(function(k){return [k,d.skips[k]]}).sort(function(a,b){return b[1]-a[1]}),mx=sk.length?sk[0][1]:1;
+    $('funnel').innerHTML=sk.length?sk.slice(0,12).map(function(s){return '<div class="row"><div><div>'+esc(s[0])+'</div><div class="bar"><i style="width:'+Math.max(3,s[1]/mx*100)+'%"></i></div></div><div class="r">'+s[1].toLocaleString()+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
+    $('decisions').innerHTML=d.evaluated.length?d.evaluated.slice(0,25).map(function(e){var buy=e.verdict==='paper buy';return '<div class="row"><div><div class="s">'+scan(e.mint,e.symbol)+'<span class="tag '+(buy?'buy':'skip')+'">'+(buy?'PAPER BUY':'SKIP')+'</span></div><small>'+esc(e.reason)+'</small></div><div class="r ash">'+ago(e.at)+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
+    $('closed').innerHTML=d.closed.length?d.closed.slice(0,25).map(function(c){return '<div class="row"><div><div class="s">'+scan(c.mint,c.symbol)+'</div><small>'+esc(c.why)+' · held '+Math.max(1,Math.round((c.closedAt-c.openedAt)/60000))+'m · '+ago(c.closedAt)+' ago</small></div><div class="r '+(c.pnlSol>=0?'up':'down')+'">'+sol(c.pnlSol)+'<small>'+(c.pnlPct>=0?'+':'')+c.pnlPct+'%</small></div></div>'}).join(''):'<p class="empty">No closed trades yet.</p>';
+    if(!$('set').children.length)$('set').innerHTML=FIELDS.map(function(f){return '<label>'+f[1]+'<input type="number" step="any" inputmode="decimal" data-k="'+f[0]+'" value="'+esc(d.settings[f[0]])+'"></label>'}).join('');
+  }
+  $('save').onclick=async function(){
+    var body={};document.querySelectorAll('#set input').forEach(function(i){body[i.dataset.k]=Number(i.value)});
+    var r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(body)});
+    if(r.ok){$('set').innerHTML='';load();this.textContent='Saved ✓';var b=this;setTimeout(function(){b.textContent='Save rules'},1500)}
+  };
+  $('reset').onclick=async function(){if(!confirm('Clear all paper results and start fresh?'))return;await api('/api/mp/settings',{method:'POST',body:JSON.stringify({reset:true})});load()};
+  $('toggle').onclick=async function(){if(!state)return;await api('/api/mp/settings',{method:'POST',body:JSON.stringify({on:!state.on})});load()};
+})();
+</script>
+</body>
+</html>
