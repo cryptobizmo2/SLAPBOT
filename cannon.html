@@ -193,6 +193,20 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         <div class="pb" id="freport"><p class="empty">Checking what happened to the launches it skipped…</p></div>
       </section>
       <section class="panel" style="grid-column:1/-1">
+        <div class="ph">Your owner code <span>pick one you'll remember</span></div>
+        <div class="pb">
+          <form id="newCodeForm" autocomplete="on" onsubmit="return false">
+            <input type="text" name="username" autocomplete="username" value="the-cannon-owner" class="vh" tabindex="-1" aria-hidden="true">
+            <div class="pw"><input id="newCode" name="password" type="password" autocomplete="new-password" placeholder="New code (12 or more characters)" autocapitalize="off" autocorrect="off" spellcheck="false"
+              style="width:100%;background:#07101E;border:1px solid var(--line2);border-radius:10px;padding:11px 74px 11px 12px;font:600 14px var(--mono);color:var(--ink)">
+              <button type="button" id="newEye" aria-label="Show code">Show</button></div>
+            <button class="btn mint" id="newSave" type="submit">Save my code</button>
+            <p class="msg" id="newMsg" role="status" style="color:var(--mint)"></p>
+          </form>
+          <p class="note">You're signed in with your wallet, so you can set this safely. After you save, your iPhone will offer to store it in Passwords. The old code stops working. Nobody else can change it.</p>
+        </div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
         <div class="ph">Savings wallet <span>where your profit goes</span></div>
         <div class="pb">
           <label class="set" style="display:block"><span style="font:700 11px var(--mono);color:var(--ash)">Your savings wallet address</span>
@@ -339,6 +353,15 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     var body={};document.querySelectorAll('#set input').forEach(function(i){body[i.dataset.k]=Number(i.value)});
     var r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(body)});
     if(r.ok){$('set').innerHTML='';load();this.textContent='Saved ✓';var b=this;setTimeout(function(){b.textContent='Save rules'},1500)}
+  };
+  $('newEye').onclick=function(){var c=$('newCode'),show=c.type==='password';c.type=show?'text':'password';this.textContent=show?'Hide':'Show';c.focus()};
+  $('newCodeForm').onsubmit=async function(e){
+    e.preventDefault();var c=$('newCode').value,m=$('newMsg');m.style.color='var(--ash)';
+    if(c.length<12){m.style.color='var(--down)';m.textContent='Use at least 12 characters.';return false}
+    m.textContent='Saving…';var r=await api('/api/mp/owner-code',{method:'POST',body:JSON.stringify({code:c})});
+    if(r.ok){m.style.color='var(--mint)';m.textContent=r.saved?'Saved ✓ Use this code next time.':'Saved until the next restart (the server has no saved storage).'}
+    else{m.style.color='var(--down)';m.textContent=r.error||'Not saved. Try again.'}
+    return false;
   };
   $('savSave').onclick=async function(){var r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify({savingsWallet:$('savw').value.trim()})});
     this.textContent=r.ok?'Saved ✓':(r.error||'Not saved');var b=this;setTimeout(function(){b.textContent='Save wallet'},1800);load()};
