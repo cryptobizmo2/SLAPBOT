@@ -107,6 +107,11 @@ header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0 16p
 .vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .msg{min-height:1.4em;font:700 13px var(--mono);color:var(--down);margin-top:8px}
 footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px 0 40px}
+.viewer .own{display:none!important}
+.vbadge{display:none;font:800 11px var(--mono);letter-spacing:.08em;padding:5px 10px;border-radius:999px;color:#9FD1FF;border:1px solid rgba(159,209,255,.5);background:rgba(90,169,255,.1)}
+.viewer .vbadge{display:inline-block}
+.sharebox{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.sharebox code{flex:1 1 100%;font:600 11px var(--mono);color:#B7CCE6;word-break:break-all;background:#07101E;border:1px solid var(--line2);border-radius:10px;padding:9px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -142,7 +147,8 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
       <span class="badge paper">PAPER MODE · NO REAL MONEY</span>
       <span class="feed" id="feed"><i></i><span>connecting…</span></span>
       <span class="sp"></span>
-      <button class="btn" id="toggle" type="button">Pause</button>
+      <span class="vbadge">VIEW ONLY</span>
+      <button class="btn own" id="toggle" type="button">Pause</button>
       <button class="btn" id="out" type="button">Lock</button>
     </header>
 
@@ -192,7 +198,20 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         <div class="ph">Did the filters pay off? <span>skipped launches, 30 min later</span></div>
         <div class="pb" id="freport"><p class="empty">Checking what happened to the launches it skipped…</p></div>
       </section>
-      <section class="panel" style="grid-column:1/-1">
+      <section class="panel own" style="grid-column:1/-1">
+        <div class="ph">Share with someone <span>they can watch, not touch</span></div>
+        <div class="pb">
+          <p id="shareStatus" class="note" style="margin-top:0">Sharing is off.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn mint" id="shareMake" type="button">Create share link</button>
+            <button class="btn warn" id="shareOff" type="button" hidden>Turn off the link</button>
+          </div>
+          <div class="sharebox" id="shareBox" hidden><code id="shareLink"></code>
+            <button class="btn" id="shareCopy" type="button">Copy link</button><button class="btn pri" id="shareSend" type="button">Send it…</button></div>
+          <p class="note">Whoever opens the link sees everything live (trades, balance, vault, decisions, rules) but can't change, pause, reset or send anything. Making a new link, or turning it off, locks the old one out right away.</p>
+        </div>
+      </section>
+      <section class="panel own" style="grid-column:1/-1">
         <div class="ph">Your owner code <span>pick one you'll remember</span></div>
         <div class="pb">
           <form id="newCodeForm" autocomplete="on" onsubmit="return false">
@@ -206,7 +225,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
           <p class="note">You're signed in with your wallet, so you can set this safely. After you save, your iPhone will offer to store it in Passwords. The old code stops working. Nobody else can change it.</p>
         </div>
       </section>
-      <section class="panel" style="grid-column:1/-1">
+      <section class="panel own" style="grid-column:1/-1">
         <div class="ph">Savings wallet <span>where your profit goes</span></div>
         <div class="pb">
           <label class="set" style="display:block"><span style="font:700 11px var(--mono);color:var(--ash)">Your savings wallet address</span>
@@ -226,7 +245,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         <div class="ph">Rules <span>change anytime, applies to the next launch</span></div>
         <div class="pb">
           <div class="set" id="set"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <div class="own" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
             <button class="btn mint" id="save" type="button">Save rules</button>
             <button class="btn warn" id="reset" type="button">Reset paper results</button>
           </div>
@@ -266,8 +285,20 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     (navigator.clipboard?navigator.clipboard.writeText(b.dataset.copy):Promise.reject()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1200)},function(){b.textContent='Hold to copy'})});
   function sol(n){return (n>=0?'+':'')+(+n).toFixed(4)+' SOL'}
 
-  var saved=null;try{saved=JSON.parse(localStorage.getItem('mpSession')||'null')}catch(e){}
-  if(saved&&saved.exp>Date.now()){pass=saved.pass;start()}
+  var role='owner';
+  function asViewer(p){pass=p;role='viewer';document.body.classList.add('viewer');start()}
+  var vt=(location.hash.match(/view=([A-Za-z0-9_-]{20,100})/)||[])[1];
+  if(vt){
+    history.replaceState(null,'',location.pathname);
+    fetch(API+'/api/mp/view',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:vt})}).then(function(r){return r.json()}).then(function(r){
+      if(!r.pass){$('gmsg').textContent=r.error||'This link isn\'t valid anymore.';return}
+      localStorage.setItem('cannonView',JSON.stringify({pass:r.pass,exp:Date.now()+6.9*24*3600e3}));asViewer(r.pass)
+    }).catch(function(){$('gmsg').textContent='The server didn\'t answer. Try the link again in a minute.'});
+  } else {
+    var saved=null,sv=null;try{saved=JSON.parse(localStorage.getItem('mpSession')||'null');sv=JSON.parse(localStorage.getItem('cannonView')||'null')}catch(e){}
+    if(saved&&saved.exp>Date.now()){pass=saved.pass;start()}
+    else if(sv&&sv.exp>Date.now())asViewer(sv.pass);
+  }
   function keep(r){
     var life=r.remembered?29.5*24*3600e3:11.5*3600e3;
     pass=r.pass;localStorage.setItem('mpSession',JSON.stringify({pass:pass,exp:Date.now()+life}));start();
@@ -296,17 +327,19 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
       var bytes=sig.signature||sig,bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);
       var r=await fetch(API+'/api/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet:w,signature:btoa(bin),remember:$('remember').checked})}).then(function(r){return r.json()});
       var sh=w.slice(0,4)+'…'+w.slice(-4);
-      if(r.isOwner===false||(r.pass&&!r.isOwner)){$('gmsg').textContent='Phantom signed with '+sh+', which isn\'t your owner wallet (12zv…gGZ7). In Phantom, tap the account name at the top, switch to 12zv…gGZ7, and try again.';b.disabled=false;return}
+      if(r.isOwner===false||(r.pass&&!r.isOwner)){$('gmsg').textContent='Phantom signed with '+sh+', which isn\'t your owner wallet (4t3F…K1CF). In Phantom, tap the account name at the top, switch to 4t3F…K1CF, and try again.';b.disabled=false;return}
       if(!r.pass){$('gmsg').textContent=(r.error?r.error+' ':'')+'(signed with '+sh+'). The server didn\'t confirm it. Try again in a minute.';b.disabled=false;return}
       keep(r);
     }catch(e){$('gmsg').textContent=(e&&e.message)||'Wallet sign-in was cancelled.';b.disabled=false}
   };
-  $('out').onclick=function(){localStorage.removeItem('mpSession');location.reload()};
+  $('out').onclick=function(){localStorage.removeItem(role==='viewer'?'cannonView':'mpSession');location.reload()};
 
   function start(){$('gate').hidden=true;$('app').hidden=false;load();clearInterval(timer);timer=setInterval(load,5000)}
   async function load(){
     var d=await api('/api/mp/state');
-    if(d._s===403||d._s===401){localStorage.removeItem('mpSession');location.reload();return}
+    if(d._s===403||d._s===401){
+      if(role==='viewer'){localStorage.removeItem('cannonView');clearInterval(timer);$('app').hidden=true;$('gate').hidden=false;$('gmsg').textContent=d.error||'This link was turned off. Ask the owner for a new one.';return}
+      localStorage.removeItem('mpSession');location.reload();return}
     if(!d.settings)return;state=d;render(d);
   }
   function render(d){
@@ -349,7 +382,8 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     $('funnel').innerHTML=sk.length?sk.slice(0,12).map(function(s){return '<div class="row"><div><div>'+esc(s[0])+'</div><div class="bar"><i style="width:'+Math.max(3,s[1]/mx*100)+'%"></i></div></div><div class="r">'+s[1].toLocaleString()+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
     $('decisions').innerHTML=d.evaluated.length?d.evaluated.slice(0,25).map(function(e){var buy=e.verdict==='paper buy';return '<div class="row"><div><div class="s">'+tok(e.mint,e.symbol,e.name)+'<span class="tag '+(buy?'buy':'skip')+'">'+(buy?'PAPER BUY':'SKIP')+'</span></div>'+caLine(e.mint)+'<small>'+esc(e.reason)+'</small></div><div class="r ash">'+ago(e.at)+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
     $('closed').innerHTML=d.closed.length?d.closed.slice(0,25).map(function(c){return '<div class="row"><div><div class="s">'+tok(c.mint,c.symbol,c.name)+'</div>'+caLine(c.mint)+'<small>'+esc(c.why)+' · held '+Math.max(1,Math.round((c.closedAt-c.openedAt)/60000))+'m · '+ago(c.closedAt)+' ago</small></div><div class="r '+((c.pnlUsd!=null?c.pnlUsd:c.pnlSol)>=0?'up':'down')+'">'+(c.pnlUsd!=null?(c.pnlUsd>=0?'+':'−')+'$'+Math.abs(c.pnlUsd).toFixed(2):sol(c.pnlSol))+'<small>'+(c.pnlPct>=0?'+':'')+c.pnlPct+'%</small></div></div>'}).join(''):'<p class="empty">No closed trades yet.</p>';
-    if(!$('set').children.length)$('set').innerHTML=FIELDS.map(function(f){return '<label>'+f[1]+'<input type="number" step="any" inputmode="decimal" data-k="'+f[0]+'" value="'+esc(d.settings[f[0]])+'"></label>'}).join('');
+    if(!$('set').children.length)$('set').innerHTML=FIELDS.map(function(f){return '<label>'+f[1]+'<input type="number" step="any" inputmode="decimal" data-k="'+f[0]+'" value="'+esc(d.settings[f[0]])+'"'+(role==='viewer'?' disabled':'')+'></label>'}).join('');
+    if(role==='owner'&&!shareChecked){shareChecked=true;api('/api/mp/share').then(showShare)}
   }
   $('save').onclick=async function(){
     var body={};document.querySelectorAll('#set input').forEach(function(i){body[i.dataset.k]=Number(i.value)});
@@ -365,6 +399,15 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     else{m.style.color='var(--down)';m.textContent=r.error||'Not saved. Try again.'}
     return false;
   };
+  var shareChecked=false;
+  function showShare(r){if(!r||r._s>=400)return;$('shareStatus').textContent=r.on?'Sharing is ON (since '+new Date(r.since).toLocaleString()+'). Anyone with the link can watch.':'Sharing is off.';
+    $('shareOff').hidden=!r.on;$('shareMake').textContent=r.on?'Make a new link (old one stops working)':'Create share link';
+    if(r.token){var link=location.origin+location.pathname+'#view='+r.token;$('shareLink').textContent=link;$('shareBox').hidden=false}
+    if(!r.on)$('shareBox').hidden=true}
+  $('shareMake').onclick=async function(){showShare(await api('/api/mp/share',{method:'POST',body:JSON.stringify({action:'create'})}))};
+  $('shareOff').onclick=async function(){if(!confirm('Turn off the share link? Anyone using it is locked out right away.'))return;showShare(await api('/api/mp/share',{method:'POST',body:JSON.stringify({action:'off'})}))};
+  $('shareCopy').onclick=function(){var t=$('shareLink').textContent,b=this;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy link'},1500)},function(){b.textContent='Hold the link to copy'})};
+  $('shareSend').onclick=function(){var t=$('shareLink').textContent;if(navigator.share)navigator.share({title:'THE CANNON (view only)',text:'Watch THE CANNON live:',url:t}).catch(function(){});else $('shareCopy').click()};
   $('savSave').onclick=async function(){var r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify({savingsWallet:$('savw').value.trim()})});
     this.textContent=r.ok?'Saved ✓':(r.error||'Not saved');var b=this;setTimeout(function(){b.textContent='Save wallet'},1800);load()};
   $('sendNow').onclick=async function(){await api('/api/mp/settings',{method:'POST',body:JSON.stringify({sendVault:true})});this.textContent='Sent ✓';var b=this;setTimeout(function(){b.textContent='Send vault to my wallet now'},1800);load()};
