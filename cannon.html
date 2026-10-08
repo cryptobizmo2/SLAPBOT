@@ -249,7 +249,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     ['maxLossStreak','Pause after this many losses in a row'],['pauseMin','Pause length (minutes)'],['learn','Learn from results (1 = on, 0 = off)'],['learnMin','Trades needed before judging a setup'],
     ['tp1SellPct','At take profit, sell this % (rest rides)'],['trailPct','After +100%: riding part sells if it drops this % from its high'],['moonHoldMin','Riding part max hold (minutes)'],
     ['smartBoost','Bet multiplier when smart money is in'],['favorBoost','Bet multiplier on winning setups'],['maxBetPct','Max bet (% of trading balance)'],
-    ['devExit','Exit instantly if creator dumps (1 = on)'],['trailAt5x','Tighter window once up 5× (%)'],['trailAt10x','Tightest window once up 10× (%)'],['autoSend','Auto-send locked profit to savings (1 = on)'],
+    ['devExit','Exit instantly if creator dumps (1 = on)'],['cashOutMcap','Rug zone: sell everything at this market cap ($, 0 = off)'],['trailAt5x','Tighter window once up 5× (%)'],['trailAt10x','Tightest window once up 10× (%)'],['autoSend','Auto-send locked profit to savings (1 = on)'],
     ['fastLane','Launch Shot: fire at launch (1 = on)'],['fastMaxMcap','Launch Shot: only under this market cap ($)'],['fastBetPct','Launch Shot bet (% of balance)'],
     ['fastMaxPerMin','Launch Shot: max buys per minute'],['fastMaxOpen','Launch Shot: max open at once'],['fastMaxDevPct','Launch Shot: skip if creator bought over (%)'],
     ['fastTimeoutSec','Launch Shot: must lift off within (sec)'],['fastMinGainPct','Launch Shot: lift-off means up at least (%)'],['waitSec','Wait before judging (sec)'],['minProgress','Min % bonded by then'],['maxDevPct','Max creator holding %'],
@@ -290,12 +290,14 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     var b=this;b.disabled=true;$('gmsg').textContent='';
     try{
       var w=(await p.connect()).publicKey.toString();
-      var ch=await fetch(API+'/api/auth/challenge?wallet='+encodeURIComponent(w)).then(function(r){return r.json()});
-      if(!ch.message)throw new Error(ch.error||'Sign-in unavailable');
+      var ch=await fetch(API+'/api/auth/challenge?wallet='+encodeURIComponent(w)).then(function(r){return r.json()}).catch(function(){return {}});
+      if(!ch.message)throw new Error(ch.error||'Your server didn\'t answer, so sign-in can\'t start. The wallet is fine. Try again in a minute.');
       var sig=await p.signMessage(new TextEncoder().encode(ch.message),'utf8');
       var bytes=sig.signature||sig,bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);
       var r=await fetch(API+'/api/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet:w,signature:btoa(bin),remember:$('remember').checked})}).then(function(r){return r.json()});
-      if(!r.pass||!r.isOwner){$('gmsg').textContent='That wallet isn\'t the owner wallet.';b.disabled=false;return}
+      var sh=w.slice(0,4)+'…'+w.slice(-4);
+      if(r.isOwner===false||(r.pass&&!r.isOwner)){$('gmsg').textContent='Phantom signed with '+sh+', which isn\'t your owner wallet (12zv…gGZ7). In Phantom, tap the account name at the top, switch to 12zv…gGZ7, and try again.';b.disabled=false;return}
+      if(!r.pass){$('gmsg').textContent=(r.error?r.error+' ':'')+'(signed with '+sh+'). The server didn\'t confirm it. Try again in a minute.';b.disabled=false;return}
       keep(r);
     }catch(e){$('gmsg').textContent=(e&&e.message)||'Wallet sign-in was cancelled.';b.disabled=false}
   };
@@ -342,7 +344,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     var E=d.events||[];
     $('events').innerHTML=E.length?E.map(function(e){return '<div class="row"><div>'+esc(e.text)+'</div><div class="r ash">'+ago(e.at)+'</div></div>'}).join(''):'<p class="empty">Nothing yet.</p>';
     $('openN').textContent=d.open.length+' / '+d.settings.maxOpen;
-    $('open').innerHTML=d.open.length?d.open.map(function(p){return '<div class="row"><div><div class="s">'+tok(p.mint,p.symbol,p.name)+'</div>'+caLine(p.mint)+'<small>bought at '+(+p.progressAtBuy).toFixed(1)+'% bonded · '+p.ageMin+'m ago · dev '+(p.devPct==null?'?':(+p.devPct).toFixed(1)+'%')+(p.sizeUsd?' · bet $'+(+p.sizeUsd).toFixed(2):'')+'</small>'+(p.phase==='moon'?'<span class="tag buy">🌙 MONEY BACK · RIDING THE REST</span>':'')+((p.boosts||[]).map(function(x){return '<span class="tag skip">⚡ '+esc(x)+'</span>'}).join(''))+'</div><div class="r '+(p.chPct>=0?'up':'down')+'">'+(p.chPct>=0?'+':'')+p.chPct+'%</div></div>'}).join(''):'<p class="empty">Nothing open. THE CANNON only fires at what passes every filter.</p>';
+    $('open').innerHTML=d.open.length?d.open.map(function(p){return '<div class="row"><div><div class="s">'+tok(p.mint,p.symbol,p.name)+'</div>'+caLine(p.mint)+'<small>bought at '+(+p.progressAtBuy).toFixed(1)+'% bonded · '+p.ageMin+'m ago · dev '+(p.devPct==null?'?':(+p.devPct).toFixed(1)+'%')+(p.sizeUsd?' · bet $'+(+p.sizeUsd).toFixed(2):'')+(p.mcapNow?' · cap $'+(p.mcapNow>=1000?(p.mcapNow/1000).toFixed(1)+'K':Math.round(p.mcapNow)):'')+(p.postGrad?' · on the pool':'')+'</small>'+(p.phase==='moon'?'<span class="tag buy">🌙 MONEY BACK · RIDING THE REST</span>':'')+((p.boosts||[]).map(function(x){return '<span class="tag skip">⚡ '+esc(x)+'</span>'}).join(''))+'</div><div class="r '+(p.chPct>=0?'up':'down')+'">'+(p.chPct>=0?'+':'')+p.chPct+'%</div></div>'}).join(''):'<p class="empty">Nothing open. THE CANNON only fires at what passes every filter.</p>';
     var sk=Object.keys(d.skips).map(function(k){return [k,d.skips[k]]}).sort(function(a,b){return b[1]-a[1]}),mx=sk.length?sk[0][1]:1;
     $('funnel').innerHTML=sk.length?sk.slice(0,12).map(function(s){return '<div class="row"><div><div>'+esc(s[0])+'</div><div class="bar"><i style="width:'+Math.max(3,s[1]/mx*100)+'%"></i></div></div><div class="r">'+s[1].toLocaleString()+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
     $('decisions').innerHTML=d.evaluated.length?d.evaluated.slice(0,25).map(function(e){var buy=e.verdict==='paper buy';return '<div class="row"><div><div class="s">'+tok(e.mint,e.symbol,e.name)+'<span class="tag '+(buy?'buy':'skip')+'">'+(buy?'PAPER BUY':'SKIP')+'</span></div>'+caLine(e.mint)+'<small>'+esc(e.reason)+'</small></div><div class="r ash">'+ago(e.at)+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
