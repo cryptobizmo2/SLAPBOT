@@ -181,6 +181,10 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         <div class="ph"><span style="font:inherit;color:inherit">⚡ LIVE: every launch, as it happens</span><span id="pulse">waiting…</span></div>
         <div class="pb" id="tape"><p class="empty">Waiting for launches…</p></div>
       </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🧪 Winner Lab</span><span id="labStat">collecting…</span></div>
+        <div class="pb" id="lab"><p class="empty">Collecting launches…</p></div>
+      </section>
       <section class="panel">
         <div class="ph">Open paper positions <span id="openN"></span></div>
         <div class="pb" id="open"><p class="empty">Nothing open. THE CANNON only fires at what passes every filter.</p></div>
@@ -293,7 +297,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     ['maxLossStreak','Pause after this many losses in a row'],['pauseMin','Pause length (minutes)'],['learn','Learn from results (1 = on, 0 = off)'],['learnMin','Trades needed before judging a setup'],
     ['tp1SellPct','At take profit, sell this % (rest rides)'],['trailPct','After +100%: riding part sells if it drops this % from its high'],['moonHoldMin','Riding part max hold (minutes)'],
     ['smartBoost','Bet multiplier when smart money is in'],['favorBoost','Bet multiplier on winning setups'],['maxBetPct','Max bet (% of trading balance)'],
-    ['devExit','Exit instantly if creator dumps (1 = on)'],['cashOutMcap','Rug zone: sell everything at this market cap ($, 0 = off)'],['trailAt5x','Tighter window once up 5× (%)'],['trailAt10x','Tightest window once up 10× (%)'],['autoSend','Auto-send locked profit to savings (1 = on)'],
+    ['devExit','Exit instantly if creator dumps (1 = on)'],['cashOutMcap','Rug zone: sell everything at this market cap ($, 0 = off)'],['labFilter','Winner Lab: skip launches below the line (1 = on)'],['labMinLift','Winner Lab: the line (1 = an average launch)'],['labBoost','Winner Lab: bet multiplier when it scores 2.5×+'],['trailAt5x','Tighter window once up 5× (%)'],['trailAt10x','Tightest window once up 10× (%)'],['autoSend','Auto-send locked profit to savings (1 = on)'],
     ['fastLane','Launch Shot: fire at launch (1 = on)'],['fastMaxMcap','Launch Shot: only under this market cap ($)'],['fastBetPct','Launch Shot bet (% of balance)'],
     ['fastMaxPerMin','Launch Shot: max buys per minute'],['fastMaxOpen','Launch Shot: max open at once'],['fastMaxDevPct','Launch Shot: skip if creator bought over (%)'],
     ['fastTimeoutSec','Launch Shot: must lift off within (sec)'],['fastMinGainPct','Launch Shot: lift-off means up at least (%)'],['waitSec','Wait before judging (sec)'],['minProgress','Min % bonded by then'],['maxDevPct','Max creator holding %'],
@@ -381,6 +385,19 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
   function render(d){
     var f=$('feed');f.className='feed'+(d.on&&d.feed.connected?' on':'');f.querySelector('span').textContent=!d.on?'paused':d.feed.connected?('live · pump.fun'+(d.feed.lastEventAt?' · last launch '+ago(d.feed.lastEventAt)+' ago · '+(d.feed.perMin||0)+'/min':'')):'connecting…';
     $('pulse').textContent=d.feed.lastEventAt?'last launch '+ago(d.feed.lastEventAt)+' ago · '+(d.feed.perMin||0)+' a minute · PAPER money':'waiting for the first launch…';
+    var LB=d.lab;
+    if(LB){
+      $('labStat').textContent=LB.ready?'✅ steering trading':'learning: '+LB.finished+' / '+LB.readyAt+' finished';
+      var rowsW=(LB.winners||[]).map(function(r){return '<div class="row"><div>'+esc(r.label)+'<small>'+r.wins+' of '+r.n+' became winners</small></div><div class="r up">'+r.lift+'×</div></div>'}).join('');
+      var rowsA=(LB.avoid||[]).map(function(r){return '<div class="row"><div>'+esc(r.label)+'<small>'+r.wins+' of '+r.n+' became winners</small></div><div class="r down">'+r.lift+'×</div></div>'}).join('');
+      var hot=(LB.hot||[]).map(function(x){return '<div class="row"><div><div class="s">'+tok(x.mint,x.symbol,x.name)+'</div>'+caLine(x.mint)+'<small>'+x.progress+'% bonded · $'+(x.mcap>=1000?(x.mcap/1000).toFixed(1)+'K':x.mcap)+' · '+(x.social==null?'socials unknown':x.social+' social link'+(x.social===1?'':'s'))+' · '+ago(x.at)+' old</small></div><div class="r '+(x.lift>=1.5?'up':x.lift<0.7?'down':'ash')+'">'+x.lift+'×<small>~'+x.oddsPct+'% odds</small></div></div>'}).join('');
+      $('lab').innerHTML=
+        '<p class="note" style="margin:0 0 8px">Studied <b>'+LB.collected+'</b> launches · <b>'+LB.finished+'</b> finished · <b>'+LB.wins+'</b> winners ('+LB.graduated+' graduated, '+LB.trended+' made the trending list) · a random launch wins <b>'+LB.baselinePct+'%</b> of the time. A winner = graduated, trended, or reached a $100K market cap.</p>'+
+        (LB.starter?'<p class="note" style="margin:0 0 10px;color:var(--gold)">Starting guesses from published research are shown until it has '+LB.readyAt+' finished launches of its own. It does not change your trading until then.</p>':'')+
+        '<div style="font:700 12px var(--mono);color:var(--ash);margin:10px 0 2px">🔥 HOT RIGHT NOW · scored at 90 seconds, before trending</div>'+(hot||'<p class="empty">Waiting for scored launches…</p>')+
+        '<div style="font:700 12px var(--mono);color:var(--ash);margin:14px 0 2px">✅ WINNERS TEND TO HAVE · times more likely than average</div>'+(rowsW||'<p class="empty">Not enough finished launches yet. Check back in a few hours.</p>')+
+        '<div style="font:700 12px var(--mono);color:var(--ash);margin:14px 0 2px">⛔ LOSERS TEND TO HAVE</div>'+(rowsA||'<p class="empty">Not enough finished launches yet.</p>');
+    }
     var T=d.tape||[];
     $('tape').innerHTML=T.length?T.slice(0,25).map(function(t){var st=t.status||'watching',b=st.indexOf('BOUGHT')===0,sk=st.indexOf('skipped')===0;
       var tag=b?'<span class="tag buy">'+esc(st)+'</span>':sk?'<span class="tag skip">SKIPPED</span>':'<span class="tag watch">WATCHING</span>';
@@ -446,9 +463,9 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
   }
 
   var PRESETS={
-    defense:{slots:10,tpPct:60,tp1SellPct:70,slPct:20,trailPct:20,trailAt5x:12,trailAt10x:8,dailyStopPct:15,maxLossStreak:3,pauseMin:180,cashOutMcap:80000,minProgress:8,maxTop10Pct:30,maxTop1Pct:10,maxDevPct:5,fastLane:0,maxHoldMin:20,learn:1},
-    balanced:{slots:10,tpPct:100,tp1SellPct:50,slPct:30,trailPct:25,trailAt5x:15,trailAt10x:10,dailyStopPct:30,maxLossStreak:5,pauseMin:120,cashOutMcap:100000,minProgress:5,maxTop10Pct:35,maxTop1Pct:12,maxDevPct:8,fastLane:1,maxHoldMin:30,learn:1},
-    offense:{slots:6,tpPct:150,tp1SellPct:40,slPct:35,trailPct:30,trailAt5x:18,trailAt10x:12,dailyStopPct:40,maxLossStreak:7,pauseMin:60,cashOutMcap:100000,minProgress:4,maxTop10Pct:40,maxTop1Pct:15,maxDevPct:10,fastLane:1,maxHoldMin:45,learn:1}};
+    defense:{slots:10,tpPct:60,tp1SellPct:70,slPct:20,trailPct:20,trailAt5x:12,trailAt10x:8,dailyStopPct:15,maxLossStreak:3,pauseMin:180,cashOutMcap:80000,minProgress:8,maxTop10Pct:30,maxTop1Pct:10,maxDevPct:5,fastLane:0,maxHoldMin:20,learn:1,labFilter:1,labMinLift:1.2,labBoost:1.5},
+    balanced:{slots:10,tpPct:100,tp1SellPct:50,slPct:30,trailPct:25,trailAt5x:15,trailAt10x:10,dailyStopPct:30,maxLossStreak:5,pauseMin:120,cashOutMcap:100000,minProgress:5,maxTop10Pct:35,maxTop1Pct:12,maxDevPct:8,fastLane:1,maxHoldMin:30,learn:1,labFilter:0,labMinLift:1,labBoost:1.5},
+    offense:{slots:6,tpPct:150,tp1SellPct:40,slPct:35,trailPct:30,trailAt5x:18,trailAt10x:12,dailyStopPct:40,maxLossStreak:7,pauseMin:60,cashOutMcap:100000,minProgress:4,maxTop10Pct:40,maxTop1Pct:15,maxDevPct:10,fastLane:1,maxHoldMin:45,learn:1,labFilter:0,labMinLift:1,labBoost:2}};
   document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=async function(){
     var k=this.dataset.preset,r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(PRESETS[k])});
     $('presetNote').innerHTML=r.ok?'✅ <b>'+k.charAt(0).toUpperCase()+k.slice(1)+'</b> is on. It applies to the next launch. You can still fine-tune any number in Rules below.':'Not saved: '+esc(r.error||'try again');
