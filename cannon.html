@@ -108,6 +108,7 @@ header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0 16p
 .msg{min-height:1.4em;font:700 13px var(--mono);color:var(--down);margin-top:8px}
 footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px 0 40px}
 .viewer .own{display:none!important}
+.tag.watch{background:rgba(242,193,78,.14);color:var(--gold)}
 .vbadge{display:none;font:800 11px var(--mono);letter-spacing:.08em;padding:5px 10px;border-radius:999px;color:#9FD1FF;border:1px solid rgba(159,209,255,.5);background:rgba(90,169,255,.1)}
 .viewer .vbadge{display:inline-block}
 .sharebox{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
@@ -176,6 +177,10 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     </div>
 
     <div class="grid">
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">⚡ LIVE: every launch, as it happens</span><span id="pulse">waiting…</span></div>
+        <div class="pb" id="tape"><p class="empty">Waiting for launches…</p></div>
+      </section>
       <section class="panel">
         <div class="ph">Open paper positions <span id="openN"></span></div>
         <div class="pb" id="open"><p class="empty">Nothing open. THE CANNON only fires at what passes every filter.</p></div>
@@ -249,6 +254,17 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
       <section class="panel" style="grid-column:1/-1">
         <div class="ph">Money moves <span>vault locks, savings, pauses, stops</span></div>
         <div class="pb" id="events"><p class="empty">Nothing yet.</p></div>
+      </section>
+      <section class="panel own" style="grid-column:1/-1">
+        <div class="ph">Autopilot <span>one tap sets the whole strategy</span></div>
+        <div class="pb">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" data-preset="defense" type="button">🛡 Defense</button>
+            <button class="btn mint" data-preset="balanced" type="button">⚖ Balanced</button>
+            <button class="btn" data-preset="offense" type="button">⚔ Offense</button>
+          </div>
+          <p class="note" id="presetNote"><b>Defense:</b> smaller risk. Takes profit earlier, stops sooner, pauses faster, skips the riskiest early buys. <b>Balanced:</b> the default. <b>Offense:</b> bigger swings, lets winners run longer. None of these can remove losses; Defense just keeps them smaller.</p>
+        </div>
       </section>
       <section class="panel" style="grid-column:1/-1">
         <div class="ph">Rules <span>change anytime, applies to the next launch</span></div>
@@ -354,7 +370,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
   };
   $('out').onclick=function(){localStorage.removeItem(role==='viewer'?'cannonView':'mpSession');location.reload()};
 
-  function start(){$('gate').hidden=true;$('app').hidden=false;load();clearInterval(timer);timer=setInterval(load,5000)}
+  function start(){$('gate').hidden=true;$('app').hidden=false;load();clearInterval(timer);timer=setInterval(load,3000)}
   async function load(){
     var d=await api('/api/mp/state');
     if(d._s===403||d._s===401){
@@ -363,7 +379,12 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     if(!d.settings)return;state=d;render(d);
   }
   function render(d){
-    var f=$('feed');f.className='feed'+(d.on&&d.feed.connected?' on':'');f.querySelector('span').textContent=!d.on?'paused':d.feed.connected?'live · pump.fun':'connecting…';
+    var f=$('feed');f.className='feed'+(d.on&&d.feed.connected?' on':'');f.querySelector('span').textContent=!d.on?'paused':d.feed.connected?('live · pump.fun'+(d.feed.lastEventAt?' · last launch '+ago(d.feed.lastEventAt)+' ago · '+(d.feed.perMin||0)+'/min':'')):'connecting…';
+    $('pulse').textContent=d.feed.lastEventAt?'last launch '+ago(d.feed.lastEventAt)+' ago · '+(d.feed.perMin||0)+' a minute · PAPER money':'waiting for the first launch…';
+    var T=d.tape||[];
+    $('tape').innerHTML=T.length?T.slice(0,25).map(function(t){var st=t.status||'watching',b=st.indexOf('BOUGHT')===0,sk=st.indexOf('skipped')===0;
+      var tag=b?'<span class="tag buy">'+esc(st)+'</span>':sk?'<span class="tag skip">SKIPPED</span>':'<span class="tag watch">WATCHING</span>';
+      return '<div class="row"><div><div class="s">'+tok(t.mint,t.symbol,t.name)+' '+tag+'</div>'+caLine(t.mint)+(sk?'<small>'+esc(st.replace('skipped: ',''))+'</small>':'')+'</div><div class="r ash">'+ago(t.at)+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
     $('toggle').textContent=d.on?'Pause':'Resume';
     $('cSeen').textContent=d.seen.toLocaleString();$('cQueue').textContent=d.queued+' waiting to be judged';
     $('cTrades').textContent=d.stats.trades;$('cOpen').textContent=d.open.length+' open';
@@ -424,6 +445,14 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     };
   }
 
+  var PRESETS={
+    defense:{slots:10,tpPct:60,tp1SellPct:70,slPct:20,trailPct:20,trailAt5x:12,trailAt10x:8,dailyStopPct:15,maxLossStreak:3,pauseMin:180,cashOutMcap:80000,minProgress:8,maxTop10Pct:30,maxTop1Pct:10,maxDevPct:5,fastLane:0,maxHoldMin:20,learn:1},
+    balanced:{slots:10,tpPct:100,tp1SellPct:50,slPct:30,trailPct:25,trailAt5x:15,trailAt10x:10,dailyStopPct:30,maxLossStreak:5,pauseMin:120,cashOutMcap:100000,minProgress:5,maxTop10Pct:35,maxTop1Pct:12,maxDevPct:8,fastLane:1,maxHoldMin:30,learn:1},
+    offense:{slots:6,tpPct:150,tp1SellPct:40,slPct:35,trailPct:30,trailAt5x:18,trailAt10x:12,dailyStopPct:40,maxLossStreak:7,pauseMin:60,cashOutMcap:100000,minProgress:4,maxTop10Pct:40,maxTop1Pct:15,maxDevPct:10,fastLane:1,maxHoldMin:45,learn:1}};
+  document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=async function(){
+    var k=this.dataset.preset,r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(PRESETS[k])});
+    $('presetNote').innerHTML=r.ok?'✅ <b>'+k.charAt(0).toUpperCase()+k.slice(1)+'</b> is on. It applies to the next launch. You can still fine-tune any number in Rules below.':'Not saved: '+esc(r.error||'try again');
+    if(r.ok){$('set').innerHTML='';load()}}});
   var shareChecked=false;
   function showShare(r){if(!r||r._s>=400)return;$('shareStatus').textContent=r.on?'Sharing is ON (since '+new Date(r.since).toLocaleString()+'). Anyone with the link can watch.':'Sharing is off.';
     $('shareOff').hidden=!r.on;$('shareMake').textContent=r.on?'Make a new link (old one stops working)':'Create share link';
