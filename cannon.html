@@ -420,7 +420,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
       $('bVault').textContent=usd(B.vault);$('bSent').textContent=usd(B.sent||0);
       $('bSentTo').textContent=role==='viewer'?'to the owner\'s savings':B.savingsWallet?'to '+B.savingsWallet.slice(0,4)+'…'+B.savingsWallet.slice(-4):'set a wallet below';
       if(!$('savw').value&&B.savingsWallet&&document.activeElement!==$('savw'))$('savw').value=B.savingsWallet;$('bToday').textContent=(B.today>=0?'+':'')+usd(B.today);$('bToday').className=B.today>=0?'up':'down';
-      $('bStatus').innerHTML=B.paused?'<span class="pill off">PAUSED · '+esc(B.paused.why)+'</span>':'<span class="pill on">TRADING</span>';}
+      $('bStatus').innerHTML=B.paused?'<span class="pill off">PAUSED · '+esc(B.paused.why)+'</span> <button class="btn own" data-resume="1" type="button" style="padding:6px 10px;font-size:12px;margin-top:6px">Resume now</button>':'<span class="pill on">TRADING</span>';}
     var SC=d.scorecard;
     if(SC){$('score').innerHTML='<div class="row"><div class="s">'+(SC.readyForLive?'<span class="up">✅ Proven: ready to go live with small money</span>':'<span class="ash">⏳ Not yet: keep paper trading</span>')+
       '</div><div class="r ash">'+SC.trades+' trades · '+(SC.winRate==null?'—':SC.winRate+'% wins')+'</div></div>'+
@@ -470,6 +470,8 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     var k=this.dataset.preset,r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(PRESETS[k])});
     $('presetNote').innerHTML=r.ok?'✅ <b>'+k.charAt(0).toUpperCase()+k.slice(1)+'</b> is on. It applies to the next launch. You can still fine-tune any number in Rules below.':'Not saved: '+esc(r.error||'try again');
     if(r.ok){$('set').innerHTML='';load()}}});
+  document.addEventListener('click',async function(e){if(!e.target.closest('[data-resume]'))return;
+    await api('/api/mp/settings',{method:'POST',body:JSON.stringify({resume:true})});load()});
   var shareChecked=false;
   function showShare(r){if(!r||r._s>=400)return;$('shareStatus').textContent=r.on?'Sharing is ON (since '+new Date(r.since).toLocaleString()+'). Anyone with the link can watch.':'Sharing is off.';
     $('shareOff').hidden=!r.on;$('shareMake').textContent=r.on?'Make a new link (old one stops working)':'Create share link';
