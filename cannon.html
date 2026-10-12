@@ -182,9 +182,58 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         <div class="pb" id="tape"><p class="empty">Waiting for launches…</p></div>
       </section>
       <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">📉 Why you're losing</span><span id="dxStat">checking…</span></div>
+        <div class="pb" id="dx"><p class="empty">Waiting for closed trades…</p></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🧭 The strategy, in plain words</span><span>exactly what it does now</span></div>
+        <div class="pb" id="strat"></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🚀 Momentum watch</span><span id="wStat">—</span></div>
+        <div class="pb" id="watch"><p class="empty">Safe launches wait here until real buying shows up.</p></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🎓 Graduate strategy</span><span id="gStat">—</span></div>
+        <div class="pb" id="grad"><p class="empty">Loading…</p></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">👥 Copy trading</span><span id="cpStat">—</span></div>
+        <div class="pb" id="copy"><p class="empty">Loading…</p></div>
+      </section>
+
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🎓 All launches &amp; graduations</span><span>last 24 hours</span></div>
+        <div class="pb" id="gr"><p class="empty">Counting…</p></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🏆 Top 100 trending: how they got there</span><span id="tStat">—</span></div>
+        <div class="pb" id="top"><p class="empty">Loading…</p></div>
+      </section>
+
+      <section class="panel" style="grid-column:1/-1">
         <div class="ph"><span style="font:inherit;color:inherit">🧪 Winner Lab</span><span id="labStat">collecting…</span></div>
         <div class="pb" id="lab"><p class="empty">Collecting launches…</p></div>
       </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🎯 Sweet Spot</span><span id="swStat">recording…</span></div>
+        <div class="pb"><div id="sweet"><p class="empty">Recording launches…</p></div>
+          <div class="own" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+            <button class="btn mint" id="swApply" type="button">Use the sweet spot now</button>
+            <button class="btn" id="dataDl" type="button">Download all the data (spreadsheet)</button>
+          </div>
+          <p class="note" id="swNote"></p>
+        </div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">🧪 Experiments: same trades, different exits</span><span id="xStat">—</span></div>
+        <div class="pb" id="exp"><p class="empty">Loading…</p></div>
+      </section>
+      <section class="panel" style="grid-column:1/-1">
+        <div class="ph"><span style="font:inherit;color:inherit">▦ Grid trading (its own paper pool)</span><span id="grStat2">—</span></div>
+        <div class="pb" id="grid"><p class="empty">Loading…</p></div>
+      </section>
+
       <section class="panel">
         <div class="ph">Open paper positions <span id="openN"></span></div>
         <div class="pb" id="open"><p class="empty">Nothing open. THE CANNON only fires at what passes every filter.</p></div>
@@ -244,6 +293,31 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         </div>
       </section>
       <section class="panel own" style="grid-column:1/-1">
+        <div class="ph">🔌 Connections <span>faster chain data · Telegram</span></div>
+        <div class="pb">
+          <div style="font:700 12px var(--mono);color:var(--ash);margin-bottom:6px">CHAIN CONNECTION (RPC)</div>
+          <p class="note" id="connRpc" style="margin:0 0 8px">Loading…</p>
+          <input id="rpcUrl" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your Helius address (https://mainnet.helius-rpc.com/?api-key=…)" style="width:100%;background:#07101E;border:1px solid var(--line2);border-radius:10px;padding:10px;font:600 12px var(--mono);color:var(--ink)">
+          <input id="rpcCap" type="number" inputmode="numeric" placeholder="Daily call cap (0 = none). Helius free ≈ 33,000 a day" style="width:100%;margin-top:8px;background:#07101E;border:1px solid var(--line2);border-radius:10px;padding:10px;font:600 12px var(--mono);color:var(--ink)">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn mint" id="rpcSave" type="button">Save chain connection</button><button class="btn" id="rpcReset" type="button">Go back to the free one</button></div>
+          <p class="note" id="rpcMsg"></p>
+          <div style="font:700 12px var(--mono);color:var(--ash);margin:16px 0 6px">TELEGRAM BOT</div>
+          <p class="note" id="connTg" style="margin:0 0 8px">Loading…</p>
+          <input id="tgToken" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your bot token from @BotFather" style="width:100%;background:#07101E;border:1px solid var(--line2);border-radius:10px;padding:10px;font:600 12px var(--mono);color:var(--ink)">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn mint" id="tgSave" type="button">Save bot token</button><button class="btn pri" id="tgCodeBtn" type="button">Make a pairing code</button><button class="btn" id="tgUnpair" type="button">Unpair phones</button><button class="btn warn" id="tgRemove" type="button">Remove bot</button></div>
+          <p class="note" id="tgCode" hidden></p><p class="note" id="tgMsg"></p>
+          <p class="note">Secrets are kept only on your server's disk and are never shown again after you save them. The bot talks only to phones you pair with a one-time code.</p>
+        </div>
+      </section>
+      <section class="panel own" style="grid-column:1/-1">
+        <div class="ph">💵 Move money <span>vault → trading cash</span></div>
+        <div class="pb">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="v2cAmt" type="number" step="any" inputmode="decimal" placeholder="Amount ($)" style="flex:1 1 120px;background:#07101E;border:1px solid var(--line2);border-radius:10px;padding:10px;font:700 14px var(--mono);color:var(--ink)">
+            <button class="btn mint" id="v2c" type="button">Move to trading cash</button><button class="btn" id="v2cAll" type="button">Move all</button></div>
+          <p class="note" id="v2cMsg">Locked profit comes back into the trading pot, so it can work again. (Paper money: nothing real moves.)</p>
+        </div>
+      </section>
+      <section class="panel own" style="grid-column:1/-1">
         <div class="ph">Savings wallet <span>where your profit goes</span></div>
         <div class="pb">
           <label class="set" style="display:block"><span style="font:700 11px var(--mono);color:var(--ash)">Your savings wallet address</span>
@@ -297,7 +371,10 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
     ['maxLossStreak','Pause after this many losses in a row'],['pauseMin','Pause length (minutes)'],['learn','Learn from results (1 = on, 0 = off)'],['learnMin','Trades needed before judging a setup'],
     ['tp1SellPct','At take profit, sell this % (rest rides)'],['trailPct','After +100%: riding part sells if it drops this % from its high'],['moonHoldMin','Riding part max hold (minutes)'],
     ['smartBoost','Bet multiplier when smart money is in'],['favorBoost','Bet multiplier on winning setups'],['maxBetPct','Max bet (% of trading balance)'],
-    ['devExit','Exit instantly if creator dumps (1 = on)'],['cashOutMcap','Rug zone: sell everything at this market cap ($, 0 = off)'],['labFilter','Winner Lab: skip launches below the line (1 = on)'],['labMinLift','Winner Lab: the line (1 = an average launch)'],['labBoost','Winner Lab: bet multiplier when it scores 2.5×+'],['trailAt5x','Tighter window once up 5× (%)'],['trailAt10x','Tightest window once up 10× (%)'],['autoSend','Auto-send locked profit to savings (1 = on)'],
+    ['devExit','Exit instantly if creator dumps (1 = on)'],['cashOutMcap','Rug zone: sell everything at this market cap ($, 0 = off)'],['gradOn','Graduates: buy after graduation (1 = on)'],['gradMinLiq','Graduates: min liquidity ($)'],['gradMinMcap','Graduates: min market cap ($)'],['gradMaxMcap','Graduates: max market cap ($)'],['gradBuys5','Graduates: min buys in 5 min'],['gradBuyShare','Graduates: min buy %'],['gradMinCh5','Graduates: min 5-min change %'],['gradMaxCh5','Graduates: max 5-min change % (not chasing)'],['gradMaxOpen','Graduates: max open at once'],['gradTp','Graduates: take profit %'],['gradTp1Sell','Graduates: sell this % there'],['gradSl','Graduates: stop loss %'],['gradTrail','Graduates: trailing stop %'],['gradHold','Graduates: max hold (min)'],
+    ['copyOn','Copy trading (1 = on)'],['copyTopN','Copy: follow the top N wallets'],['copyMinUsd','Copy: their buy must be at least ($)'],['copyMinWallets','Copy: smart wallets needed'],['copyMaxOpen','Copy: max open at once'],['copyTp','Copy: take profit %'],['copySl','Copy: stop loss %'],['copyTrail','Copy: trailing stop %'],['copyHold','Copy: max hold (min)'],
+    ['gridOn','Grid trading (1 = on)'],['gridStartUsd','Grid: paper pool ($)'],['gridMax','Grid: tokens at once'],['gridLevels','Grid: dip levels'],['gridStepPct','Grid: step %'],['gridMinLiq','Grid: min liquidity ($)'],
+    ['momentum','Momentum entry: buy only when real buying shows up (1 = on)'],['momWindowMin','Momentum: watch each launch this many minutes'],['momBuyers60','Momentum: different buyers in the last minute'],['momBuyShare','Momentum: buys at least this % of trades'],['momNetSol','Momentum: SOL flowing in, last minute'],['momRise2m','Momentum: price up at least this % in 2 min'],['momMaxMcap','Momentum: too late above this market cap ($)'],['autoTune','Auto-tune: adopt the Sweet Spot every 6 h when it proves better (1 = on)'],['labFilter','Winner Lab: skip launches below the line (1 = on)'],['labMinLift','Winner Lab: the line (1 = an average launch)'],['labBoost','Winner Lab: bet multiplier when it scores 2.5×+'],['trailAt5x','Tighter window once up 5× (%)'],['trailAt10x','Tightest window once up 10× (%)'],['autoSend','Auto-send locked profit to savings (1 = on)'],
     ['fastLane','Launch Shot: fire at launch (1 = on)'],['fastMaxMcap','Launch Shot: only under this market cap ($)'],['fastBetPct','Launch Shot bet (% of balance)'],
     ['fastMaxPerMin','Launch Shot: max buys per minute'],['fastMaxOpen','Launch Shot: max open at once'],['fastMaxDevPct','Launch Shot: skip if creator bought over (%)'],
     ['fastTimeoutSec','Launch Shot: must lift off within (sec)'],['fastMinGainPct','Launch Shot: lift-off means up at least (%)'],['waitSec','Wait before judging (sec)'],['minProgress','Min % bonded by then'],['maxDevPct','Max creator holding %'],
@@ -398,6 +475,70 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
         '<div style="font:700 12px var(--mono);color:var(--ash);margin:14px 0 2px">✅ WINNERS TEND TO HAVE · times more likely than average</div>'+(rowsW||'<p class="empty">Not enough finished launches yet. Check back in a few hours.</p>')+
         '<div style="font:700 12px var(--mono);color:var(--ash);margin:14px 0 2px">⛔ LOSERS TEND TO HAVE</div>'+(rowsA||'<p class="empty">Not enough finished launches yet.</p>');
     }
+    var DX=d.diagnosis;
+    if(DX){
+      $('dxStat').textContent=DX.trades+' closed trades'+(DX.winRate!=null?' · '+DX.winRate+'% wins':'');
+      var f=(DX.findings||[]).map(function(x){var col=x.level==='bad'?'down':x.level==='good'?'up':'ash';
+        return '<div class="row"><div><div class="'+col+'" style="font-weight:700">'+(x.level==='bad'?'❌ ':x.level==='good'?'✅ ':'ℹ️ ')+esc(x.text)+'</div>'+(x.fix&&role==='owner'?'<button class="btn mint own" type="button" style="margin-top:8px;padding:7px 12px;font-size:12px" data-fix=\''+esc(JSON.stringify(x.fix))+'\'>Fix it: '+esc(x.fixText)+'</button>':'')+'</div></div>'}).join('');
+      var rs=(DX.reasons||[]).map(function(r){return '<div class="row"><div>'+esc(r.reason)+'<small>'+r.trades+' trades · '+r.wins+' won</small></div><div class="r '+(r.pnlUsd>=0?'up':'down')+'">'+(r.pnlUsd>=0?'+$':'−$')+Math.abs(r.pnlUsd).toFixed(2)+'</div></div>'}).join('');
+      $('dx').innerHTML=f+(DX.avgWinPct!=null?'<p class="note">Average win <b class="up">+'+DX.avgWinPct+'%</b> · average loss <b class="down">'+DX.avgLossPct+'%</b> · winners vs losers <b>'+DX.profitFactor+'×</b> · fees, tips and slippage ≈ <b>$'+DX.feesUsd+'</b> on bets of about $'+DX.avgBetUsd+'</p>':'')+
+        (rs?'<div style="font:700 12px var(--mono);color:var(--ash);margin:12px 0 2px">WHERE THE MONEY WENT, BY HOW EACH TRADE ENDED</div>'+rs:'')+
+        ((DX.types||[]).length?'<div style="font:700 12px var(--mono);color:var(--ash);margin:12px 0 2px">BY WAY OF ENTERING</div>'+DX.types.map(function(t){return '<div class="row"><div>'+esc(t.type)+'<small>'+t.trades+' trades · '+t.wins+' won · avg '+(t.avgPct>=0?'+':'')+t.avgPct+'%</small></div><div class="r '+(t.pnlUsd>=0?'up':'down')+'">'+(t.pnlUsd>=0?'+$':'−$')+Math.abs(t.pnlUsd).toFixed(2)+'</div></div>'}).join(''):'');
+    }
+    if(d.strategy)$('strat').innerHTML=d.strategy.map(function(t){var i=t.indexOf(':');return '<div class="row"><div><b>'+esc(t.slice(0,i))+'</b><small style="font-size:12.5px;line-height:1.5">'+esc(t.slice(i+1))+'</small></div></div>'}).join('');
+    var WT=d.watch||[];$('wStat').textContent=d.settings.momentum?WT.length+' watching':'off (buys at 90s)';
+    var ok=function(v,n){return v>=n?'<b class="up">'+v+'</b>':'<b class="ash">'+v+'</b>'};
+    $('watch').innerHTML=WT.length?WT.map(function(w){var F=w.flow||{},S=d.settings;
+      return '<div class="row"><div><div class="s">'+tok(w.mint,w.symbol,w.name)+'</div>'+caLine(w.mint)+'<small>buyers/min '+ok(F.buyers60||0,S.momBuyers60)+'/'+S.momBuyers60+' · buys '+ok(F.buyShare60||0,S.momBuyShare)+'%/'+S.momBuyShare+'% · SOL in '+ok(F.net60||0,S.momNetSol)+'/'+S.momNetSol+' · 2-min '+ok(F.rise2m||0,S.momRise2m)+'%/'+S.momRise2m+'%</small></div><div class="r ash">'+w.leftSec+'s<small>left</small></div></div>'}).join(''):'<p class="empty">'+(d.settings.momentum?'Safe launches wait here until real buying shows up.':'Momentum entry is off: it buys right at 90 seconds.')+'</p>';
+    var G=d.grads;
+    if(G){$('gr').innerHTML='<p class="note" style="margin:0 0 8px"><b>'+G.launches24h.toLocaleString()+'</b> launches · <b>'+G.grads24h+'</b> graduated · rate <b>'+(G.gradRatePct==null?'—':G.gradRatePct+'%')+'</b> · median time to graduate <b>'+(G.medianMinsToGrad==null?'—':G.medianMinsToGrad+' min')+'</b>'+(G.fastestMins!=null?' · fastest '+G.fastestMins+' min':'')+(G.bestHourUtc!=null?' · best hour <b>'+G.bestHourUtc+':00 UTC</b> ('+G.bestHourRatePct+'%)':'')+'</p>'+
+      '<p class="note" style="margin:0 0 8px">Of those graduates, THE CANNON had already judged <b>'+G.gradsJudged+'</b>, scored <b>'+G.gradsScoredHigh+'</b> as hot (1.5×+), and held <b>'+G.gradsHeld+'</b>.</p>'+
+      ((G.recent||[]).length?G.recent.map(function(x){return '<div class="row"><div><div class="s">'+tok(x.mint,x.symbol||'?',x.name)+(x.held?' <span class="tag buy">WE HELD IT</span>':x.judged?' <span class="tag watch">WE SAW IT</span>':' <span class="tag skip">MISSED</span>')+'</div>'+caLine(x.mint)+'<small>'+(x.mins!=null?'graduated '+x.mins+' min after launch':'launched before the bot was watching')+(x.lift!=null?' · lab score '+x.lift+'×':'')+'</small></div><div class="r ash">'+ago(x.at)+'</div></div>'}).join(''):'<p class="empty">No graduations in the last 24 hours yet.</p>');}
+
+    var sg=function(n){return (n<0?'−$':'+$')+Math.abs(+n||0).toFixed(2)},kf=function(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(Math.round(n||0))};
+    var GPv=d.graduate;
+    if(GPv){$('gStat').textContent=GPv.on?GPv.trades+' trades · '+sg(GPv.pnlUsd)+(GPv.open?' · '+GPv.open+' open':''):'off';
+      $('grad').innerHTML=(GPv.watching.length?GPv.watching.map(function(w){return '<div class="row"><div><div class="s">'+tok(w.mint,w.sym,'')+'</div>'+caLine(w.mint)+'<small>'+(w.liq!=null?'liq $'+kf(w.liq)+' · cap $'+kf(w.mcap)+' · '+w.buys5+' buys/5m · 5m '+w.ch5+'% · ':'')+esc((w.why||[]).join(' · ')||'checking…')+'</small></div><div class="r ash">'+w.leftMin+'m<small>left</small></div></div>'}).join(''):'<p class="empty">'+(GPv.on?'Tokens that graduate wait here until real buying shows up on the trading pool.':'Graduate strategy is off (turn it on in Rules).')+'</p>')+
+        '<p class="note">Buys a graduated token only when: enough liquidity, a healthy market cap, 25+ buys in 5 minutes with 58%+ buys, a rising (but not spiking) price, the creator can\'t print or freeze, and Jupiter confirms a $100 sale goes through. Uses its own tighter exits.</p>'}
+    var CPv=d.copy;
+    if(CPv){$('cpStat').textContent=CPv.on?CPv.trades+' trades · '+sg(CPv.pnlUsd)+(CPv.open?' · '+CPv.open+' open':''):'off';
+      $('copy').innerHTML='<p class="note" style="margin:0">'+(CPv.on?'ON: when a top Smart Wallet buys $150+ of a token that passes our own safety checks, we paper-buy it, and sell when that wallet sells.':'OFF. Turn it on in Rules (or tap ⚔ Offense). Smart Wallets must have proven themselves first.')+'</p>'+
+        (CPv.trades?'<div class="row"><div>Copied trades<small>'+CPv.wins+' won of '+CPv.trades+' · average '+(CPv.avgPct>=0?'+':'')+CPv.avgPct+'%</small></div><div class="r '+(CPv.pnlUsd>=0?'up':'down')+'">'+sg(CPv.pnlUsd)+'</div></div>':'')+
+        ((CPv.skips||[]).length?'<div style="font:700 12px var(--mono);color:var(--ash);margin:10px 0 2px">WHY IT PASSED ON SOME</div>'+CPv.skips.map(function(s){return '<div class="row"><div>'+esc(s.reason)+'</div><div class="r ash">'+s.n+'</div></div>'}).join(''):'')}
+    var TPv=d.top100;
+    if(TPv){var st=TPv.stats||{};$('tStat').textContent=TPv.count?TPv.count+' tracked now · '+TPv.tracked+' ever':'collecting…';
+      $('top').innerHTML=TPv.count?
+        '<p class="note" style="margin:0 0 8px">New on the list in the last 24h: <b>'+st.newEntries24h+'</b>. A typical newcomer was <b>$'+kf(st.medianMcapAtEntry||0)+'</b> market cap, <b>'+(st.medianAgeMinAtEntry==null?'?':st.medianAgeMinAtEntry+' min')+'</b> old, with <b>'+(st.medianBuyShare==null?'?':st.medianBuyShare+'%')+'</b> buys and <b>$'+kf(st.medianLiqAtEntry||0)+'</b> liquidity. <b>'+(st.pumpPct==null?'?':st.pumpPct+'%')+'</b> came from pump.fun. THE CANNON had already seen <b>'+(st.sawBeforePct==null?'?':st.sawBeforePct+'%')+'</b> of them'+(st.medianLeadMin!=null?' (median <b>'+st.medianLeadMin+' min</b> before they listed)':'')+'.</p>'+
+        '<div style="font:700 12px var(--mono);color:var(--ash);margin:10px 0 2px">🆕 JUST ENTERED THE LIST</div>'+((TPv.entries||[]).map(function(e){return '<div class="row"><div><div class="s">'+tok(e.addr,e.sym,e.name)+'</div>'+caLine(e.addr)+'<small>entered at #'+e.rank+' · cap $'+kf(e.mcap)+' · '+(e.ageMin==null?'age ?':e.ageMin+' min old')+(e.buyShare!=null?' · '+e.buyShare+'% buys':'')+(e.sawBefore?' · <b class="up">we saw it '+e.leadMin+' min earlier</b>'+(e.lift!=null?' (score '+e.lift+'×)':''):' · we hadn\'t seen it')+'</small></div><div class="r ash">'+ago(e.at)+'</div></div>'}).join('')||'<p class="empty">Waiting for newcomers…</p>')+
+        '<div style="font:700 12px var(--mono);color:var(--ash);margin:14px 0 2px">THE LIST RIGHT NOW (top 25)</div>'+TPv.list.slice(0,25).map(function(p){return '<div class="row"><div><div class="s">#'+p.rank+' '+tok(p.addr,p.sym,p.name)+'</div>'+caLine(p.addr)+'<small>cap $'+kf(p.mcap)+' · liq $'+kf(p.liq)+' · '+(p.ageMin==null?'':(p.ageMin<120?p.ageMin+' min':Math.round(p.ageMin/60)+'h')+' old')+(p.pump?' · pump.fun':'')+'</small></div><div class="r '+(p.ch1>=0?'up':'down')+'">'+(p.ch1>=0?'+':'')+p.ch1+'%<small>1h</small></div></div>'}).join('')
+        :'<p class="empty">Recording the top 100 every 5 minutes. The first snapshot lands a minute after the server starts.</p>'}
+    var EXv=d.experiments;
+    if(EXv){$('xStat').textContent=EXv.best?'best so far: '+(EXv.rows.filter(function(r){return r.id===EXv.best})[0]||{}).name:'collecting…';
+      $('exp').innerHTML='<p class="note" style="margin:0 0 6px">Every real entry is also opened as a <b>$100 paper bet</b> under five ways of selling. Same entries, different exits, so the comparison is fair. A "+20%" means +$20 on a $100 bet.</p>'+
+        EXv.rows.map(function(r){var best=r.id===EXv.best;return '<div class="row"><div><div class="s">'+(best?'🏆 ':'')+esc(r.name)+'</div><small>'+r.trades+' trades · '+(r.winRate==null?'—':r.winRate+'% wins')+' · winners vs losers '+r.pf+'× · '+r.open+' open</small></div><div class="r '+((r.avgPct||0)>=0?'up':'down')+'">'+(r.avgPct==null?'—':(r.avgPct>=0?'+':'')+r.avgPct+'%')+'<small>avg per trade</small></div></div>'}).join('')+
+        '<p class="note">Needs 10+ trades per row before a winner is named. The Sweet Spot above can apply the best one for you.</p>'}
+    var GDv=d.grid;
+    if(GDv){$('grStat2').textContent=GDv.on?'pool $'+GDv.cash.toFixed(2)+' + $'+GDv.inLots.toFixed(2)+' in lots · '+sg(GDv.pnlUsd):'off';
+      $('grid').innerHTML='<p class="note" style="margin:0 0 6px">Picks calm, liquid tokens (liquidity $60K+, price barely moving), buys small dips and sells small bounces. Sells everything if the range breaks, liquidity dries up, or 3 hours pass. Its own paper pool, separate from your main money.</p>'+
+        (GDv.trades?'<div class="row"><div>All grid trades<small>'+GDv.trades+' · '+GDv.winRate+'% wins</small></div><div class="r '+(GDv.pnlUsd>=0?'up':'down')+'">'+sg(GDv.pnlUsd)+'</div></div>':'')+
+        (GDv.active.length?GDv.active.map(function(g){return '<div class="row"><div><div class="s">'+tok(g.mint,g.sym,'')+'</div>'+caLine(g.mint)+'<small>'+g.open+'/'+g.levels+' lots open · '+g.rounds+' rounds · centered $'+(+g.center).toPrecision(4)+' · now $'+(+g.last).toPrecision(4)+' · '+g.leftMin+' min left</small></div><div class="r '+(g.pnl>=0?'up':'down')+'">'+sg(g.pnl)+'</div></div>'}).join(''):'<p class="empty">'+(GDv.on?'Looking for a calm, liquid token…':'Grid trading is off (turn it on in Rules).')+'</p>')+
+        ((GDv.done||[]).length?'<div style="font:700 12px var(--mono);color:var(--ash);margin:10px 0 2px">FINISHED</div>'+GDv.done.map(function(g){return '<div class="row"><div>'+esc(g.sym)+'<small>'+g.rounds+' rounds · '+esc(g.status)+'</small></div><div class="r '+(g.pnl>=0?'up':'down')+'">'+sg(g.pnl)+'</div></div>'}).join(''):'')}
+    if(role==='owner'&&!connChecked){connChecked=true;api('/api/mp/connections').then(showConn)}
+    var SW=d.sweet;
+    if(SW){
+      if(!SW.ready){$('swStat').textContent=SW.computing?'working…':'recording '+(SW.usable||0)+' / '+(SW.need||120);
+        $('sweet').innerHTML='<p class="note" style="margin:0">Recording the real price of every launch it judges, every 15 seconds for 45 minutes'+(SW.recording?' ('+SW.recording+' being recorded right now)':'')+'. Once it has '+(SW.need||120)+', it replays them under 400+ rule combinations with every fee counted, and shows you the settings that made money.</p>';}
+      else{
+        var B=SW.best,C=SW.current,st=SW.settings,cell=function(v,s){return '<b class="'+(v>0?'up':'down')+'">'+(v>0?'+':'')+v+(s||'%')+'</b>'};
+        $('swStat').textContent=SW.trustworthy?'✅ proven on both halves':'⚠️ not proven yet';
+        $('sweet').innerHTML='<p class="note" style="margin:0 0 8px">Replayed <b>'+SW.usable+'</b> real launches. To avoid luck, it split them into older and newer halves, dropped each half\'s single best trade, and only trusts settings that made money in <b>both</b>.</p>'+
+          '<div class="row"><div><div class="s">Your current rules</div><small>'+C.trades+' trades · '+C.winRate+'% wins · older half '+(C.olderAvg==null?'—':C.olderAvg+'%')+' · newer half '+(C.newerAvg==null?'—':C.newerAvg+'%')+'</small></div><div class="r">'+cell(C.avgPct)+'<small>avg per trade</small></div></div>'+
+          '<div class="row"><div><div class="s">🎯 Sweet spot</div><small>'+B.trades+' trades · '+B.winRate+'% wins · older half '+(B.olderAvg==null?'—':B.olderAvg+'%')+' · newer half '+(B.newerAvg==null?'—':B.newerAvg+'%')+'</small></div><div class="r">'+cell(B.avgPct)+'<small>avg per trade</small></div></div>'+
+          '<p class="note">Sweet-spot rules: take profit at <b>+'+st.tpPct+'%</b>, sell <b>'+st.tp1SellPct+'%</b> there, stop loss <b>−'+st.slPct+'%</b>, trailing window <b>'+st.trailPct+'%</b>, max hold <b>'+st.maxHoldMin+' min</b>, only buy launches at least <b>'+st.minProgress+'% bonded</b>, top 10 under <b>'+st.maxTop10Pct+'%</b>, creator under <b>'+st.maxDevPct+'%</b>'+(st.labFilter?', Winner Lab line <b>'+st.labMinLift+'×</b>':'')+'.</p>'+
+          '<p class="note">Past results on recorded paths, not a promise. Real fills can be slower than the replay.</p>';
+      }
+      $('swNote').textContent='Auto-tune is '+(d.settings.autoTune?'ON: it adopts the sweet spot by itself every 6 hours, only when it proved better on both halves.':'OFF (turn it on in Rules).');
+    }
     var T=d.tape||[];
     $('tape').innerHTML=T.length?T.slice(0,25).map(function(t){var st=t.status||'watching',b=st.indexOf('BOUGHT')===0,sk=st.indexOf('skipped')===0;
       var tag=b?'<span class="tag buy">'+esc(st)+'</span>':sk?'<span class="tag skip">SKIPPED</span>':'<span class="tag watch">WATCHING</span>';
@@ -434,7 +575,7 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
       return '<div class="row"><div><div>'+esc(x.reason)+'</div><small>'+x.checked+' checked · '+x.wouldLose+' would have lost · '+x.wouldWin+' would have doubled</small></div><div class="r '+(x.verdict==='still checking'?'ash':good?'up':'down')+'">'+esc(x.verdict)+'</div></div>'}).join(''):'<p class="empty">Checking what happened to the launches it skipped…</p>';
     var E=d.events||[];
     $('events').innerHTML=E.length?E.map(function(e){return '<div class="row"><div>'+esc(e.text)+'</div><div class="r ash">'+ago(e.at)+'</div></div>'}).join(''):'<p class="empty">Nothing yet.</p>';
-    $('openN').textContent=d.open.length+' / '+d.settings.maxOpen;
+    $('openN').textContent=d.open.length+' / '+(d.settings.slots>0?d.settings.slots:d.settings.maxOpen);
     $('open').innerHTML=d.open.length?d.open.map(function(p){return '<div class="row"><div><div class="s">'+tok(p.mint,p.symbol,p.name)+'</div>'+caLine(p.mint)+'<small>bought at '+(+p.progressAtBuy).toFixed(1)+'% bonded · '+p.ageMin+'m ago · dev '+(p.devPct==null?'?':(+p.devPct).toFixed(1)+'%')+(p.sizeUsd?' · bet $'+(+p.sizeUsd).toFixed(2):'')+(p.mcapNow?' · cap $'+(p.mcapNow>=1000?(p.mcapNow/1000).toFixed(1)+'K':Math.round(p.mcapNow)):'')+(p.postGrad?' · on the pool':'')+'</small>'+(p.phase==='moon'?'<span class="tag buy">🌙 MONEY BACK · RIDING THE REST</span>':'')+((p.boosts||[]).map(function(x){return '<span class="tag skip">⚡ '+esc(x)+'</span>'}).join(''))+'</div><div class="r '+(p.chPct>=0?'up':'down')+'">'+(p.chPct>=0?'+':'')+p.chPct+'%</div></div>'}).join(''):'<p class="empty">Nothing open. THE CANNON only fires at what passes every filter.</p>';
     var sk=Object.keys(d.skips).map(function(k){return [k,d.skips[k]]}).sort(function(a,b){return b[1]-a[1]}),mx=sk.length?sk[0][1]:1;
     $('funnel').innerHTML=sk.length?sk.slice(0,12).map(function(s){return '<div class="row"><div><div>'+esc(s[0])+'</div><div class="bar"><i style="width:'+Math.max(3,s[1]/mx*100)+'%"></i></div></div><div class="r">'+s[1].toLocaleString()+'</div></div>'}).join(''):'<p class="empty">Waiting for launches…</p>';
@@ -463,15 +604,41 @@ footer{text-align:center;color:var(--dim);font:500 11px var(--mono);padding:24px
   }
 
   var PRESETS={
-    defense:{slots:10,tpPct:60,tp1SellPct:70,slPct:20,trailPct:20,trailAt5x:12,trailAt10x:8,dailyStopPct:15,maxLossStreak:3,pauseMin:180,cashOutMcap:80000,minProgress:8,maxTop10Pct:30,maxTop1Pct:10,maxDevPct:5,fastLane:0,maxHoldMin:20,learn:1,labFilter:1,labMinLift:1.2,labBoost:1.5},
-    balanced:{slots:10,tpPct:100,tp1SellPct:50,slPct:30,trailPct:25,trailAt5x:15,trailAt10x:10,dailyStopPct:30,maxLossStreak:5,pauseMin:120,cashOutMcap:100000,minProgress:5,maxTop10Pct:35,maxTop1Pct:12,maxDevPct:8,fastLane:1,maxHoldMin:30,learn:1,labFilter:0,labMinLift:1,labBoost:1.5},
-    offense:{slots:6,tpPct:150,tp1SellPct:40,slPct:35,trailPct:30,trailAt5x:18,trailAt10x:12,dailyStopPct:40,maxLossStreak:7,pauseMin:60,cashOutMcap:100000,minProgress:4,maxTop10Pct:40,maxTop1Pct:15,maxDevPct:10,fastLane:1,maxHoldMin:45,learn:1,labFilter:0,labMinLift:1,labBoost:2}};
+    defense:{slots:10,tpPct:60,tp1SellPct:70,slPct:20,trailPct:20,trailAt5x:12,trailAt10x:8,dailyStopPct:15,maxLossStreak:3,pauseMin:180,cashOutMcap:80000,minProgress:8,maxTop10Pct:30,maxTop1Pct:10,maxDevPct:5,fastLane:0,maxHoldMin:20,learn:1,labFilter:1,labMinLift:1.2,labBoost:1.5,momentum:1,momBuyers60:10,momBuyShare:65,momNetSol:3,momRise2m:20,momMaxMcap:30000,gradOn:1,gradSl:12,gradMaxOpen:2,copyOn:0},
+    balanced:{slots:10,tpPct:100,tp1SellPct:50,slPct:30,trailPct:25,trailAt5x:15,trailAt10x:10,dailyStopPct:30,maxLossStreak:5,pauseMin:120,cashOutMcap:100000,minProgress:5,maxTop10Pct:35,maxTop1Pct:12,maxDevPct:8,fastLane:0,maxHoldMin:30,learn:1,labFilter:0,labMinLift:1,labBoost:1.5,momentum:1,momBuyers60:8,momBuyShare:60,momNetSol:2,momRise2m:15,momMaxMcap:40000,gradOn:1,gradSl:15,gradMaxOpen:3,copyOn:0},
+    offense:{slots:6,tpPct:150,tp1SellPct:40,slPct:35,trailPct:30,trailAt5x:18,trailAt10x:12,dailyStopPct:40,maxLossStreak:7,pauseMin:60,cashOutMcap:100000,minProgress:4,maxTop10Pct:40,maxTop1Pct:15,maxDevPct:10,fastLane:1,maxHoldMin:45,learn:1,labFilter:0,labMinLift:1,labBoost:2,momentum:1,momBuyers60:6,momBuyShare:55,momNetSol:1.5,momRise2m:10,momMaxMcap:60000,gradOn:1,gradSl:18,gradMaxOpen:4,copyOn:1}};
   document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=async function(){
     var k=this.dataset.preset,r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(PRESETS[k])});
     $('presetNote').innerHTML=r.ok?'✅ <b>'+k.charAt(0).toUpperCase()+k.slice(1)+'</b> is on. It applies to the next launch. You can still fine-tune any number in Rules below.':'Not saved: '+esc(r.error||'try again');
     if(r.ok){$('set').innerHTML='';load()}}});
   document.addEventListener('click',async function(e){if(!e.target.closest('[data-resume]'))return;
     await api('/api/mp/settings',{method:'POST',body:JSON.stringify({resume:true})});load()});
+  $('swApply').onclick=async function(){var b=this;b.disabled=true;var r=await api('/api/mp/sweetspot/apply',{method:'POST',body:'{}'});b.disabled=false;
+    $('swNote').textContent=r.ok?'✅ Sweet spot is on. It applies to the next launch.':(r.error||'Not applied. Try again.');if(r.ok){$('set').innerHTML='';load()}};
+  $('dataDl').onclick=async function(){var b=this;b.textContent='Preparing…';
+    try{var r=await fetch(API+'/api/mp/data.csv',{headers:{Authorization:'Bearer '+pass}});if(!r.ok)throw 0;var bl=await r.blob(),u=URL.createObjectURL(bl),a=document.createElement('a');
+      a.href=u;a.download='the-cannon-data-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);b.textContent='Downloaded ✓'}
+    catch(e){b.textContent='Couldn\'t download. Try again'}setTimeout(function(){b.textContent='Download all the data (spreadsheet)'},2500)};
+  document.addEventListener('click',async function(e){var b=e.target.closest('[data-fix]');if(!b)return;var fx;try{fx=JSON.parse(b.getAttribute('data-fix'))}catch(_){return}
+    b.disabled=true;var r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify(fx)});b.textContent=r.ok?'✅ Fixed. Applies to the next launch.':'Not saved: '+(r.error||'try again');if(r.ok){$('set').innerHTML='';load()}});
+
+  var connChecked=false;
+  function showConn(r){if(!r||r._s>=400||!r.rpc)return;var Rp=r.rpc,Tg=r.telegram;
+    $('connRpc').innerHTML=(Rp.own?'✅ Using <b>your own</b> connection (<b>'+esc(Rp.using)+'</b>)':'Using the free public connection (<b>'+esc(Rp.using)+'</b>). A Helius key makes everything faster.')+'<br>Calls today <b>'+Rp.today.toLocaleString()+'</b>'+(Rp.cap?' of your cap '+Rp.cap.toLocaleString():'')+' · this month <b>'+Rp.month.toLocaleString()+'</b>'+(Rp.capHit?' <b class="down">· cap reached: background research paused, trading continues</b>':'')+(Rp.top.length?'<br><small>busiest: '+Rp.top.map(function(x){return esc(x.m)+' '+x.n}).join(' · ')+'</small>':'');
+    $('connTg').innerHTML=Tg.set?((Tg.on?'✅ Connected to <b>@'+esc(Tg.bot||'your bot')+'</b>':'⚠️ Token saved, but the bot isn\'t answering yet')+' · phones paired: <b>'+Tg.paired+'</b> · alerts '+(Tg.alerts?'on':'off')):'Not set up yet. In Telegram, message <b>@BotFather</b>, send /newbot, and paste the token it gives you here.';
+    if(Tg.code){$('tgCode').hidden=false;$('tgCode').innerHTML='Open Telegram, find your bot, and send this message:<br><b style="font:800 18px var(--mono)">/start '+esc(Tg.code)+'</b><br><small>one-time code, good for 15 minutes</small>'}else $('tgCode').hidden=true}
+  var postConn=async function(body,msgId){var r=await api('/api/mp/connections',{method:'POST',body:JSON.stringify(body)});
+    $(msgId).textContent=r.ok?(r.restart?'✅ Saved. The server is restarting to use it (about 15 seconds), then this page reconnects.':'✅ Saved.'):(r.error||'Not saved. Try again.');
+    if(r.ok){showConn(r);if(r.restart)setTimeout(function(){connChecked=false;load()},16000)}return r};
+  $('rpcSave').onclick=async function(){var v=$('rpcUrl').value.trim(),c=$('rpcCap').value;if(!v&&c==='')return;var b={};if(v)b.rpcUrl=v;if(c!=='')b.rpcDailyCap=Number(c);var r=await postConn(b,'rpcMsg');if(r.ok){$('rpcUrl').value=''}};
+  $('rpcReset').onclick=async function(){if(!confirm('Go back to the free public connection? The server restarts.'))return;await postConn({rpcUrl:''},'rpcMsg')};
+  $('tgSave').onclick=async function(){var v=$('tgToken').value.trim();if(!v)return;var r=await postConn({tgToken:v},'tgMsg');if(r.ok)$('tgToken').value=''};
+  $('tgCodeBtn').onclick=function(){postConn({tgNewCode:true},'tgMsg')};
+  $('tgUnpair').onclick=function(){if(confirm('Unpair all phones?'))postConn({tgUnpair:true},'tgMsg')};
+  $('tgRemove').onclick=function(){if(confirm('Remove the Telegram bot and its token?'))postConn({tgRemove:true},'tgMsg')};
+  var moveCash=async function(all){var v=all?1e9:parseFloat($('v2cAmt').value);if(!(v>0)){$('v2cMsg').textContent='Type an amount first.';return}
+    var r=await api('/api/mp/settings',{method:'POST',body:JSON.stringify({vaultToCash:v})});$('v2cMsg').textContent=r.ok?'✅ Moved. It shows in Trading balance now.':(r.error||'Not moved.');if(r.ok){$('v2cAmt').value='';load()}};
+  $('v2c').onclick=function(){moveCash(false)};$('v2cAll').onclick=function(){moveCash(true)};
   var shareChecked=false;
   function showShare(r){if(!r||r._s>=400)return;$('shareStatus').textContent=r.on?'Sharing is ON (since '+new Date(r.since).toLocaleString()+'). Anyone with the link can watch.':'Sharing is off.';
     $('shareOff').hidden=!r.on;$('shareMake').textContent=r.on?'Make a new link (old one stops working)':'Create share link';
