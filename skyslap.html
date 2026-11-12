@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="BIG MOUF: SKY SLAP — cinematic arcade flight combat. Rule the skies, take the gold.">
-<title>BIG MOUF: SKY SLAP — Final Flight Build 3.3</title>
+<title>BIG MOUF: SKY SLAP — Final Flight Build 3.4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Saira+Condensed:wght@500;600;700;800&display=swap">
@@ -249,6 +249,20 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
 .steer-btn{right:3.4em;width:auto;min-width:3.4em;padding:0 .55em;font-weight:800;font-size:.9em;letter-spacing:.02em}
 .steer-btn.std{color:#9FB4C6}
 .loop-btn[hidden]{display:none}
+.nv-btn{pointer-events:auto;position:absolute;right:1.15em;bottom:10.5em;width:3.4em;height:3.4em;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05em;
+  background:radial-gradient(circle at 40% 32%,#2D5A3A,#122418);border:2px solid rgba(120,255,150,.5);color:#9CFFB0;font-weight:800;box-shadow:0 .25em .6em rgba(0,0,0,.45)}
+.nv-btn svg{width:1.55em;height:1.55em}
+.nv-btn span{font-size:.62em;letter-spacing:.06em;line-height:1}
+.nv-btn.on{background:radial-gradient(circle at 40% 32%,#7CFF9A,#1E8A3E);color:#04200B;border-color:#C6FFD2}
+.nv-btn.hint{animation:nvHint 1.2s ease-in-out infinite}
+@keyframes nvHint{50%{box-shadow:0 0 0 .5em rgba(120,255,150,.32)}}
+.nv-btn[hidden]{display:none}
+.radio{position:absolute;left:.6em;top:7em;max-width:74%;display:flex;gap:.5em;align-items:center;padding:.45em .75em .45em .5em;border-radius:.55em;pointer-events:none;
+  background:rgba(8,16,12,.8);border:1px solid rgba(255,190,60,.55);color:#FFEBC0;font-weight:700;font-size:.84em;line-height:1.22;opacity:0;transform:translateY(-.3em);transition:opacity .2s,transform .2s}
+.radio.show{opacity:1;transform:none}
+.radio svg{width:1.55em;height:1.55em;flex:none;color:var(--signal)}
+.radio b{display:block;font-size:.74em;letter-spacing:.05em;color:var(--signal)}
+@media (prefers-reduced-motion: reduce){.radio{transition:none}.nv-btn.hint{animation:none}}
 .btn.stacked{flex-direction:column;gap:.05em}
 .btn.stacked small{font-size:.72em;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 .ctl{margin-left:auto;display:flex;align-items:center;gap:.45em;font-weight:700;font-size:.9em;color:var(--muted)}
@@ -284,6 +298,8 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
   <symbol id="i-loop" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.6 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M2.6 4.8l2 5.6 5.4-2.3z"/></symbol>
   <symbol id="i-vortex" viewBox="0 0 24 24"><path d="M12 12m-1.2 0a1.2 1.2 0 1 0 2.4 0M12 12c0-3 3.6-4 5.6-2 2.6 2.6.8 7.6-4.6 7.6-4.8 0-7.6-3.6-7.6-6.8C5.4 6.2 9 3 13.4 3.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7z"/></symbol>
+  <symbol id="i-nv" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 9a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v4a4 4 0 0 1-4 4h-1.6l-1.6-2.3a1 1 0 0 0-1.6 0L9.6 17H7a4 4 0 0 1-4-4zm4.5 1a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4zm9 0a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4z"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M8 2h2v4h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1zM8 9v3h8V9zm1 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.6 2L5 13.4h6l-1.2 8.6L19 10.4h-6.2z"/></symbol>
 </svg>
 
@@ -294,6 +310,8 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
     <button id="btnSteer" class="hud-btn steer-btn" aria-label="Switch controls between 360 degree and standard"><span id="steerLbl">360°</span></button>
     <button id="btnPause" class="hud-btn" aria-label="Pause"><svg class="i"><use href="#i-pause"/></svg></button>
     <button id="btnLoop" class="loop-btn" aria-label="Loop: spin 360 degrees and dodge"><svg class="i"><use href="#i-loop"/></svg><span class="cd" id="loopCd"></span></button>
+    <button id="btnNV" class="nv-btn" hidden aria-label="Night vision on or off"><svg class="i"><use href="#i-nv"/></svg><span>NV</span></button>
+    <div id="radio" class="radio" role="status" aria-live="polite"><svg class="i" aria-hidden="true"><use href="#i-radio"/></svg><div><b>Slap Tower</b><span id="radioText"></span></div></div>
     <button id="btnSpecial" class="special" aria-label="Special attack"><svg class="i"><use id="specialIcon" href="#i-bomb"/></svg><span class="count" id="specialCount">2</span></button>
   </div>
 
@@ -400,6 +418,7 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
           <button class="btn" id="btnMusic2">Music on</button>
         </div>
         <div class="toggle-row"><span>Controls</span><div class="seg steer-seg" role="group" aria-label="Controls"><button data-s="360">360°</button><button data-s="classic">Standard</button></div></div>
+        <div class="toggle-row"><span>Radio voice</span><div class="seg voice-seg" role="group" aria-label="Radio voice"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
       </div>
     </div>
   </section>
@@ -419,6 +438,7 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
         <li><span class="tok coin"><svg class="i"><use href="#i-coin"/></svg></span><span>Collect <b>$SLAPGOLD</b> and earn XP. Level up to unlock new jets and weapons in the Hangar.</span></li>
       </ul>
       <div class="toggle-row"><span>Controls</span><div class="seg steer-seg" role="group" aria-label="Controls"><button data-s="360">360°</button><button data-s="classic">Standard</button></div></div>
+      <div class="toggle-row"><span>Radio voice</span><div class="seg voice-seg" role="group" aria-label="Radio voice"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
       <div class="toggle-row"><span>Graphics</span><div class="seg" id="qualitySeg"><button data-q="auto">Auto</button><button data-q="high">Max</button><button data-q="saver">Saver</button></div></div>
       <div class="btn-row two">
         <button class="btn danger" id="btnReset">Erase progress</button>
@@ -475,7 +495,7 @@ function todayKey() { const d = new Date(); return d.getFullYear() + '-' + (d.ge
 const SAVE_KEY = 'rang-flight-save-v1';
 function defaultSave() {
   return { v: 1, coins: 0, plane: 'kestrel', owned: { kestrel: true }, upg: {}, stars: {}, unlocked: 1, best: 0,
-    daily: '', sound: true, music: true, quality: 'auto', q2: true, flown: 0, xp: 0, weapon: 'none', steer: '360', steerChosen: false, seenLoop: false };
+    daily: '', sound: true, music: true, quality: 'auto', q2: true, flown: 0, xp: 0, weapon: 'none', steer: '360', steerChosen: false, seenLoop: false, voice: true, seenNV: false };
 }
 let save = defaultSave();
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) save = Object.assign(defaultSave(), JSON.parse(raw)); } catch (e) { /* no storage: progress lasts this session */ }
@@ -552,6 +572,9 @@ const Sound = (() => {
   const gate = (k, ms) => { const n = performance.now(); if (last[k] && n - last[k] < ms) return false; last[k] = n; return true; };
   const live = () => ac && save.sound;
   const sfx = {
+    radioIn() { if (!live()) return; const t = ac.currentTime; nz(t, 0.16, 0.22, 2800, 1300, 'bandpass', sfxGain); osc(1320, t + 0.03, 0.07, 'square', 0.045, sfxGain); },
+    radioOut() { if (!live()) return; const t = ac.currentTime; osc(1150, t, 0.07, 'square', 0.045, sfxGain); osc(830, t + 0.08, 0.09, 'square', 0.045, sfxGain); nz(t + 0.1, 0.24, 0.16, 2300, 800, 'bandpass', sfxGain); },
+    nv(on) { if (!live()) return; const t = ac.currentTime; osc(on ? 480 : 2300, t, 0.42, 'sine', 0.06, sfxGain, on ? 2600 : 380); nz(t, 0.05, 0.1, 4200, 2400, 'bandpass', sfxGain); },
     shot() { if (live() && gate('shot', 75)) osc(900, ac.currentTime, 0.045, 'square', 0.028, sfxGain, 430); },
     hit() { if (live() && gate('hit', 45)) nz(ac.currentTime, 0.04, 0.07, 7000, 2500, 'highpass', sfxGain); },
     boomS() { if (live() && gate('boomS', 55)) { const t = ac.currentTime; nz(t, 0.38, 0.34, 2400, 120, 'lowpass', sfxGain); } },
@@ -624,9 +647,20 @@ const Sound = (() => {
     seq = SONGS[name] ? { name, song: SONGS[name], i: 0, next: ac.currentTime + 0.08 } : null;
     if (!timer) timer = setInterval(tick, 30);
   }
+  // CB radio: a squelch burst in, a two-tone roger beep out, and a hiss under the voice.
+  function staticBed(dur) {
+    if (!live()) return null;
+    const t = ac.currentTime, s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1900; f.Q.value = 0.8;
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.028, t + 0.08);
+    g.gain.setValueAtTime(0.028, t + dur); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.12);
+    s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t); s.stop(t + dur + 0.2);
+    return { stop() { try { g.gain.cancelScheduledValues(ac.currentTime); g.gain.setTargetAtTime(0.0001, ac.currentTime, 0.03); s.stop(ac.currentTime + 0.15); } catch (e) {} } };
+  }
+  function duck(on) { if (ac && musicGain) musicGain.gain.setTargetAtTime(save.music ? (on ? 0.07 : 0.24) : 0, ac.currentTime, 0.08); }
   function setSound(on) { save.sound = on; if (sfxGain) sfxGain.gain.value = on ? 0.6 : 0; persist(); }
   function setMusic(on) { save.music = on; if (musicGain) musicGain.gain.value = on ? 0.24 : 0; persist(); }
-  return { init, sfx, music, setSound, setMusic };
+  return { init, sfx, music, setSound, setMusic, staticBed, duck };
 })();
 /* =====================================================================
    Art — every sprite is painted once at load, at the screen's resolution.
@@ -1617,7 +1651,7 @@ const LAYER = { shoal: 0, scrub: 0, cinders: 0, wreck: 0, road: 1, wadi: 1, lava
 
 const world = {
   key: 'ocean', th: THEATERS.ocean, seed: 1, s: 0, chunks: new Map(), feats: new Map(), tex: null, glint: null,
-  lightKey: 'day', light: null, cover: [],
+  lightKey: 'day', light: null, cover: [], glows: [],
   set(key, seed, lightKey) { this.key = key; this.th = THEATERS[key]; this.seed = seed; this.s = 0; this.lightKey = lightKey || 'day'; this.light = LIGHTS[this.lightKey]; this.feats.clear(); this.invalidate(); this.cover = []; },
   invalidate() { this.chunks.clear(); this.tex = null; this.glint = null; },
   featuresFor(k) {
@@ -1741,13 +1775,16 @@ const LIGHTS = {
     spec: 0.14, fog: 1.25, glitter: 0.15, facade: [['#BAC4CE', '#3E4852'], ['#B4C6C6', '#33494A'], ['#C6BEB0', '#4A4440']] },
   storm: { key: 'storm', label: 'Storm', sunA: -1.9, sh: [0.18, 0.32], shA: 0.1, grade: ['multiply', 'rgba(132,146,170,.72)'], haze: 'rgba(150,165,186,.12)', desat: 0.42,
     spec: 0.12, fog: 1.45, glitter: 0, rain: true, bolt: true, facade: [['#7E8B99', '#232A33'], ['#7A9090', '#1E2E30'], ['#8C8478', '#2E2A26']] },
+  night: { key: 'night', label: 'Night', night: true, sunA: -1.05, sh: [-0.3, 0.5], shA: 0.12, grade: ['multiply', 'rgba(66,88,148,.86)'], tint: 'rgba(8,16,44,.1)',
+    haze: 'rgba(40,62,112,.1)', desat: 0.5, spec: 0.28, fog: 0.85, glitter: 0.5, facade: [['#5E7294', '#141C2A'], ['#5A747E', '#122024'], ['#6E685C', '#1E1A16']] },
 };
 world.light = LIGHTS.day;
 function missionLight(m, th) {
-  const slot = (m - 1) % 4;
-  if (th === 'storm') return ['overcast', 'storm', 'overcast', 'storm'][slot];
-  if (th === 'ruins') return ['overcast', 'golden', 'storm', 'storm'][slot];
-  return ['day', 'golden', 'overcast', 'storm'][slot];
+  // Each world's four missions get their own mix; every world has one night mission.
+  const MIX = { ocean: ['day', 'golden', 'overcast', 'night'], desert: ['day', 'golden', 'night', 'storm'], arctic: ['day', 'overcast', 'night', 'storm'],
+    volcano: ['golden', 'night', 'overcast', 'storm'], storm: ['overcast', 'storm', 'night', 'storm'], woods: ['day', 'golden', 'night', 'overcast'],
+    city: ['day', 'golden', 'night', 'storm'], ruins: ['overcast', 'golden', 'night', 'storm'] };
+  return (MIX[th] || MIX.ocean)[(m - 1) % 4];
 }
 const VPX = W / 2;
 const vpy = () => H * 0.62;
@@ -1997,6 +2034,14 @@ function drawTower(t, sx, sy, L) {
       ctx.beginPath(); ctx.moveTo(lerp(a[0], ra[0], p0), lerp(a[1], ra[1], p0)); ctx.lineTo(lerp(b[0], rb[0], p0 + 0.06), lerp(b[1], rb[1], p0 + 0.06));
       ctx.lineTo(lerp(b[0], rb[0], Math.min(1, p1 + 0.06)), lerp(b[1], rb[1], Math.min(1, p1 + 0.06))); ctx.lineTo(lerp(a[0], ra[0], p1), lerp(a[1], ra[1], p1)); ctx.closePath(); ctx.fill();
     }
+    if (L.night && !t.steel && world.glows.length < 160) {
+      // Lit office windows at night: picked per tower so they stay put as it scrolls.
+      const rng = mulberry32(((t.ph * 1e6) | 0) + i * 97), floors = clamp(Math.round(t.h / 24), 6, 18), len = Math.hypot(b[0] - a[0], b[1] - a[1]), cols = Math.max(2, Math.round(len / 9));
+      for (let k = 0; k < 7; k++) {
+        const p = (Math.floor(rng() * floors) + 0.5) / floors, q = (Math.floor(rng() * cols) + 0.5) / cols;
+        world.glows.push([lerp(lerp(a[0], b[0], q), lerp(ra[0], rb[0], q), p), lerp(lerp(a[1], b[1], q), lerp(ra[1], rb[1], q), p), rng() < 0.25 ? 1 : 0]);
+      }
+    }
     ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 0.7;
     ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(ra[0], ra[1]); ctx.moveTo(b[0], b[1]); ctx.lineTo(rb[0], rb[1]); ctx.stroke();
   }
@@ -2200,7 +2245,7 @@ Object.assign(world, {
   },
   // Tall things drawn every frame with perspective: towers, bridge pylons, smoke columns.
   draw3D(time) {
-    this.cover.length = 0;
+    this.cover.length = 0; this.glows.length = 0;
     if (!this.th.dyn) return;
     const L = this.light, vis = this.visible(DYN);
     const towers = vis.filter((v) => v[0].t === 'tower' && v[2] > -120 && v[2] < H + 120);
@@ -2212,6 +2257,7 @@ Object.assign(world, {
   },
   // Light sources that should not be darkened by the time-of-day grade.
   drawLights(time) {
+    if (this.light.night) this.drawNightLights(time);
     if (!this.th.dyn) return;
     ctx.globalCompositeOperation = 'lighter';
     for (const [f, x, y] of this.visible(DYN)) {
@@ -2227,6 +2273,24 @@ Object.assign(world, {
         ctx.globalAlpha = 1; ctx.fillStyle = gr;
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a - sp) * len, y + Math.sin(a - sp) * len); ctx.lineTo(x + Math.cos(a + sp) * len, y + Math.sin(a + sp) * len); ctx.closePath(); ctx.fill();
         ctx.drawImage(SPR.glow.c, x - 7, y - 7, 14, 14);
+      }
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  },
+  // Night: city windows and street lamps glow through the dark (drawn after the grade so they stay bright).
+  drawNightLights(time) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (const [x, y, cool] of this.glows) {
+      ctx.fillStyle = cool ? 'rgba(170,215,255,.85)' : 'rgba(255,212,130,.9)'; ctx.fillRect(x - 1.1, y - 0.8, 2.2, 1.6);
+      ctx.globalAlpha = 0.18; ctx.drawImage(SPR.glow.c, x - 5, y - 5, 10, 10); ctx.globalAlpha = 1;
+    }
+    if (this.key === 'city') {
+      for (const ax of AVE) for (let k = 0; k < 9; k++) {
+        const y = ((k * 96 + this.s * 1) % (H + 96)) - 48;
+        for (const sd of [-11, 11]) {
+          ctx.globalAlpha = 0.5; ctx.drawImage(SPR.glow.c, ax + sd - 9, y - 9, 18, 18);
+          ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(255,226,170,.95)'; ctx.fillRect(ax + sd - 0.9, y - 0.9, 1.8, 1.8);
+        }
       }
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -2255,6 +2319,7 @@ Object.assign(world, {
   },
   drawGrade(time) {
     const L = this.light;
+    if (L.night && G.nv && scene === 'game') { nightVision(time); return; }
     if (L.grade) { ctx.globalCompositeOperation = L.grade[0]; ctx.fillStyle = L.grade[1]; ctx.fillRect(-14, -14, W + 28, H + 28); ctx.globalCompositeOperation = 'source-over'; }
     if (L.tint) { ctx.fillStyle = L.tint; ctx.fillRect(-14, -14, W + 28, H + 28); }
     if (L.glow) {
@@ -2274,7 +2339,7 @@ Object.assign(world, {
       }
       ctx.restore();
     }
-    if (this.th.moody || L.key === 'storm') {
+    if (this.th.moody || L.key === 'storm' || L.night) {
       const gr = ctx.createRadialGradient(W / 2, H * 0.55, H * 0.3, W / 2, H * 0.55, H * 0.85);
       gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.45)');
       ctx.fillStyle = gr; ctx.fillRect(-14, -14, W + 28, H + 28);
@@ -2306,6 +2371,31 @@ Object.assign(world, {
     return surf;
   },
 });
+// Night vision: an image-intensifier look. The scene goes grayscale, gets amplified, turns phosphor green,
+// then picks up grain, scanlines and the round edge of the goggle tubes.
+const nvCache = { key: '', c: null };
+function nightVision(time) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = '#808080'; ctx.fillRect(-14, -14, W + 28, H + 28);
+  ctx.globalCompositeOperation = 'color-dodge'; ctx.fillStyle = 'rgb(84,84,84)'; ctx.fillRect(-14, -14, W + 28, H + 28);
+  ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = '#62FF84'; ctx.fillRect(-14, -14, W + 28, H + 28);
+  ctx.globalCompositeOperation = 'source-over';
+  const key = W + '|' + H + '|' + K;
+  if (nvCache.key !== key) {
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(W * K)); c.height = Math.max(1, Math.round(H * K));
+    const g = c.getContext('2d'); g.setTransform(K, 0, 0, K, 0, 0);
+    g.fillStyle = 'rgba(0,18,4,.16)'; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+    const v = g.createRadialGradient(W / 2, H * 0.5, Math.min(W, H) * 0.42, W / 2, H * 0.5, Math.max(W, H) * 0.62);
+    v.addColorStop(0, 'rgba(0,10,2,0)'); v.addColorStop(0.7, 'rgba(0,10,2,.45)'); v.addColorStop(1, 'rgba(0,6,1,.92)');
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+    nvCache.key = key; nvCache.c = c;
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(nvCache.c, 0, 0); ctx.setTransform(K, 0, 0, K, OX * K, OY * K);
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(120,255,150,.22)';
+  const gf = Math.floor(time * 30);
+  for (let i = 0; i < 90; i++) ctx.fillRect(((i * 97.31 + gf * 41.7) % W), ((i * 57.13 + gf * 23.9) % H), 1, 1);
+  ctx.restore();
+}
 function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1, t = clamp(((px - ax) * dx + (py - ay) * dy) / l2, 0, 1);
   return Math.hypot(px - ax - dx * t, py - ay - dy * t);
@@ -2471,7 +2561,7 @@ function blankGame() {
   return { mode: 'mission', m: 1, mi: MISSIONS[0], diff: makeDiff(1), t: 0, time: 0, speed: 40, phase: 'waves', phaseT: 0, prevPhase: 'waves',
     en: [], eb: [], pb: [], parts: [], pick: [], floats: [], timers: [], fx: [], holes: [], wrecks: [], boss: null, score: 0, coins: 0, kills: 0, waveT: 1.6, carrierT: 5, dropsP: 0,
     shake: 0, flash: 0, gold: 0, hurt: 0, timeScale: 1, rng: mulberry32(1), revived: false, god: false, banner: null, nextBoss: 110, bossCount: 0,
-    carpet: null, prime: false, tier: 0, hint: 0, coinVal: 1, diffT: 0, hitTaken: false, banked: false, success: false };
+    carpet: null, prime: false, nv: false, saidLow: false, tier: 0, hint: 0, coinVal: 1, diffT: 0, hitTaken: false, banked: false, success: false };
 }
 G = blankGame();
 const MAXP = () => [320, 520, 720][perfLevel];
@@ -2505,6 +2595,7 @@ function startGame(mode, m) {
   if (PREMIUM.mega) { P.mega = true; P.bombs++; }
   if (mode === 'endless') banner('Endless', 'Survive as long as you can', 2.6);
   else banner('Mission ' + G.m, mi.name + ', ' + world.light.label.toLowerCase(), 2.6);
+  later(2.9, () => Radio.say(world.light.night ? 'night' : mode === 'endless' ? 'endless' : 'start', true));
   scene = 'game';
   Sound.music('battle');
 }
@@ -2802,6 +2893,7 @@ function damageEnemy(e, dmg) {
 }
 function killEnemy(e) {
   e.dead = true; G.kills++;
+  if (G.kills === 10 || G.kills === 25 || G.kills === 50 || G.kills === 100) Radio.say('k' + G.kills);
   G.score += e.d.score * (1 + 0.1 * (G.diff.m - 1));
   if (e.ground) explode(e.x, e.y, e.d.boom, true);
   else {
@@ -2817,6 +2909,7 @@ function killEnemy(e) {
 function hurtPlayer(dmg) {
   if (!P.alive || P.inv > 0 || P.shieldT > 0 || G.god || G.phase === 'clear') return;
   P.hp -= dmg; P.inv = 1.1; P.blink = 1.1; G.hurt = 0.45; G.hitTaken = true;
+  if (!G.saidLow && P.hp > 0 && P.hp / P.maxHp < 0.3) { G.saidLow = true; Radio.say('low', true); }
   if (!REDUCED) G.shake = Math.max(G.shake, 6);
   Sound.sfx.hurt();
   for (let i = 0; i < 8; i++) hitSpark(P.x + rand(-8, 8), P.y + rand(-8, 8));
@@ -2824,6 +2917,7 @@ function hurtPlayer(dmg) {
 }
 function playerDie() {
   P.alive = false; P.hp = 0; P.loopT = 0; P.spin = 0;
+  Radio.say('down', true);
   explode(P.x, P.y, 2.2);
   later(0.25, () => explode(P.x + 14, P.y - 8, 1.2));
   later(0.45, () => explode(P.x - 12, P.y + 10, 1.4));
@@ -2838,7 +2932,7 @@ function damageBoss(b, dmg) {
   const want = f < 0.33 ? Math.min(2, maxPh) : f < 0.66 ? Math.min(1, maxPh) : 0;
   if (want > b.phase && b.hp > 0) {
     b.phase = want; b.atk = 0; b.atkT = 0; b.atkK = 0; b.rest = 1.3; b.inv = 0.8;
-    clearBullets(true); G.flash = 0.25;
+    clearBullets(true); G.flash = 0.25; Radio.say('phase');
     const h = pick(b.art.hit); explode(b.x - h[0], b.y - h[1], 1.4);
   }
   if (b.hp <= 0) killBoss(b);
@@ -2909,12 +3003,13 @@ function updateBoss(dt) {
       dropCoins(b.x, b.y, 26);
       Sound.sfx.boomL();
       G.flash = 0.75; b.dead = true; G.boss = null;
-      if (G.mode === 'mission') { G.phase = 'clear'; G.phaseT = 0; banner('Mission complete', G.mi.name, 2.6); Sound.sfx.win(); }
+      if (G.mode === 'mission') { G.phase = 'clear'; G.phaseT = 0; banner('Mission complete', G.mi.name, 2.6); Sound.sfx.win(); Radio.say('clear', true); }
       else {
         G.phase = 'waves'; G.bossCount++; G.nextBoss = G.t + 115;
         const next = THEATER_ORDER[(THEATER_ORDER.indexOf(world.key) + 1) % THEATER_ORDER.length];
-        const lk = ['day', 'golden', 'overcast', 'storm'][(G.bossCount) % 4];
-        later(1.6, () => { world.set(next, (Math.random() * 1e6) | 0, lk); fog.reset(); G.flash = 1; banner(THEATERS[next].label, 'Wave ' + (G.bossCount + 1) + ', ' + LIGHTS[lk].label.toLowerCase(), 2.4); });
+        const lk = ['day', 'golden', 'night', 'overcast', 'storm'][(G.bossCount) % 5];
+        Radio.say('bossDown', true); later(5.2, () => Radio.say('airspace'));
+        later(1.6, () => { world.set(next, (Math.random() * 1e6) | 0, lk); fog.reset(); G.flash = 1; updateNVBtn(); banner(THEATERS[next].label, 'Wave ' + (G.bossCount + 1) + ', ' + LIGHTS[lk].label.toLowerCase(), 2.4); });
         Sound.music('battle');
       }
     }
@@ -2963,6 +3058,37 @@ function useSpecial() {
   Sound.sfx.bomb();
   if (!REDUCED) G.shake = 8;
   updateSpecialBtn();
+}
+// Night: red and green wingtip lights and a white tail strobe on every plane, so aircraft read in the dark.
+function navLights(id, x, y, rot, t) {
+  const spr = SPR[id], span = spr ? spr.w * 0.42 : 14, tail = spr ? spr.h * 0.42 : 12, c = Math.cos(rot), s = Math.sin(rot);
+  const pt = (lx, ly) => [x + lx * c - ly * s, y + lx * s + ly * c];
+  const l = pt(-span, 2), r = pt(span, 2);
+  ctx.fillStyle = 'rgba(255,60,50,.35)'; ctx.fillRect(l[0] - 2.5, l[1] - 2.5, 5, 5);
+  ctx.fillStyle = 'rgba(60,255,120,.35)'; ctx.fillRect(r[0] - 2.5, r[1] - 2.5, 5, 5);
+  ctx.fillStyle = '#FF5A4A'; ctx.fillRect(l[0] - 1.1, l[1] - 1.1, 2.2, 2.2);
+  ctx.fillStyle = '#5CFF8A'; ctx.fillRect(r[0] - 1.1, r[1] - 1.1, 2.2, 2.2);
+  if ((t * 0.9) % 1 < 0.07) { const b = pt(0, tail); ctx.globalAlpha = 0.9; ctx.drawImage(SPR.glow.c, b[0] - 7, b[1] - 7, 14, 14); ctx.globalAlpha = 1; }
+}
+function drawNavLights() {
+  ctx.setTransform(K, 0, 0, K, OX * K, OY * K);
+  ctx.globalCompositeOperation = 'lighter';
+  for (const e of G.en) if (!e.ground && !e.dead && e.y > -30 && e.y < H + 30) navLights(e.d.art, e.x, e.y, e.ang + Math.PI / 2, G.time + e.id * 0.31);
+  const b = G.boss;
+  if (b && b.state !== 'dying') navLights(b.key, b.x, b.y, Math.PI, G.time);
+  if (P.alive) {
+    navLights(P.id, P.x, P.y, P.hd + Math.PI / 2 + P.spin, G.time + 0.5);
+    if (P.wingT > 0) for (const w of P.wing) navLights('kestrel', w.x, w.y, P.hd + Math.PI / 2, G.time);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+// Night vision goggles: only on night stages. Off at the start of every run.
+function toggleNV(force) {
+  if (state !== 'play' || !world.light.night) return;
+  G.nv = force === undefined ? !G.nv : !!force;
+  Sound.sfx.nv(G.nv);
+  if (!save.seenNV) { save.seenNV = true; persist(); }
+  updateNVBtn();
 }
 // Gold Key perk: every special also sets off a mega bomb across the whole screen.
 function megaBlast(dmg) {
@@ -3047,7 +3173,7 @@ function update(dt) {
     case 'prewarn': {
       G.phaseT += sdt;
       const air = G.en.some((e) => !e.dead && !e.ground && e.y > -20);
-      if (G.phaseT > 1.5 && (!air || G.phaseT > 6)) { G.phase = 'warning'; G.phaseT = 0; banner('Warning', 'Heavy contact incoming', 2.8, true); Sound.sfx.warn(); }
+      if (G.phaseT > 1.5 && (!air || G.phaseT > 6)) { G.phase = 'warning'; G.phaseT = 0; banner('Warning', 'Heavy contact incoming', 2.8, true); Sound.sfx.warn(); Radio.say('warn', true); }
       break;
     }
     case 'warning':
@@ -3513,7 +3639,7 @@ function drawPickups() {
 // stage and screen size into one offscreen canvas, so a frame costs one image draw instead of six gradient fills.
 const cine = { key: '', veil: null };
 function cineLayers() {
-  const L = world.light || {}, storm = !!(world.th && world.th.storm) || L.key === 'storm', golden = L.key === 'golden';
+  const L = world.light || {}, storm = !!(world.th && world.th.storm) || L.key === 'storm', golden = L.key === 'golden', night = !!L.night;
   const key = W + '|' + H + '|' + K + '|' + L.key + '|' + storm;
   if (cine.key === key) return cine;
   const make = () => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(W * K)); c.height = Math.max(1, Math.round(H * K)); const g = c.getContext('2d'); g.setTransform(K, 0, 0, K, 0, 0); return [c, g]; };
@@ -3522,7 +3648,7 @@ function cineLayers() {
   haze.addColorStop(0, 'rgba(150,205,225,.055)'); haze.addColorStop(0.38, 'rgba(105,166,190,.018)'); haze.addColorStop(1, 'rgba(3,13,24,.10)');
   g.fillStyle = haze; g.fillRect(0, 0, W, H);
   const horizon = g.createLinearGradient(0, H * 0.12, 0, H * 0.82);
-  horizon.addColorStop(0, storm ? 'rgba(125,160,184,.025)' : 'rgba(190,226,239,.065)');
+  horizon.addColorStop(0, night ? 'rgba(90,120,190,.04)' : storm ? 'rgba(125,160,184,.025)' : 'rgba(190,226,239,.065)');
   horizon.addColorStop(.48, golden ? 'rgba(255,204,132,.055)' : 'rgba(145,198,218,.025)');
   horizon.addColorStop(1, 'rgba(4,13,23,0)');
   g.fillStyle = horizon; g.fillRect(0, 0, W, H);
@@ -3535,13 +3661,14 @@ function cineLayers() {
   // Warm sun spill, baked into the same layer (a faint lighten reads the same as the old screen pass).
   const sunX = W * (L.sunA < 0 ? 0.18 : 0.82);
   const sun = g.createRadialGradient(sunX, H * 0.12, 0, sunX, H * 0.12, W * 0.78);
-  sun.addColorStop(0, 'rgba(255,214,150,.085)'); sun.addColorStop(.32, 'rgba(255,182,100,.03)'); sun.addColorStop(1, 'rgba(255,160,70,0)');
+  if (night) { sun.addColorStop(0, 'rgba(190,212,255,.07)'); sun.addColorStop(.32, 'rgba(150,180,240,.025)'); sun.addColorStop(1, 'rgba(120,150,220,0)'); }
+  else { sun.addColorStop(0, 'rgba(255,214,150,.085)'); sun.addColorStop(.32, 'rgba(255,182,100,.03)'); sun.addColorStop(1, 'rgba(255,160,70,0)'); }
   g.fillStyle = sun; g.fillRect(0, 0, W, H);
   cine.key = key; cine.veil = vc;
   return cine;
 }
 function drawCinematic(time) {
-  if (perfLevel < 1) return;
+  if (perfLevel < 1 || (G.nv && world.light.night && scene === 'game')) return;
   const c = cineLayers(), storm = !!(world.th && world.th.storm) || (world.light && world.light.key === 'storm'), golden = world.light && world.light.key === 'golden';
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -3550,7 +3677,7 @@ function drawCinematic(time) {
   if (perfLevel >= 2 && !REDUCED) {
     ctx.globalCompositeOperation = 'screen';
     // Volumetric sun shafts, narrow and low-contrast so the action stays readable.
-    if (!storm) for (let i = 0; i < 5; i++) {
+    if (!storm && !(world.light && world.light.night)) for (let i = 0; i < 5; i++) {
       const x = W * (.12 + i * .19) + Math.sin(time * .17 + i * 1.91) * 24, width = 12 + (i % 3) * 9;
       const beam = ctx.createLinearGradient(x, 0, x + width * 2.5, H * .82);
       beam.addColorStop(0, 'rgba(255,224,174,0)'); beam.addColorStop(.38, golden ? 'rgba(255,203,126,.045)' : 'rgba(218,239,255,.026)'); beam.addColorStop(1, 'rgba(255,224,174,0)');
@@ -3665,6 +3792,7 @@ function renderGame() {
   }
   world.drawGrade(G.time);
   world.drawLights(G.time);
+  if (world.light.night) drawNavLights();
   drawPickups();
 
   for (const h of G.holes) {
@@ -3852,7 +3980,7 @@ function renderAttract() {
    and $SLAPGOLD holder status. Offline (or inside a page that can't reach it) the game runs
    on the local save exactly as before, without premium gear. ---------------- */
 const NET_API = 'https://sky-slap-server-production.up.railway.app';
-const NET_SITE = 'https://slapgold.com/skyslap.html';
+const NET_SITE = 'https://cryptobizmo2.github.io/SLAPBOT/skyslap.html';
 const Net = (() => {
   const qApi = new URLSearchParams(location.search).get('api');
   const api = qApi && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(qApi) ? qApi : NET_API;
@@ -4189,6 +4317,84 @@ const coinFx = (() => {
   const after = (fn) => { if (run) run.after.push(fn); else fn(); };
   return { play, skip: finish, after, running: () => !!run, END };
 })();
+
+/* ---------------- CB radio: short lines from Slap Tower after big moments ---------------- */
+const Radio = (() => {
+  const LINES = {
+    start: ['Slap Tower to Big Mouf. You are cleared hot.', 'Big Mouf, Tower. Skies are dirty. Go clean them up.', 'Wheels up, Big Mouf. Go get that gold.'],
+    endless: ['Tower to Big Mouf. Hold this sky as long as you can.'],
+    night: ['Lights out, pilot. Hit your night vision.', 'Tower here. It is dark up there. Goggles on.'],
+    k10: ['Ten down. Keep slapping.'], k25: ['Twenty five down. You are on fire.'], k50: ['Fifty kills. Ace in the making.'], k100: ['One hundred down. That is legend status.'],
+    warn: ['Heavy contact inbound. Stay frosty.', 'Big bird on radar. Here it comes.'],
+    phase: ['Armor is cracking. Keep it on him.', 'He is breaking up. Hit him again.'],
+    bossDown: ['Splash the big one. Nice work.', 'Big bird is down. The gold is yours.'],
+    clear: ['Mission complete. Bring that gold home.', 'Sky is clean. Good slap, pilot.', 'Splash the big one. Mission complete.'],
+    low: ['You are smoking, pilot. Watch your six.', 'Armor critical. Get out of the line of fire.'],
+    down: ['Big Mouf is down. Big Mouf is down.'],
+    revive: ['Back in the fight. Let us go.'],
+    airspace: ['New airspace, pilot. Stay sharp.'],
+  };
+  const has = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
+  let voice = null, unlocked = false, lastAt = 0, hideT = null, bed = null, seq = 0;
+  function pickVoice() {
+    if (!has) return;
+    let vs = [];
+    try { vs = speechSynthesis.getVoices() || []; } catch (e) {}
+    const en = vs.filter((v) => /^en/i.test(v.lang));
+    voice = en.find((v) => /daniel|fred|aaron|arthur|alex|google us english|male/i.test(v.name)) || en.find((v) => /en-US/i.test(v.lang)) || en[0] || null;
+  }
+  // iPhone only lets speech start from a tap, so the first tap primes it with a silent line.
+  function unlock() {
+    if (unlocked || !has) return;
+    unlocked = true;
+    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
+    pickVoice();
+    try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {}
+  }
+  function show(text) {
+    const box = document.getElementById('radio');
+    if (!box) return;
+    document.getElementById('radioText').textContent = text;
+    box.classList.add('show');
+    clearTimeout(hideT); hideT = setTimeout(() => box.classList.remove('show'), Math.max(2600, text.length * 75));
+  }
+  function stop() {
+    seq++;
+    clearTimeout(hideT);
+    const box = document.getElementById('radio'); if (box) box.classList.remove('show');
+    if (has) try { speechSynthesis.cancel(); } catch (e) {}
+    if (bed) { bed.stop(); bed = null; }
+    Sound.duck(false);
+  }
+  function say(kind, force) {
+    const list = LINES[kind];
+    if (!list || scene !== 'game') return false;
+    const now = performance.now();
+    if (!force && now - lastAt < 4500) return false;
+    lastAt = now;
+    const text = list[(Math.random() * list.length) | 0], id = ++seq, dur = Math.max(1.3, text.length * 0.062);
+    show(text);
+    Sound.sfx.radioIn();
+    if (has && save.sound && save.voice !== false) {
+      let ended = false;
+      const done = () => { if (ended || id !== seq) return; ended = true; if (bed) { bed.stop(); bed = null; } Sound.duck(false); Sound.sfx.radioOut(); };
+      try {
+        speechSynthesis.cancel();
+        if (bed) bed.stop();
+        bed = Sound.staticBed(dur + 0.6);
+        Sound.duck(true);
+        const u = new SpeechSynthesisUtterance(text);
+        if (voice) { u.voice = voice; u.lang = voice.lang; } else u.lang = 'en-US';
+        u.rate = 1.1; u.pitch = 0.8; u.volume = 1;
+        u.onend = done; u.onerror = done;
+        setTimeout(() => { if (id === seq) try { speechSynthesis.speak(u); } catch (e) { done(); } }, 170);
+        setTimeout(done, (dur * 2 + 2.5) * 1000);
+      } catch (e) { done(); }
+    } else setTimeout(() => { if (id === seq) Sound.sfx.radioOut(); }, dur * 1000);
+    return text;
+  }
+  return { say, stop, unlock, lines: LINES };
+})();
 /* =====================================================================
    Menus, hangar, pilot levels, input and the main loop.
    ===================================================================== */
@@ -4226,13 +4432,14 @@ window.addEventListener('keydown', (e) => {
   if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; if (state === 'play') e.preventDefault(); }
   if ((e.code === 'Space' || e.code === 'KeyB') && state === 'play') { e.preventDefault(); useSpecial(); }
   if ((e.code === 'KeyL' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && state === 'play') { e.preventDefault(); doLoop(); }
+  if (e.code === 'KeyN' && state === 'play') toggleNV();
   if (e.code === 'Escape' || e.code === 'KeyP') { if (state === 'play') pauseGame(); else if (state === 'paused') resumeGame(); }
 });
 window.addEventListener('keyup', (e) => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') pauseGame(); });
 // iPhone only unlocks audio on a completed tap, so listen for the end of touches and clicks too.
-for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, () => Sound.init(), { passive: true, capture: true });
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, () => { Sound.init(); Radio.unlock(); }, { passive: true, capture: true });
 
 /* ---------------- screens ---------------- */
 const SCREENS = { title: 'scrTitle', map: 'scrMap', hangar: 'scrHangar', paused: 'scrPause', result: 'scrResult', help: 'scrHelp', steer: 'scrSteer', premium: 'scrPremium', leaders: 'scrLeaders' };
@@ -4261,6 +4468,7 @@ function syncToggles() {
   $('steerLbl').textContent = s360 ? '360°' : 'STD';
   $('btnSteer').classList.toggle('std', !s360);
   $('btnLoop').hidden = !s360;
+  document.querySelectorAll('.voice-seg button').forEach((b) => { const on = (b.dataset.v === 'on') === (save.voice !== false); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
 }
 const nextMission = () => clamp(save.unlocked, 1, LAST_MISSION);
 function refreshTitle() {
@@ -4279,6 +4487,7 @@ function refreshTitle() {
 let pendingToasts = [];
 function go(name) {
   Sound.sfx.click();
+  if (name !== 'result') Radio.stop();
   if (name === 'title') {
     if (scene === 'game') { world.set('ocean', 7, 'golden'); clouds.reset(true); fog.reset(); }
     state = 'title'; scene = 'attract';
@@ -4299,11 +4508,11 @@ function go(name) {
 document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
 
 function launch(mode, m) {
-  Sound.init(); Sound.sfx.click();
+  Sound.init(); Sound.sfx.click(); Radio.stop();
   startGame(mode, m);
   G.ticket = Net.start(mode, G.m, P.id, P.weapon);
   state = 'play'; input.id = null;
-  showScreen('play'); updateSpecialBtn();
+  showScreen('play'); updateSpecialBtn(); updateNVBtn();
   save.flown++; persist();
 }
 // First flight asks which controls the pilot wants; after that it flies straight away.
@@ -4510,6 +4719,7 @@ function updateLoopBtn() {
 }
 function pauseGame() {
   if (state !== 'play') return;
+  Radio.stop();
   state = 'paused'; input.id = null;
   $('pauseSub').textContent = G.mode === 'endless' ? 'Endless run, score ' + fmt(G.score) : 'Mission ' + G.m + ', ' + G.mi.name;
   syncToggles(); showScreen('paused');
@@ -4637,12 +4847,13 @@ function revive() {
   doRevive();
 }
 function doRevive() {
-  G.revived = true;
+  G.revived = true; G.saidLow = false;
   P.alive = true; P.hp = P.maxHp; P.inv = 3; P.x = W / 2; P.y = H - 120; P.hd = UP;
   clearBullets(false);
   G.phase = G.prevPhase && G.prevPhase !== 'dead' ? G.prevPhase : 'waves'; G.phaseT = G.prevPhaseT || 0;
   state = 'play'; input.id = null; showScreen('play'); updateSpecialBtn();
   float(P.x, P.y - 40, 'Back in the fight', '#FFCB52');
+  Radio.say('revive', true); updateNVBtn();
 }
 $('resultPanel').addEventListener('click', (e) => {
   const b = e.target.closest('[data-r]');
@@ -4705,7 +4916,7 @@ function buildPremium() {
   if (!on) h += '<a class="btn primary big" href="' + NET_SITE + '" target="_blank" rel="noopener">Open the online game</a>';
   else if (p && p.wallet) h += '<button class="btn primary big" id="premRecheck">Recheck my $SLAPGOLD</button><button class="btn" id="premConnect">Connect a different wallet</button>';
   else h += '<button class="btn primary big" id="premConnect">Connect Phantom wallet</button>';
-  h += '<a class="btn gold" href="' + esc(cfg.buyUrl || 'https://www.coinbase.com/') + '" target="_blank" rel="noopener">' + coinIcon + 'Buy $SLAPGOLD on Coinbase</a>';
+  h += '<a class="btn gold" href="' + esc(cfg.buyUrl || 'https://www.coinbase.com/price/big-mouf-solana-4r7hbdhh3yevqzaesra3qpj8z3xh3qedsw88rdjxl1q9-token') + '" target="_blank" rel="noopener">' + coinIcon + 'Buy $SLAPGOLD on Coinbase</a>';
   h += '<button class="btn" id="premCopy">Copy $SLAPGOLD contract</button></div>';
   h += '<p class="fine">Contract ' + esc(mint) + '<br>Connecting only proves the wallet is yours: you sign a free message. It never moves or spends tokens. Perks follow what you hold, so dropping below a level turns its perks off.</p>';
   $('premBody').innerHTML = h;
@@ -4762,6 +4973,23 @@ $('lbBody').addEventListener('submit', (e) => {
   Net.setName(v).then(() => { toast('Callsign saved'); buildLeaders(); }).catch((err) => toast(err.message));
 });
 $('btnLeaders').addEventListener('click', () => go('leaders'));
+
+/* ---------------- night vision button + radio voice setting ---------------- */
+function updateNVBtn() {
+  const b = $('btnNV'), on = scene === 'game' && !!world.light.night && (state === 'play' || state === 'paused');
+  b.hidden = !on;
+  b.classList.toggle('on', on && !!G.nv);
+  b.classList.toggle('hint', on && !G.nv && !save.seenNV);
+  b.setAttribute('aria-pressed', on && !!G.nv);
+}
+$('btnNV').addEventListener('pointerdown', (e) => e.stopPropagation());
+$('btnNV').addEventListener('click', () => toggleNV());
+document.querySelectorAll('.voice-seg').forEach((el) => el.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-v]');
+  if (!b) return;
+  save.voice = b.dataset.v === 'on'; persist(); syncToggles(); Sound.sfx.click();
+  toast(save.voice ? 'Radio voice on' : 'Radio voice off: Tower still shows on screen');
+}));
 
 /* ---------------- main loop ---------------- */
 let lastT = 0;
