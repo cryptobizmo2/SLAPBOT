@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="BIG MOUF: SKY SLAP — cinematic arcade flight combat. Rule the skies, take the gold.">
-<title>BIG MOUF: SKY SLAP — Final Flight Build 3.7</title>
+<title>BIG MOUF: SKY SLAP — Final Flight Build 3.8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Saira+Condensed:wght@500;600;700;800&display=swap">
@@ -552,7 +552,6 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
           <button class="btn" id="btnMusic2">Music on</button>
         </div>
         <div class="toggle-row"><span>Controls</span><div class="seg steer-seg" role="group" aria-label="Controls"><button data-s="360">360°</button><button data-s="classic">Standard</button></div></div>
-        <div class="toggle-row"><span>Radio voice</span><div class="seg voice-seg" role="group" aria-label="Radio voice"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
       </div>
     </div>
   </section>
@@ -572,7 +571,6 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
         <li><span class="tok coin"><svg class="i"><use href="#i-coin"/></svg></span><span>Collect <b>Slap Coins</b> and earn XP. Level up to unlock new jets and weapons in the Hangar. Slap Coins are game coins: they can't be withdrawn or traded.</span></li>
       </ul>
       <div class="toggle-row"><span>Controls</span><div class="seg steer-seg" role="group" aria-label="Controls"><button data-s="360">360°</button><button data-s="classic">Standard</button></div></div>
-      <div class="toggle-row"><span>Radio voice</span><div class="seg voice-seg" role="group" aria-label="Radio voice"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
       <div class="toggle-row"><span>Graphics</span><div class="seg" id="qualitySeg"><button data-q="auto">Auto</button><button data-q="high">Max</button><button data-q="saver">Saver</button></div></div>
       <div class="btn-row two">
         <button class="btn danger" id="btnReset">Erase progress</button>
@@ -709,8 +707,6 @@ const Sound = (() => {
   const gate = (k, ms) => { const n = performance.now(); if (last[k] && n - last[k] < ms) return false; last[k] = n; return true; };
   const live = () => ac && save.sound;
   const sfx = {
-    radioIn() { if (!live()) return; const t = ac.currentTime; nz(t, 0.16, 0.22, 2800, 1300, 'bandpass', sfxGain); osc(1320, t + 0.03, 0.07, 'square', 0.045, sfxGain); },
-    radioOut() { if (!live()) return; const t = ac.currentTime; osc(1150, t, 0.07, 'square', 0.045, sfxGain); osc(830, t + 0.08, 0.09, 'square', 0.045, sfxGain); nz(t + 0.1, 0.24, 0.16, 2300, 800, 'bandpass', sfxGain); },
     nv(on) { if (!live()) return; const t = ac.currentTime; osc(on ? 480 : 2300, t, 0.42, 'sine', 0.06, sfxGain, on ? 2600 : 380); nz(t, 0.05, 0.1, 4200, 2400, 'bandpass', sfxGain); },
     shot() { if (live() && gate('shot', 75)) osc(900, ac.currentTime, 0.045, 'square', 0.028, sfxGain, 430); },
     hit() { if (live() && gate('hit', 45)) nz(ac.currentTime, 0.04, 0.07, 7000, 2500, 'highpass', sfxGain); },
@@ -784,20 +780,10 @@ const Sound = (() => {
     seq = SONGS[name] ? { name, song: SONGS[name], i: 0, next: ac.currentTime + 0.08 } : null;
     if (!timer) timer = setInterval(tick, 30);
   }
-  // CB radio: a squelch burst in, a two-tone roger beep out, and a hiss under the voice.
-  function staticBed(dur) {
-    if (!live()) return null;
-    const t = ac.currentTime, s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
-    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1900; f.Q.value = 0.8;
-    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.028, t + 0.08);
-    g.gain.setValueAtTime(0.028, t + dur); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.12);
-    s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t); s.stop(t + dur + 0.2);
-    return { stop() { try { g.gain.cancelScheduledValues(ac.currentTime); g.gain.setTargetAtTime(0.0001, ac.currentTime, 0.03); s.stop(ac.currentTime + 0.15); } catch (e) {} } };
-  }
   function duck(on) { if (ac && musicGain) musicGain.gain.setTargetAtTime(save.music ? (on ? 0.07 : 0.24) : 0, ac.currentTime, 0.08); }
   function setSound(on) { save.sound = on; if (sfxGain) sfxGain.gain.value = on ? 0.6 : 0; persist(); }
   function setMusic(on) { save.music = on; if (musicGain) musicGain.gain.value = on ? 0.24 : 0; persist(); }
-  return { init, sfx, music, setSound, setMusic, staticBed, duck };
+  return { init, sfx, music, setSound, setMusic, duck };
 })();
 /* =====================================================================
    Art — every sprite is painted once at load, at the screen's resolution.
@@ -830,6 +816,939 @@ function outlined(s, color, px) {
   g.drawImage(s.c, 0, 0);
   return { c, w: s.w, h: s.h };
 }
+/* ---------------- 3D aircraft (Build 3.8) ----------------
+   Every plane is a real 3D model built from its spec: a lofted fuselage, wings and tailplane with an airfoil,
+   a fin, engine nacelles, glass canopies and turrets, painted with its livery. It is lit by the mission's sun
+   and sky (glossy paint, glass that reflects the sky, the fuselage casting its shadow on the wings, contact
+   shadows where parts meet) and rendered into frames for every heading, plus banked frames for turns.
+   Phones without WebGL keep the flat art. */
+let PAINT_FLAT = false;
+const GL3D = (() => {
+  let gl = null, cv = null, tried = false, okFlag = false, P = {}, Q = {}, quadBuf = null, fbs = {}, texCache = {};
+  const PREC = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
+  const VS = [
+    'attribute vec3 aPos; attribute vec3 aNrm; attribute float aMat;',
+    'uniform float uRoll; uniform float uYaw; uniform vec3 uScale;',
+    'varying vec3 vObj; varying vec3 vN; varying float vMat; varying float vZ; varying vec3 vP;',
+    'vec3 rl(vec3 p, float c, float s) { return vec3(p.x * c - p.z * s, p.y, p.x * s + p.z * c); }',
+    'vec3 yw(vec3 p, float c, float s) { return vec3(p.x * c - p.y * s, p.x * s + p.y * c, p.z); }',
+    'void main() {',
+    '  float cr = cos(uRoll), sr = sin(uRoll), cy = cos(uYaw), sy = sin(uYaw);',
+    '  vec3 p = yw(rl(aPos, cr, sr), cy, sy);',
+    '  vN = yw(rl(aNrm, cr, sr), cy, sy);',
+    '  vObj = aPos; vMat = aMat; vZ = p.z; vP = p;',
+    '  gl_Position = vec4(p.x * uScale.x, -p.y * uScale.y, -p.z * uScale.z, 1.0);',
+    '}'].join('\n');
+  const FS = PREC + [
+    'uniform sampler2D uPaint; uniform vec2 uHalf; uniform float uMode; uniform float uZr;',
+    'uniform vec3 uSun; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGnd; uniform float uSpec; uniform float uCam; uniform float uSeed;',
+    'varying vec3 vObj; varying vec3 vN; varying float vMat; varying float vZ; varying vec3 vP;',
+    // value noise for weathering: faded paint, grime and exhaust staining
+    'float hs(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+    'float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(hs(i), hs(i + vec2(1.0, 0.0)), f.x), mix(hs(i + vec2(0.0, 1.0)), hs(i + vec2(1.0, 1.0)), f.x), f.y); }',
+    // what shiny surfaces reflect: ground below, a bright horizon, the sky overhead and the sun itself
+    'vec3 env(vec3 r) {',
+    '  float e = r.z; vec3 hor = mix(uSky, vec3(1.0), 0.5);',
+    '  vec3 c = e < 0.0 ? mix(hor * 0.55, uGnd, clamp(-e * 2.5, 0.0, 1.0)) : mix(hor, uSky, pow(clamp(e, 0.0, 1.0), 0.5));',
+    '  float sd = max(dot(normalize(r), uSun), 0.0);',
+    '  return c + uSunCol * (pow(sd, 80.0) * 3.0 + pow(sd, 8.0) * 0.3);',
+    '}',
+    'void main() {',
+    '  vec2 uv = vec2(vObj.x / (2.0 * uHalf.x) + 0.5, vObj.y / (2.0 * uHalf.y) + 0.5);',
+    '  vec4 t = texture2D(uPaint, uv);',
+    '  if (t.a < 0.42) discard;',
+    '  if (uMode > 0.5) { float h = clamp(vZ / uZr * 0.5 + 0.5, 0.0, 1.0) * 255.0; float hi = floor(h); gl_FragColor = vec4(hi / 255.0, fract(h), 0.0, 1.0); return; }',
+    '  vec3 base = t.rgb, n = normalize(vN), v = normalize(vec3(-vP.x, -vP.y, uCam - vP.z));',
+    // weathering: broad blotches, fine grain and streaks that run back along the airflow
+    '  vec2 q = vObj.xy + uSeed;',
+    '  float wx = vn(q * 0.11) * 0.6 + vn(q * 0.37) * 0.3 + vn(vec2(q.x * 0.9, q.y * 0.06)) * 0.45;',
+    '  base *= mix(1.0, 0.86 + 0.2 * wx, step(vMat, 0.5));',
+    '  float ndv = clamp(dot(n, v), 0.0, 1.0), glass = step(0.5, vMat) * step(vMat, 1.5);',
+    '  float dif = max(dot(n, uSun), 0.0);',
+    '  vec3 amb = mix(uGnd * 1.4, uSky, n.z * 0.5 + 0.5);',
+    '  vec3 col = base * (amb * 0.62 + uSunCol * dif * 0.9);',
+    '  vec3 r = reflect(-v, n);',
+    '  float F0 = mix(0.04, 0.45, glass), fres = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0);',
+    '  float k = mix(0.34, 0.9, glass) * fres + mix(0.07, 0.24, glass);',
+    '  col = mix(col, env(r) * mix(vec3(1.0), base * 0.8 + 0.45, 0.6 * (1.0 - glass)), clamp(k, 0.0, 1.0));',
+    '  vec3 h = normalize(uSun + v);',
+    '  float nh = max(dot(n, h), 0.0);',
+    '  col += uSunCol * (pow(nh, mix(46.0, 180.0, glass)) * mix(0.55, 1.5, glass) + pow(nh, 9.0) * 0.08 * (1.0 - glass)) * uSpec;',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'].join('\n');
+  // Final pass: 2x2 downsample, contact shadows (ambient occlusion), the sun's shadow across the model, a thin dark rim.
+  const VQ = 'attribute vec2 aQ; varying vec2 vUv; void main() { vUv = aQ * 0.5 + 0.5; gl_Position = vec4(aQ, 0.0, 1.0); }';
+  const FQ = PREC + [
+    'uniform sampler2D uCol; uniform sampler2D uHgt; uniform vec2 uTx; uniform vec2 uSd; uniform float uTan; uniform float uZr; uniform float uPpu;',
+    'uniform float uAo; uniform float uShK; uniform float uRim;',
+    'varying vec2 vUv;',
+    'float Z(vec2 uv) { vec4 t = texture2D(uHgt, uv); return ((t.r * 255.0 + t.g) / 255.0 - 0.5) * 2.0 * uZr; }',
+    'float A(vec2 uv) { return texture2D(uCol, uv).a; }',
+    'void main() {',
+    '  vec4 c = 0.25 * (texture2D(uCol, vUv + uTx * vec2(-0.5, -0.5)) + texture2D(uCol, vUv + uTx * vec2(0.5, -0.5)) + texture2D(uCol, vUv + uTx * vec2(-0.5, 0.5)) + texture2D(uCol, vUv + uTx * vec2(0.5, 0.5)));',
+    '  if (c.a < 0.02) {',
+    '    float a = 0.0;',
+    '    for (int i = 0; i < 8; i++) { float an = float(i) * 0.7854; a = max(a, A(vUv + vec2(cos(an), sin(an)) * uTx * 2.2)); }',
+    '    gl_FragColor = vec4(0.0, 0.0, 0.0, a * uRim); return;',
+    '  }',
+    '  float z0 = Z(vUv), occ = 0.0;',
+    // contact shadows: a point is occluded only where the surface around it rises on both sides (a crease or a junction),
+    // so tilted panels and banked wings are not darkened just for being tilted
+    '  for (int i = 0; i < 6; i++) { float an = float(i) * 0.5236; vec2 d = vec2(cos(an), sin(an));',
+    '    for (int j = 1; j <= 3; j++) { vec2 o = d * uTx * uPpu * float(j) * 0.9; vec2 u1 = vUv + o, u2 = vUv - o;',
+    '      occ += clamp(0.5 * (Z(u1) + Z(u2)) - z0, 0.0, 4.0) * step(0.5, A(u1)) * step(0.5, A(u2)) * 2.0 / float(j); } }',
+    '  float ao = 1.0 - clamp(occ * uAo, 0.0, 0.5);',
+    '  float sh = 0.0;',
+    '  for (int i = 1; i <= 14; i++) { float dist = float(i) * 0.55; vec2 uv = vUv + uSd * uTx * uPpu * dist;',
+    '    float rayZ = z0 + dist * uTan; sh = max(sh, clamp((Z(uv) - rayZ) * 0.8, 0.0, 1.0) * step(0.5, A(uv))); }',
+    '  gl_FragColor = vec4(c.rgb * ao * (1.0 - sh * uShK), c.a);',
+    '}'].join('\n');
+
+  function prog(vs, fs, attrs, unis) {
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const o = { p };
+    for (const k of attrs) o[k] = gl.getAttribLocation(p, k);
+    for (const k of unis) o[k] = gl.getUniformLocation(p, k);
+    return o;
+  }
+  function init() {
+    if (tried) return okFlag;
+    tried = true;
+    try {
+      cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      gl = cv.getContext('webgl', { preserveDrawingBuffer: true, premultipliedAlpha: true, antialias: false, alpha: true, depth: false });
+      if (!gl) return (okFlag = false);
+      P = prog(VS, FS, ['aPos', 'aNrm', 'aMat'], ['uRoll', 'uYaw', 'uScale', 'uPaint', 'uHalf', 'uMode', 'uZr', 'uSun', 'uSunCol', 'uSky', 'uGnd', 'uSpec', 'uCam', 'uSeed']);
+      Q = prog(VQ, FQ, ['aQ'], ['uCol', 'uHgt', 'uTx', 'uSd', 'uTan', 'uZr', 'uPpu', 'uAo', 'uShK', 'uRim']);
+      quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); okFlag = false; });
+      okFlag = true;
+    } catch (e) { okFlag = false; }
+    return okFlag;
+  }
+  /* ---- geometry helpers ---- */
+  const V = { sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+    dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], norm: (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; } };
+  // A parametric surface P(u,v) on a grid; normals by finite differences, turned to face away from ref(u,v,p).
+  function surface(M, fn, rows, cols, mat, ref) {
+    const base = M.p.length / 3, e = 1e-3;
+    for (let i = 0; i <= rows; i++) for (let j = 0; j <= cols; j++) {
+      const u = i / rows, v = j / cols, q = fn(u, v);
+      const du = V.sub(fn(Math.min(1, u + e), v), fn(Math.max(0, u - e), v)), dv = V.sub(fn(u, Math.min(1, v + e)), fn(u, Math.max(0, v - e)));
+      let nn = V.norm(V.cross(du, dv));
+      if (!isFinite(nn[0]) || (nn[0] === 0 && nn[1] === 0 && nn[2] === 0)) nn = [0, 0, 1];
+      const rd = ref(u, v, q);
+      if (V.dot(nn, rd) < 0) nn = [-nn[0], -nn[1], -nn[2]];
+      M.p.push(q[0], q[1], q[2]); M.n.push(nn[0], nn[1], nn[2]); M.m.push(mat);
+    }
+    const W = cols + 1;
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) { const a = base + i * W + j, b = a + 1, c = a + W, d = c + 1; M.i.push(a, c, b, b, c, d); }
+  }
+  const TAU2 = Math.PI * 2;
+  // A body of revolution along y (fuselage, nacelle, boom, canopy): rx(t), rz(t) half-axes, t from front to back.
+  function loft(M, cx, cz, y0, y1, rx, rz, mat, rows, cols) {
+    surface(M, (u, v) => { const y = y0 + (y1 - y0) * u, a = v * TAU2; return [cx + rx(u) * Math.cos(a), y, cz + rz(u) * Math.sin(a)]; },
+      rows || 30, cols || 16, mat, (u, v, q) => { const y = y0 + (y1 - y0) * u; return [q[0] - cx, u < 0.02 ? -(y1 - y0) : u > 0.98 ? (y1 - y0) : 0, q[2] - cz]; });
+  }
+  // Bezier helpers to rebuild the same outlines the 2D art uses.
+  const cub = (p0, p1, p2, p3, t) => { const k = 1 - t; return [k * k * k * p0[0] + 3 * k * k * t * p1[0] + 3 * k * t * t * p2[0] + t * t * t * p3[0], k * k * k * p0[1] + 3 * k * k * t * p1[1] + 3 * k * t * t * p2[1] + t * t * t * p3[1]]; };
+  const quad = (p0, p1, p2, t) => { const k = 1 - t; return [k * k * p0[0] + 2 * k * t * p1[0] + t * t * p2[0], k * k * p0[1] + 2 * k * t * p1[1] + t * t * p2[1]]; };
+  const samp = (f, n) => { const o = []; for (let i = 0; i <= n; i++) o.push(f(i / n)); return o; };
+  // Fuselage half-width along y, from the same curves as bodyPath(): returns r(y) for y in [n, n + L].
+  function bodyProfile(L, bw, pointed, tailW) {
+    tailW = tailW || 0.3;
+    const n = -L / 2, t = L / 2, nw = pointed ? 0 : bw * 0.55, pts = [];
+    if (pointed) pts.push(...samp((u) => cub([0, n], [bw * 0.35, n + L * 0.08], [bw, n + L * 0.2], [bw, n + L * 0.36], u), 24));
+    else pts.push(...samp((u) => cub([nw, n], [bw * 0.92, n + L * 0.02], [bw, n + L * 0.14], [bw, n + L * 0.32], u), 24));
+    const y2 = pointed ? n + L * 0.36 : n + L * 0.32;
+    pts.push(...samp((u) => cub([bw, y2], [bw, n + L * 0.6], [bw * tailW * 1.8, t - L * 0.1], [bw * tailW, t], u), 30));
+    pts.sort((a, b) => a[1] - b[1]);
+    return (y) => {
+      if (y <= pts[0][1]) return pts[0][0];
+      for (let i = 1; i < pts.length; i++) if (y <= pts[i][1]) { const a = pts[i - 1], b = pts[i], k = (y - a[1]) / Math.max(1e-6, b[1] - a[1]); return a[0] + (b[0] - a[0]) * k; }
+      return pts[pts.length - 1][0];
+    };
+  }
+  // One wing's outline (right side) sampled as a polygon, from the same curves as wingSide().
+  function wingOutline(sp) {
+    const w = sp.wing, rx = sp.bw * 0.75, tx = sp.S / 2, ly = w.y, ty = w.y + w.rc, tly = w.y + w.sweep, tty = tly + w.tc;
+    let le = [], te = [];
+    if (w.style === 'ellipse') {
+      le = samp((u) => cub([rx, ly], [rx + (tx - rx) * 0.55, ly - 2], [tx, tly - 1], [tx, (tly + tty) / 2], u), 26);
+      te = samp((u) => cub([tx, (tly + tty) / 2], [tx, tty + 1], [rx + (tx - rx) * 0.6, ty + 1], [rx, ty], u), 26);
+    } else if (w.style === 'gull') {
+      le = [...samp((u) => quad([rx, ly], [rx + (tx - rx) * 0.35, ly + w.sweep * 0.9], [tx - 2, tly], u), 20), ...samp((u) => quad([tx - 2, tly], [tx, tly], [tx, tly + w.tc * 0.5], u), 6)];
+      te = [...samp((u) => quad([tx, tly + w.tc * 0.5], [tx, tty], [tx - 2, tty], u), 6), ...samp((u) => quad([tx - 2, tty], [rx + (tx - rx) * 0.35, ty + w.sweep * 0.5], [rx, ty], u), 20)];
+    } else if (w.style === 'delta') {
+      le = samp((u) => [rx + (tx - rx) * u, ly + (tly - ly) * u], 20); te = samp((u) => [tx + (rx - tx) * u, tty + (ty - tty) * u], 20);
+    } else {
+      const r = Math.min(3, w.tc * 0.45);
+      le = [...samp((u) => [rx + (tx - r - rx) * u, ly + (tly - ly) * u], 20), ...samp((u) => quad([tx - r, tly], [tx, tly], [tx, tly + w.tc * 0.5], u), 6)];
+      te = [...samp((u) => quad([tx, tly + w.tc * 0.5], [tx, tty], [tx - r, tty], u), 6), ...samp((u) => [tx - r + (rx - tx + r) * u, tty + (ty - tty) * u], 20)];
+    }
+    return { poly: le.concat(te), rx, tx };
+  }
+  // Leading and trailing edge at a spanwise x, by cutting the outline polygon with a vertical line.
+  function spanCut(poly, x) {
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      if ((a[0] - x) * (b[0] - x) <= 0 && a[0] !== b[0]) { const k = (x - a[0]) / (b[0] - a[0]), y = a[1] + (b[1] - a[1]) * k; if (y < lo) lo = y; if (y > hi) hi = y; }
+      else if (a[0] === x) { if (a[1] < lo) lo = a[1]; if (a[1] > hi) hi = a[1]; }
+    }
+    return lo === Infinity ? null : [lo, hi];
+  }
+  // Airfoil: thickness along the chord (0 = leading edge, 1 = trailing edge), max 1 near 30% chord.
+  const foil = (v) => Math.max(0, 1.02 * (2.969 * Math.sqrt(v) - 1.26 * v - 3.516 * v * v + 2.843 * v * v * v - 1.036 * v * v * v * v) / 1.0);
+  function wing(M, outline, x0, thick, zc, dih, gull, mat) {
+    const { poly, tx } = outline, xs = Math.max(x0, outline.rx * 0.4), span = tx - xs;
+    for (const side of [1, -1]) for (const top of [1, -1]) {
+      surface(M, (u, v) => {
+        const x = xs + span * Math.min(0.999, u), cut = spanCut(poly, Math.min(x, tx - 0.01)) || [0, 0];
+        const c0 = cut[0] - 0.35, c1 = cut[1] + 0.35, ch = c1 - c0, y = c0 + ch * v;
+        const tk = thick * ch * (1 - 0.45 * u) * foil(v) * (top > 0 ? 1 : 0.55) * (u > 0.97 ? Math.max(0, (1 - u) / 0.03) : 1);
+        let dz = (x - xs) * dih;
+        if (gull) dz = u < 0.38 ? -(x - xs) * 0.16 : -(span * 0.38) * 0.16 + (x - xs - span * 0.38) * 0.2;
+        return [side * x, y, zc + dz + top * tk];
+      }, 16, 12, mat, (u, v, q) => [0, 0, top]);
+    }
+  }
+  function tailplane(M, sp, zc) {
+    const t = sp.tail, rx = sp.bw * 0.35, tx = t.s / 2, sw = t.sweep || 1.5;
+    const le = samp((u) => quad([rx, t.y], [tx * 0.85, t.y + sw * 0.4], [tx, t.y + sw + t.c * 0.35], u), 16);
+    const te = [...samp((u) => quad([tx, t.y + sw + t.c * 0.35], [tx * 0.98, t.y + t.c], [tx * 0.6, t.y + t.c], u), 8), [rx, t.y + t.c]];
+    wing(M, { poly: le.concat(te), rx, tx }, rx * 0.5, 0.09, zc, 0.03, false, 0);
+  }
+  function fin(M, sp, rOf, zr) {
+    const y0 = sp.tail.y - 4, y1 = sp.L / 2 + 0.5, hf = Math.max(4.5, sp.L * 0.15);
+    loft(M, 0, 0, y0, y1, (u) => 0.75 * (1 - 0.4 * u), (u) => 0.01 + hf * Math.min(1, u * 2.4) * (u > 0.9 ? (1 - u) / 0.1 * 0.7 + 0.3 : 1) / 2 + rOf(y0 + (y1 - y0) * u) * zr * 0.5, 0, 14, 10);
+  }
+  // Build the whole model for one spec.
+  function model(sp) {
+    const M = { p: [], n: [], m: [], i: [] }, L = sp.L, bw = sp.bw, zr = sp.jet ? 0.8 : 0.9;
+    const rOf = sp.noBody || sp.booms ? () => 0 : bodyProfile(L, bw, sp.jet);
+    const wz = sp.jet ? -bw * 0.12 : -bw * 0.3;
+    wing(M, wingOutline(sp), bw * 0.3, sp.jet ? 0.075 : 0.12, wz, sp.jet ? 0.02 : 0.06, sp.wing.style === 'gull', 0);
+    const twin = !!sp.booms;
+    if (!sp.noTail && sp.tail && !twin) tailplane(M, sp, sp.jet ? 0 : bw * 0.1);
+    for (const e of sp.engines || []) for (const s of [1, -1]) {
+      const r = e.w / 2;
+      loft(M, e.x * s, wz + r * 0.25, e.y - e.len / 2 - r * 0.3, e.y + e.len / 2, (u) => r * (u < 0.08 ? 0.62 + 0.38 * Math.sin(u / 0.08 * Math.PI / 2) : u < 0.42 ? 1 : 1 - 0.62 * (u - 0.42) / 0.58), (u) => r * 0.92 * (u < 0.08 ? 0.62 + 0.38 * Math.sin(u / 0.08 * Math.PI / 2) : u < 0.42 ? 1 : 1 - 0.62 * (u - 0.42) / 0.58), 0, 20, 14);
+    }
+    if (sp.booms) {
+      const b = sp.booms;
+      for (const s of [1, -1]) loft(M, s * b.x, 0, b.y - b.len / 2 - 0.6, b.y + b.len / 2, (u) => b.bw * (u < 0.1 ? 0.55 + 0.45 * Math.sin(u / 0.1 * Math.PI / 2) : 1 - 0.5 * Math.max(0, u - 0.6) / 0.4), (u) => b.bw * 0.95 * (u < 0.1 ? 0.55 + 0.45 * Math.sin(u / 0.1 * Math.PI / 2) : 1 - 0.5 * Math.max(0, u - 0.6) / 0.4), 0, 22, 14);
+      const p = sp.pod;
+      loft(M, 0, bw * 0.2, p.y - p.len / 2 - 0.5, p.y + p.len / 2, (u) => p.bw * Math.sin(Math.min(1, u / 0.3) * Math.PI / 2) * (1 - 0.45 * Math.max(0, u - 0.6) / 0.4) + 0.2, (u) => p.bw * 0.95 * Math.sin(Math.min(1, u / 0.3) * Math.PI / 2) * (1 - 0.45 * Math.max(0, u - 0.6) / 0.4) + 0.2, 0, 22, 14);
+      const c = sp.canopy; loft(M, 0, bw * 0.2 + p.bw * 0.55, c.y - c.ry, c.y + c.ry, (u) => c.rx * Math.sin(u * Math.PI) + 0.05, (u) => c.rx * 0.95 * Math.sin(u * Math.PI) + 0.05, 1, 12, 12);
+      // tailplane between the booms, and a fin on each boom
+      const ty0 = b.y + b.len / 2 - 8.5, ty1 = b.y + b.len / 2 - 1.5, tx = b.x + 3.2;
+      wing(M, { poly: [[0, ty0], [tx, ty0], [tx, ty1], [0, ty1]], rx: 0, tx }, 0, 0.1, 0, 0, false, 0);
+      for (const s of [1, -1]) loft(M, s * b.x, 0, b.y + b.len / 2 - 10, b.y + b.len / 2 + 0.3, (u) => 0.8, (u) => b.bw * 0.95 + 4.5 * Math.min(1, u * 2.5) / 2, 0, 10, 10);
+    }
+    if (!sp.noBody && !twin) {
+      const n = -L / 2, cap = sp.jet ? 0 : bw * 0.35;
+      // fuselage, with a rounded cowl cap in front of prop planes
+      loft(M, 0, 0, n - cap - 0.3, L / 2 + 0.3, (u) => { const y = n - cap + (L + cap) * u; return y < n ? rOf(n) * Math.sqrt(Math.max(0, 1 - ((n - y) / cap) ** 2)) + 0.1 : rOf(y) + 0.3; },
+        (u) => { const y = n - cap + (L + cap) * u; return (y < n ? rOf(n) * Math.sqrt(Math.max(0, 1 - ((n - y) / cap) ** 2)) + 0.1 : rOf(y) + 0.3) * zr; }, 0, 40, 18);
+      if (!sp.noTail && sp.tail) fin(M, sp, rOf, zr);
+      if (sp.canopy) { const c = sp.canopy, zc = rOf(c.y) * zr * 0.62; loft(M, 0, zc, c.y - c.ry - 0.2, c.y + c.ry + 0.2, (u) => (c.rx + 0.25) * Math.sin(u * Math.PI), (u) => (c.rx + 0.25) * 1.05 * Math.sin(u * Math.PI), 1, 14, 14); }
+      for (const t of sp.turrets || []) { const [x, y, r] = t, zc = rOf(y) * zr * 0.7; loft(M, x, zc, y - r - 0.2, y + r + 0.2, (u) => (r + 0.2) * Math.sin(u * Math.PI), (u) => (r + 0.2) * Math.sin(u * Math.PI), 1, 10, 12); }
+    }
+    return M;
+  }
+
+  // Light by time of day: sun elevation and color, sky and ground bounce, gloss, shadow and contact-shadow strength.
+  const LIT = {
+    day: { el: 0.95, sun: [1.0, 0.97, 0.9], sky: [0.52, 0.67, 0.88], gnd: [0.24, 0.23, 0.2], spec: 1.0, sh: 0.5, ao: 0.07 },
+    golden: { el: 0.45, sun: [1.08, 0.95, 0.82], sky: [0.54, 0.6, 0.74], gnd: [0.28, 0.24, 0.2], spec: 1.1, sh: 0.58, ao: 0.07 },
+    overcast: { el: 1.25, sun: [0.66, 0.69, 0.74], sky: [0.74, 0.77, 0.82], gnd: [0.26, 0.26, 0.26], spec: 0.4, sh: 0.22, ao: 0.09 },
+    storm: { el: 1.25, sun: [0.56, 0.6, 0.66], sky: [0.58, 0.64, 0.72], gnd: [0.18, 0.19, 0.2], spec: 0.35, sh: 0.18, ao: 0.09 },
+    night: { el: 0.85, sun: [0.85, 0.9, 1.0], sky: [0.46, 0.52, 0.66], gnd: [0.16, 0.16, 0.18], spec: 0.85, sh: 0.4, ao: 0.08 },
+  };
+  function fb(w, h) {
+    const k = w + 'x' + h;
+    if (fbs[k]) return fbs[k];
+    const keys = Object.keys(fbs);
+    if (keys.length > 6) { for (const kk of keys) for (const x of [fbs[kk].a, fbs[kk].b]) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); gl.deleteRenderbuffer(x.d); } fbs = {}; }
+    const mk = () => {
+      const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      const d = gl.createRenderbuffer(); gl.bindRenderbuffer(gl.RENDERBUFFER, d); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, d);
+      return { t, f, d };
+    };
+    return (fbs[k] = { a: mk(), b: mk() });
+  }
+  // The frame a model needs so it fits at any heading.
+  function size(sp) {
+    const M = sp._mesh || (sp._mesh = model(sp));
+    let r = 0; for (let i = 0; i < M.p.length; i += 3) r = Math.max(r, Math.hypot(M.p[i], M.p[i + 1]));
+    return Math.ceil(r * 2 + 6);
+  }
+  // Render one plane at a heading (yaw) and bank (roll) under a time-of-day light, into a square frame F logical units wide.
+  function render(id, sp, paint, yaw, roll, lk, F, R, rim) {
+    if (!init() || gl.isContextLost()) return null;
+    const M = sp._mesh || (sp._mesh = model(sp));
+    const S3 = Math.max(8, Math.round(F * R)), S2 = S3 * 2;
+    if (S2 > 2048) return null;
+    if (cv.width !== S3 || cv.height !== S3) { cv.width = S3; cv.height = S3; }
+    const B = fb(S2, S2);
+    let gb = sp._gl;
+    if (!gb) {
+      gb = sp._gl = {};
+      for (const [k, d] of [['aPos', M.p], ['aNrm', M.n], ['aMat', M.m]]) { gb[k] = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, gb[k]); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(d), gl.STATIC_DRAW); }
+      gb.idx = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gb.idx); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(M.i), gl.STATIC_DRAW); gb.n = M.i.length;
+    }
+    let tc = texCache[id];
+    if (!tc || tc.src !== paint.c) {
+      if (tc) gl.deleteTexture(tc.t);
+      tc = texCache[id] = { src: paint.c, t: gl.createTexture() };
+      gl.bindTexture(gl.TEXTURE_2D, tc.t); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paint.c);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    const L = LIT[lk] || LIT.day, sunA = (LIGHTS[lk] || LIGHTS.day).sunA, ce = Math.cos(L.el);
+    const half = F / 2, ZR = Math.max(6, sp.bw * 2 + sp.L * 0.16);
+    gl.useProgram(P.p);
+    for (const [k, n] of [['aPos', 3], ['aNrm', 3], ['aMat', 1]]) { gl.bindBuffer(gl.ARRAY_BUFFER, gb[k]); gl.enableVertexAttribArray(P[k]); gl.vertexAttribPointer(P[k], n, gl.FLOAT, false, 0, 0); }
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gb.idx);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tc.t); gl.uniform1i(P.uPaint, 0);
+    gl.uniform2f(P.uHalf, paint.w / 2, paint.h / 2); gl.uniform1f(P.uRoll, roll); gl.uniform1f(P.uYaw, yaw);
+    gl.uniform3f(P.uScale, 1 / half, 1 / half, 1 / Math.max(half, 40)); gl.uniform1f(P.uZr, ZR);
+    gl.uniform3f(P.uSun, Math.cos(sunA) * ce, Math.sin(sunA) * ce, Math.sin(L.el));
+    gl.uniform1f(P.uCam, half * 2.6); gl.uniform1f(P.uSeed, (sp.seed || 1) * 7.31);
+    gl.uniform3f(P.uSunCol, L.sun[0], L.sun[1], L.sun[2]); gl.uniform3f(P.uSky, L.sky[0], L.sky[1], L.sky[2]); gl.uniform3f(P.uGnd, L.gnd[0], L.gnd[1], L.gnd[2]); gl.uniform1f(P.uSpec, L.spec);
+    gl.viewport(0, 0, S2, S2); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+    for (const [mode, tgt] of [[0, B.a], [1, B.b]]) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.f); gl.clearColor(0, 0, 0, 0); gl.clearDepth(1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.uniform1f(P.uMode, mode); gl.drawElements(gl.TRIANGLES, gb.n, gl.UNSIGNED_SHORT, 0);
+    }
+    for (const k of ['aPos', 'aNrm', 'aMat']) gl.disableVertexAttribArray(P[k]);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, S3, S3); gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(Q.p);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.enableVertexAttribArray(Q.aQ); gl.vertexAttribPointer(Q.aQ, 2, gl.FLOAT, false, 0, 0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, B.a.t); gl.uniform1i(Q.uCol, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, B.b.t); gl.uniform1i(Q.uHgt, 1);
+    gl.uniform2f(Q.uTx, 1 / S2, 1 / S2); gl.uniform2f(Q.uSd, Math.cos(sunA), -Math.sin(sunA)); gl.uniform1f(Q.uTan, Math.tan(L.el));
+    gl.uniform1f(Q.uZr, ZR); gl.uniform1f(Q.uPpu, 2 * R); gl.uniform1f(Q.uAo, L.ao); gl.uniform1f(Q.uShK, L.sh); gl.uniform1f(Q.uRim, rim === undefined ? 0.45 : rim);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disableVertexAttribArray(Q.aQ); gl.activeTexture(gl.TEXTURE0);
+    const c = document.createElement('canvas'); c.width = S3; c.height = S3;
+    c.getContext('2d').drawImage(cv, 0, 0);
+    // big one-off buffers (the hangar showcase) are freed at once instead of being kept for reuse
+    if (S2 > 1100) { const k = S2 + 'x' + S2; for (const x of [B.a, B.b]) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); gl.deleteRenderbuffer(x.d); } delete fbs[k]; }
+    return { c, w: F, h: F };
+  }
+  // Full-frame shader bake (water, ground, clouds, smoke, fire): one fragment shader drawn into a w x h frame,
+  // returned as a 2D canvas. vUv runs left to right and top to bottom, like a 2D canvas; textures read the same way.
+  const VQ2 = 'attribute vec2 aQ; varying vec2 vUv; void main() { vUv = vec2(aQ.x * 0.5 + 0.5, 0.5 - aQ.y * 0.5); gl_Position = vec4(aQ, 0.0, 1.0); }';
+  const progs = {}, units = [];
+  function pass(key, fs, w, h, uni, tex) {
+    w = Math.round(w); h = Math.round(h);
+    if (!init() || gl.isContextLost() || w < 1 || h < 1 || w > 2048 || h > 2048) return null;
+    uni = uni || {}; tex = tex || {};
+    let pr = progs[key];
+    if (pr === undefined) {
+      try { pr = progs[key] = prog(VQ2, PREC + fs, ['aQ'], Object.keys(uni).concat(Object.keys(tex))); }
+      catch (e) { console.warn('GL bake ' + key + ': ' + e.message); pr = progs[key] = null; }
+    }
+    if (!pr) return null;
+    const t0 = performance.now();
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, w, h); gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
+    gl.useProgram(pr.p);
+    let unit = 0;
+    for (const k in tex) {
+      const t = units[unit] || (units[unit] = gl.createTexture());
+      gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tex[k]);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.uniform1i(pr[k], unit); unit++;
+    }
+    for (const k in uni) {
+      const v = uni[k], l = pr[k];
+      if (l === null || l === undefined) continue;
+      if (typeof v === 'number') gl.uniform1f(l, v); else if (v.length > 4) gl.uniform4fv(l, v); else if (v.length === 2) gl.uniform2f(l, v[0], v[1]); else if (v.length === 3) gl.uniform3f(l, v[0], v[1], v[2]); else gl.uniform4f(l, v[0], v[1], v[2], v[3]);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.enableVertexAttribArray(pr.aQ); gl.vertexAttribPointer(pr.aQ, 2, gl.FLOAT, false, 0, 0);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disableVertexAttribArray(pr.aQ); gl.activeTexture(gl.TEXTURE0);
+    const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(cv, 0, 0);
+    // a graphics chip that needs over a quarter second for one bake (software rendering) gets the painted look instead
+    if (performance.now() - t0 > 250) slowN++;
+    return c;
+  }
+  let slowN = 0;
+  return { ok: init, render, size, model, quad: pass, lit: (k) => LIT[k] || LIT.day, slow: () => slowN };
+})();
+
+// Heading frames for the 3D planes: 16 headings (the last few degrees are a small 2D turn) and up to 9 bank angles,
+// baked on demand for the current light inside a small time budget per frame so the game never stalls.
+// Frames nobody has drawn for a while are freed once they pass a memory cap. Without WebGL, or on Saver, the flat art is used.
+const AIR3D = {
+  on: false, key: '', frames: {}, flats: {}, queue: [], qset: new Set(), bucket: 0, px: 0, tick: 0, cap: 10e6, heroC: null, slow: 0,
+  R() { return Math.min(RES, 2.3); },
+  check() {
+    this.on = save.quality !== 'saver' && this.slow + GL3D.slow() < 3 && GL3D.ok();
+    const k = world.light.key + '|' + this.R().toFixed(3);
+    if (k !== this.key) { this.key = k; this.clear(); this.burst = 90; if (this.on && this.prep) this.queueAll(); }
+  },
+  clear() {
+    for (const k in this.frames) this.free(this.frames[k]);
+    this.frames = {}; this.flats = {}; this.queue.length = 0; this.qset.clear(); this.px = 0;
+  },
+  free(f) { if (!f) return; for (const o of [f, f.wh, f.sh]) if (o) { this.px -= o.c.width * o.c.height; o.c.width = o.c.height = 1; } },
+  // The livery with no painted-on shading: the 3D lighting does the shading.
+  flat(id, res) {
+    if (!res && this.flats[id]) return this.flats[id];
+    const sp = PSPEC[id], keep = RES;
+    PAINT_FLAT = true; if (res) RES = res;
+    let f;
+    try { f = sprite(Math.ceil(sp.S + 8), Math.ceil(sp.L + 12), (g) => (sp.paint || paintPlane)(g, sp, COL[id])); } finally { PAINT_FLAT = false; RES = keep; }
+    if (!res) this.flats[id] = f;
+    return f;
+  },
+  bake(id, hi, q) {
+    const sp = PSPEC[id], a = (hi * TAU) / 16, t0 = performance.now();
+    const f = GL3D.render(id, sp, this.flat(id), a, -q * 0.125, world.light.key, sp._F || (sp._F = GL3D.size(sp)), this.R());
+    const ms = performance.now() - t0;
+    this.bucket -= ms;
+    // A phone whose graphics chip needs a quarter of a second per frame keeps the flat art.
+    if (ms > 250) this.slow++;
+    if (f) { f.a = a; f.r = -q * 0.125; f.u = this.tick; this.px += f.c.width * f.c.height; if (this.px > this.cap) this.evict(); }
+    return f;
+  },
+  evict() {
+    const old = Object.keys(this.frames).filter((k) => this.frames[k] && this.tick - this.frames[k].u > 120).sort((a, b) => this.frames[a].u - this.frames[b].u);
+    for (const k of old) { if (this.px <= this.cap * 0.75) break; this.free(this.frames[k]); delete this.frames[k]; }
+  },
+  // White or black copy of a frame, at half size, for hit flashes and burning wrecks.
+  sil(f, color) {
+    const c = document.createElement('canvas'); c.width = Math.max(2, f.c.width >> 1); c.height = Math.max(2, f.c.height >> 1);
+    const g = c.getContext('2d'); g.drawImage(f.c, 0, 0, c.width, c.height);
+    g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
+    this.px += c.width * c.height;
+    return { c, w: f.w, h: f.h };
+  },
+  want(key, first) { if (this.qset.has(key) || this.frames[key] !== undefined) return; this.qset.add(key); if (first) this.queue.unshift(key); else this.queue.push(key); },
+  // lv: bank steps on each side (1 for enemies, 4 for the player: 7 degrees a step).
+  get(id, rot, bank, lv) {
+    if (!this.on || !PSPEC[id]) return null;
+    const hi = ((Math.round(rot / (TAU / 16)) % 16) + 16) % 16, st = 4 / (lv || 1);
+    const q = clamp(Math.round(((bank || 0) * 4) / st) * st, -4, 4), key = id + ':' + hi + ':' + q;
+    let f = this.frames[key];
+    if (f) { f.u = this.tick; return f; }
+    if (f === undefined) {
+      if (this.bucket > 0) { this.qset.delete(key); f = this.frames[key] = this.bake(id, hi, q); if (f) return f; }
+      else this.want(key, true);
+    }
+    // Until that frame is ready: the nearest bank angle at this heading, then the nearest heading.
+    for (let d = 0; d <= 8; d++) for (const s of d ? [1, -1] : [1]) {
+      const h2 = (hi + s * d + 16) % 16;
+      for (let dq = 0; dq <= 4; dq++) for (const sq of dq ? [1, -1] : [1]) {
+        const g = this.frames[id + ':' + h2 + ':' + (q + sq * dq)];
+        if (g) { g.u = this.tick; return g; }
+      }
+    }
+    return null;
+  },
+  // Bake waiting frames inside a time budget (ms) per animation frame.
+  pump(ms) {
+    this.check();
+    this.tick++;
+    // right after the light changes (a new world in Endless), bake faster so the planes are back in 3D quickly
+    if (this.burst > 0) { this.burst--; ms = Math.max(ms, 22); if (this.bucket < 0) this.bucket = 0; }
+    this.bucket = Math.min(this.bucket + ms, ms * 2);
+    while (this.on && this.bucket > 0 && this.queue.length) {
+      const key = this.queue.shift(); this.qset.delete(key);
+      if (this.frames[key] !== undefined) continue;
+      const p = key.split(':'); this.frames[key] = this.bake(p[0], +p[1], +p[2]);
+    }
+  },
+  // Queue the frames a sortie will need, most likely first: enemies flying down the screen, the player flying up.
+  prepare(enemyIds, playerId) {
+    this.prep = [enemyIds, playerId];
+    this.check();
+    if (this.on) this.queueAll();
+  },
+  queueAll() {
+    const [enemyIds, playerId] = this.prep, heavy = (id) => Object.values(EDEF).some((d) => d.art === id && d.heavy);
+    const order = [0]; for (let d = 1; d <= 8; d++) { order.push(d); if (d < 8) order.push(-d); }
+    for (const q of [0, -1, 1, -2, 2, -3, 3, -4, 4]) this.want(playerId + ':0:' + q);
+    for (const d of order) for (const id of enemyIds) this.want(id + ':' + ((8 + d + 16) % 16) + ':0');
+    for (const d of order) for (const q of [0, -2, 2, -4, 4]) this.want(playerId + ':' + ((d + 16) % 16) + ':' + q);
+    for (const d of order) for (const id of enemyIds) if (!heavy(id)) for (const q of [-4, 4]) this.want(id + ':' + ((8 + d + 16) % 16) + ':' + q);
+  },
+  // Bosses, boats, tanks and turrets: their painted sprite rounded and lit for the current light, made the first time it is drawn.
+  metals: {},
+  metal(id, spin) {
+    if (!this.on || !SPR[id]) return null;
+    const src = SPR[id], m = this.metals[id];
+    if (m && m.src === src && m.key === this.key) return m.s;
+    if (m && m.s) m.s.c.width = m.s.c.height = 1;
+    const s = GLFX.metal(src, world.light.key, spin || 0);
+    this.metals[id] = { src, key: this.key, s };
+    return s;
+  },
+  // Hangar showcase: one large frame in a slight bank, at the hangar's own resolution, in daylight.
+  hero(id, R) {
+    if (!this.on) return null;
+    const sp = PSPEC[id], F = sp._F || (sp._F = GL3D.size(sp));
+    R = Math.min(R, 1000 / F);
+    const hc = this.heroC;
+    if (hc && hc.id === id && Math.abs(hc.R - R) < 0.05) return hc.f;
+    const paint = this.flat(id, R), f = GL3D.render(id + '@hero', sp, paint, 0, -0.16, 'day', F, R, 0.3);
+    paint.c.width = paint.c.height = 1;
+    if (hc && hc.f) hc.f.c.width = hc.f.c.height = 1;
+    this.heroC = { id, R, f };
+    return f;
+  },
+};
+/* ---------------- Realistic surfaces and effects (Build 3.8) ----------------
+   Baked once per world and light on the graphics chip, then drawn like any other image:
+   moving water with real waves and sun glitter, ground with texture and relief, lit clouds,
+   and smoke and fire with real billows. Phones without WebGL, or on Saver, keep the flat art. */
+const GLFX = (() => {
+  // Shared shader code: hashes, value noise (plain and seamless) and fractal sums.
+  const NOISE = [
+    'float hash1(float n) { return fract(sin(n * 127.1 + 311.7) * 43758.5453); }',
+    'float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7)) + 0.613) * 43758.5453); }',
+    'float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7)) + 0.613) * 43758.5453); }',
+    'float vnoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+    '  return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y); }',
+    // seamless: the lattice wraps every per cells
+    'float pnoise(vec2 p, float per) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+    '  vec2 a = mod(i, per), b = mod(i + 1.0, per);',
+    '  return mix(mix(hash2(a), hash2(vec2(b.x, a.y)), f.x), mix(hash2(vec2(a.x, b.y)), hash2(b), f.x), f.y); }',
+    'float pnoiseV(vec2 p, vec2 per) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+    '  vec2 a = mod(i, per), b = mod(i + 1.0, per);',
+    '  return mix(mix(hash2(a), hash2(vec2(b.x, a.y)), f.x), mix(hash2(vec2(a.x, b.y)), hash2(b), f.x), f.y); }',
+    'float pfbmV(vec2 p, vec2 per) { float s = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { s += a * pnoiseV(p + float(i) * vec2(0.37, 0.61), per); p *= 2.0; per *= 2.0; a *= 0.5; } return s / 0.94; }',
+    'float pfbm(vec2 p, float per) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * pnoise(p + float(i) * vec2(0.37, 0.61), per); p *= 2.0; per *= 2.0; a *= 0.5; } return s / 0.97; }',
+    'float vnoise3(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+    '  float a = mix(mix(hash3(i), hash3(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash3(i + vec3(0.0, 1.0, 0.0)), hash3(i + vec3(1.0, 1.0, 0.0)), f.x), f.y);',
+    '  float b = mix(mix(hash3(i + vec3(0.0, 0.0, 1.0)), hash3(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash3(i + vec3(0.0, 1.0, 1.0)), hash3(i + vec3(1.0, 1.0, 1.0)), f.x), f.y);',
+    '  return mix(a, b, f.z); }',
+    'float fbm3(vec3 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * vnoise3(p); p = p * 2.03 + vec3(1.7, 9.2, 3.1); a *= 0.5; } return s / 0.97; }',
+    'varying vec2 vUv;',
+  ].join('\n');
+
+  // Water: 40 wave trains with whole numbers of cycles across the tile and over the loop, so it tiles in space and loops in time.
+  // Shaded like real water seen from above: deep body color, light through the crests, sky reflection by Fresnel, sun glitter, whitecaps.
+  const WATER = NOISE + `
+uniform float uPhase; uniform float uSeed; uniform float uChop; uniform float uFoam; uniform float uSpecK; uniform float uWind; uniform float uDir;
+uniform vec3 uSun; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uHor; uniform vec3 uDeep; uniform vec3 uMid;
+void main() {
+  const float PI2 = 6.2831853;
+  vec2 p = vUv * PI2;
+  float t = uPhase * PI2, hgt = 0.0;
+  vec2 g = vec2(0.0);
+  for (int i = 0; i < 44; i++) {
+    float fi = float(i), r1 = hash1(fi * 1.31 + uSeed), r2 = hash1(fi * 2.17 + uSeed + 3.1);
+    float k = 5.0 * pow(13.0, fi / 43.0);
+    float a = uWind + (r1 - 0.5) * 2.2;
+    vec2 m = floor(vec2(cos(a), sin(a)) * k + 0.5);
+    float km = length(m);
+    if (km < 0.5) continue;
+    float amp = pow(km, -1.25), w = max(1.0, floor(sqrt(km) * 0.8 + 0.5)), ph = dot(m, p) - w * t + r2 * PI2;
+    hgt += amp * sin(ph);
+    g += amp * cos(ph) * m;
+  }
+  // a slow swell under it all, and fine ripples from seamless noise drifting over the loop
+  hgt += 0.08 * sin(p.x * 2.0 + p.y * 1.0 - t);
+  vec2 q = vUv * 32.0;
+  float e = 0.06, n0 = pfbm(q + vec2(uPhase * 32.0, 0.0), 32.0), nx = pfbm(q + vec2(e + uPhase * 32.0, 0.0), 32.0), ny = pfbm(q + vec2(uPhase * 32.0, e), 32.0);
+  g += vec2(nx - n0, ny - n0) / e * 0.035;
+  vec3 n = normalize(vec3(-g * uChop, 1.0));
+  vec3 r = vec3(2.0 * n.z * n.x, 2.0 * n.z * n.y, 2.0 * n.z * n.z - 1.0);
+  float fres = 0.06 + 0.94 * pow(1.0 - n.z, 5.0);
+  vec3 sky = mix(uHor, uSky, smoothstep(0.1, 0.9, r.z));
+  vec2 sd2 = normalize(uSun.xy + vec2(1e-4));
+  float crest = clamp(hgt * 0.5 + 0.5, 0.0, 1.0), facing = dot(n.xy, sd2);
+  // water body: lighter where light passes through the thin tops of waves and on faces turned to the sun
+  vec3 body = mix(uDeep, uMid, clamp(0.18 + crest * 0.22 + facing * 0.9 * uDir, 0.0, 1.0));
+  body *= 0.93 + 0.14 * uDir * clamp(dot(n, uSun) * 1.2 - 0.1, 0.0, 1.0);
+  body *= 0.96 + 0.08 * pfbm(vUv * 3.0, 3.0);
+  vec3 col = mix(body, sky, clamp(fres * 1.4, 0.0, 1.0));
+  float sd = max(dot(r, uSun), 0.0);
+  col += uSunCol * (pow(sd, 1800.0) * 7.0 + pow(sd, 160.0) * 0.16) * uSpecK;
+  if (uFoam > 0.0) {
+    float fn = pfbm(vUv * 12.0 + vec2(uPhase * 12.0, uPhase * 24.0), 12.0);
+    float foam = smoothstep(0.78, 1.02, crest + (fn - 0.5) * 0.5) * uFoam;
+    float streak = smoothstep(0.72, 0.92, pfbmV(vec2(vUv.x * 9.0, vUv.y * 48.0 - uPhase * 48.0), vec2(9.0, 48.0))) * uFoam * 0.35;
+    col = mix(col, vec3(0.86, 0.9, 0.92) * (0.7 + 0.3 * uDir), clamp(foam * (0.6 + fn * 0.6) + streak, 0.0, 0.85));
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+  // Neutral light for baked surfaces: direction, how much is direct sun, and glitter. The world's color grade adds the mood on top.
+  const SURF = {
+    day: { el: 0.95, dir: 1, spec: 1, amb: 0.42 }, golden: { el: 0.42, dir: 1, spec: 1.3, amb: 0.4 }, overcast: { el: 1.2, dir: 0.32, spec: 0.12, amb: 0.75 },
+    storm: { el: 1.2, dir: 0.24, spec: 0.08, amb: 0.8 }, night: { el: 0.85, dir: 0.55, spec: 0.55, amb: 0.5 },
+  };
+  function sun(lk) { const S = SURF[lk] || SURF.day, A = (LIGHTS[lk] || LIGHTS.day).sunA, ce = Math.cos(S.el); return [Math.cos(A) * ce, Math.sin(A) * ce, Math.sin(S.el)]; }
+  const WATERS = {
+    ocean: { deep: [0.03, 0.25, 0.38], mid: [0.06, 0.42, 0.5], sky: [0.5, 0.66, 0.84], hor: [0.8, 0.88, 0.95], chop: 0.12, foam: 0, wind: 0.7 },
+    arctic: { deep: [0.03, 0.19, 0.27], mid: [0.08, 0.32, 0.38], sky: [0.56, 0.68, 0.82], hor: [0.84, 0.9, 0.95], chop: 0.1, foam: 0, wind: 0.4 },
+    storm: { deep: [0.05, 0.15, 0.19], mid: [0.12, 0.26, 0.29], sky: [0.5, 0.55, 0.6], hor: [0.68, 0.71, 0.75], chop: 0.18, foam: 0.55, wind: 1.1 },
+  };
+  // Animated water tile: n frames of a seamless tile `size` logical units wide.
+  function water(kind, lk, size, res, n) {
+    const P = WATERS[kind] || WATERS.ocean, S = SURF[lk] || SURF.day, px = Math.round(size * res), frames = [];
+    const sc = [S.dir, S.dir * 0.98, S.dir * 0.94];
+    for (let i = 0; i < n; i++) {
+      const c = GL3D.quad('water', WATER, px, px, { uPhase: i / n, uSeed: 4.7, uChop: P.chop, uFoam: P.foam, uSpecK: S.spec, uWind: P.wind, uDir: S.dir, uSun: sun(lk), uSunCol: sc,
+        uSky: P.sky, uHor: P.hor, uDeep: P.deep, uMid: P.mid });
+      if (!c) return null;
+      frames.push({ c, w: size, h: size });
+    }
+    return frames;
+  }
+  // Ground: a seamless tile of real-looking terrain for each land world, lit by the mission sun (relative to flat ground,
+  // so the world's grade still sets the mood). 0 sand, 1 volcanic ash and basalt, 2 meadow, 3 asphalt, 4 rubble and dirt.
+  const GROUND = NOISE + `
+uniform float uKind; uniform vec2 uPx; uniform vec3 uSun; uniform float uDir; uniform float uAmb; uniform float uRelief;
+const float PI2 = 6.2831853;
+float ridged(vec2 p, float per) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * (1.0 - abs(pnoise(p + float(i) * vec2(0.37, 0.61), per) * 2.0 - 1.0)); p *= 2.0; per *= 2.0; a *= 0.5; } return s; }
+// stones: one per cell of a seamless grid, random size and offset
+float stones(vec2 uv, float cells, float size) {
+  vec2 p = uv * cells, i = floor(p), f = fract(p);
+  float h = 0.0;
+  for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+    vec2 c = i + vec2(float(dx), float(dy)), w = mod(c, cells);
+    float r = hash2(w + 7.1);
+    if (r > 0.55) continue;
+    vec2 o = vec2(hash2(w + 1.3), hash2(w + 4.9)) * 0.8 + 0.1;
+    float rad = size * (0.4 + 0.6 * hash2(w + 9.7)), d = length(p - c - o) / rad;
+    h = max(h, sqrt(max(0.0, 1.0 - d * d)));
+  }
+  return h;
+}
+float H(vec2 uv) {
+  if (uKind < 0.5) {
+    float d = 0.55 * sin(PI2 * (uv.x * 1.0 + uv.y * 2.0) + pfbm(uv * 2.0, 2.0) * 2.0) + 0.3 * sin(PI2 * (uv.x * 3.0 - uv.y * 1.0) + 1.3);
+    float rp = sin(PI2 * (uv.y * 40.0 + uv.x * 5.0) + pfbm(uv * 5.0, 5.0) * 9.0 + d * 3.0);
+    rp = rp > 0.0 ? rp * 0.55 : rp;
+    return d * 6.0 + rp * 0.22 * smoothstep(0.25, 0.75, pfbm(uv * 4.0 + 1.0, 4.0)) + pfbm(uv * 32.0, 32.0) * 0.3 + stones(uv, 64.0, 0.18) * 0.4;
+  } else if (uKind < 1.5) {
+    return ridged(uv * 8.0, 8.0) * 2.4 + pfbm(uv * 48.0, 48.0) * 0.5 + stones(uv, 40.0, 0.35) * 0.8;
+  } else if (uKind < 2.5) {
+    return pfbm(uv * 6.0, 6.0) * 1.4 + pfbm(uv * 90.0, 90.0) * 0.55 + pfbm(uv * 26.0, 26.0) * 0.4;
+  } else if (uKind < 3.5) {
+    return pfbm(uv * 120.0, 120.0) * 0.18 + pfbm(uv * 12.0, 12.0) * 0.1;
+  }
+  return pfbm(uv * 10.0, 10.0) * 1.1 + stones(uv, 36.0, 0.42) * 1.2 + stones(uv * 1.0 + 0.37, 90.0, 0.35) * 0.5 + pfbm(uv * 60.0, 60.0) * 0.3;
+}
+vec3 albedo(vec2 uv, float h) {
+  float n1 = pfbm(uv * 5.0, 5.0), n2 = pfbm(uv * 23.0 + 3.0, 23.0), n3 = hash2(floor(uv * uPx));
+  if (uKind < 0.5) {
+    vec3 c = mix(vec3(0.74, 0.52, 0.31), vec3(0.88, 0.67, 0.43), n1);
+    c *= 0.94 + 0.12 * n2;
+    c = mix(c, vec3(0.62, 0.42, 0.25), smoothstep(0.55, 0.9, pfbm(uv * 9.0 + 5.0, 9.0)) * 0.22);
+    float sc = stones(uv, 64.0, 0.18) * step(0.55, hash2(floor(uv * 64.0) + 31.0));
+    c = mix(c, vec3(0.5, 0.36, 0.24), step(0.05, sc) * 0.5);
+    float shrub = stones(uv + 0.5, 22.0, 0.12);
+    c = mix(c, vec3(0.32, 0.36, 0.18), step(0.1, shrub) * step(0.62, hash2(floor(uv * 22.0 + 0.5) + 2.0)));
+    return c * (0.97 + 0.06 * n3);
+  } else if (uKind < 1.5) {
+    vec3 c = mix(vec3(0.11, 0.09, 0.085), vec3(0.2, 0.17, 0.16), n2);
+    c = mix(c, vec3(0.38, 0.34, 0.32), smoothstep(0.5, 0.8, n1) * 0.65);
+    c = mix(c, vec3(0.62, 0.22, 0.08), smoothstep(0.83, 0.95, pfbm(uv * 30.0 + 9.0, 30.0)) * 0.5);
+    return c * (0.95 + 0.1 * n3);
+  } else if (uKind < 2.5) {
+    vec3 c = mix(vec3(0.15, 0.26, 0.1), vec3(0.3, 0.4, 0.16), n1);
+    c = mix(c, vec3(0.42, 0.42, 0.22), smoothstep(0.62, 0.85, pfbm(uv * 11.0 + 2.0, 11.0)) * 0.6);
+    c *= 0.82 + 0.3 * pfbm(uv * 90.0, 90.0);
+    return c * (0.96 + 0.08 * n3);
+  } else if (uKind < 3.5) {
+    vec3 c = vec3(0.25, 0.26, 0.27) * (0.88 + 0.22 * pfbm(uv * 120.0, 120.0));
+    c *= 0.9 + 0.12 * n1;
+    c = mix(c, vec3(0.16, 0.16, 0.17), smoothstep(0.6, 0.9, pfbm(uv * 7.0 + 4.0, 7.0)) * 0.5);
+    return c * (0.95 + 0.1 * n3);
+  }
+  vec3 c = mix(vec3(0.27, 0.24, 0.2), vec3(0.42, 0.38, 0.32), n1);
+  c *= 0.9 + 0.2 * n2;
+  c = mix(c, vec3(0.5, 0.48, 0.45), step(0.05, stones(uv, 36.0, 0.42)) * 0.45);
+  c = mix(c, vec3(0.08, 0.07, 0.06), smoothstep(0.66, 0.9, pfbm(uv * 4.0 + 8.0, 4.0)) * 0.7);
+  return c * (0.95 + 0.1 * n3);
+}
+void main() {
+  vec2 e = 1.0 / uPx;
+  float h = H(vUv), hx = H(vUv + vec2(e.x, 0.0)), hy = H(vUv + vec2(0.0, e.y));
+  vec2 slope = vec2(hx - h, hy - h) / (e * 256.0);
+  vec3 n = normalize(vec3(-slope * uRelief, 1.0));
+  float lit = (uAmb + uDir * max(dot(n, uSun), 0.0)) / (uAmb + uDir * uSun.z);
+  float cav = clamp((h - (H(vUv + vec2(e.x * 3.0, 0.0)) + H(vUv - vec2(e.x * 3.0, 0.0)) + H(vUv + vec2(0.0, e.y * 3.0)) + H(vUv - vec2(0.0, e.y * 3.0))) * 0.25) * 2.0 + 1.0, 0.75, 1.1);
+  gl_FragColor = vec4(albedo(vUv, h) * lit * cav, 1.0);
+}`;
+  const GROUND_KIND = { desert: 0, volcano: 1, woods: 2, city: 3, ruins: 4 }, RELIEF = [1.6, 1.4, 1.0, 0.5, 1.6];
+  function ground(kind, lk, size, res) {
+    if (GROUND_KIND[kind] === undefined) return null;
+    const S = SURF[lk] || SURF.day, px = Math.round(size * res);
+    const c = GL3D.quad('ground', GROUND, px, px, { uKind: GROUND_KIND[kind], uPx: [px, px], uSun: sun(lk), uDir: S.dir, uAmb: S.amb, uRelief: RELIEF[GROUND_KIND[kind]] });
+    return c ? { c, w: size, h: size } : null;
+  }
+  function waterFrame(kind, lk, size, res, i, n) {
+    const P = WATERS[kind] || WATERS.ocean, S = SURF[lk] || SURF.day, px = Math.round(size * res), sc = [S.dir, S.dir * 0.98, S.dir * 0.94];
+    const c = GL3D.quad('water', WATER, px, px, { uPhase: i / n, uSeed: 4.7, uChop: P.chop, uFoam: P.foam, uSpecK: S.spec, uWind: P.wind, uDir: S.dir, uSun: sun(lk), uSunCol: sc,
+      uSky: P.sky, uHor: P.hor, uDeep: P.deep, uMid: P.mid });
+    return c ? { c, w: size, h: size } : null;
+  }
+  // Clouds seen from above: a cluster of domes roughed up with billowing noise, lit on top by the sun,
+  // shaded in the folds, glowing where they are thin, with wispy edges.
+  const CLOUD = NOISE + `
+uniform vec4 uPuff[22]; uniform vec2 uSize; uniform vec3 uSun; uniform float uDir; uniform float uAmb; uniform float uAlb; uniform float uSeed; uniform float uSoft;
+float smax(float a, float b, float k) { float h = max(k - abs(a - b), 0.0) / k; return max(a, b) + h * h * k * 0.25; }
+// top surface height of the cloud: soft union of domes, warped so the outline is ragged, with billows on top
+float Hc(vec2 p) {
+  vec2 w = vec2(fbm3(vec3(p * 0.02, uSeed)), fbm3(vec3(p * 0.02, uSeed + 5.0))) - 0.5;
+  vec2 q = p + w * 34.0;
+  float h = -60.0;
+  for (int i = 0; i < 22; i++) { vec4 c = uPuff[i]; vec2 d = q - c.xy; float dd = dot(d, d), dome = dd < c.z * c.z ? sqrt(c.z * c.z - dd) * c.w : (c.z - sqrt(dd)); h = smax(h, dome, 6.0); }
+  float b = fbm3(vec3(p * 0.07, uSeed + 2.0));
+  h += (1.0 - abs(b * 2.0 - 1.0) - 0.6) * 7.0 * smoothstep(1.0, 12.0, h);
+  return h;
+}
+void main() {
+  vec2 p = (vUv - 0.5) * uSize;
+  float h = Hc(p);
+  float fine = fbm3(vec3(p * 0.22, uSeed + 9.0));
+  float a = smoothstep(0.0, mix(9.0, 26.0, uSoft), h) * mix(0.35 + 0.9 * fine, 1.0, smoothstep(3.0, 12.0, h));
+  a = clamp(a, 0.0, 1.0) * mix(1.0, 0.8, uSoft);
+  if (a < 0.004) { gl_FragColor = vec4(0.0); return; }
+  float e = 1.5, hx = Hc(p + vec2(e, 0.0)), hy = Hc(p + vec2(0.0, e));
+  vec3 n = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 0.9));
+  vec2 sd = normalize(uSun.xy + vec2(1e-4));
+  float tn = uSun.z / max(0.2, length(uSun.xy)), sh = 0.0;
+  for (int k = 1; k <= 3; k++) { float t = float(k * k) * 3.5; sh = max(sh, smoothstep(0.0, 7.0, Hc(p + sd * t) - h - t * tn)); }
+  sh *= uDir;
+  float wrap = clamp((dot(n, uSun) + 0.45) / 1.45, 0.0, 1.0);
+  vec3 lit = vec3(1.0, 0.995, 0.985), shade = vec3(0.66, 0.7, 0.77);
+  vec3 col = mix(shade, lit, clamp(uAmb * 0.5 + wrap * uDir * 0.8 - sh * 0.3 + uSoft * 0.25, 0.0, 1.0));
+  col = mix(col * vec3(0.9, 0.93, 0.98), col, smoothstep(2.0, 12.0, h));
+  col *= uAlb;
+  gl_FragColor = vec4(col * a, a);
+}`;
+  function cloud(i, lk, res, soft) {
+    const S = SURF[lk] || SURF.day, r = mulberry32(101 + i * 17), Wc = 240, Hc = 150, pf = [];
+    // a lumpy cluster: a few big towers near the middle, smaller domes spreading out to an uneven edge
+    const ang = (r() - 0.5) * 0.6, ca = Math.cos(ang), sa = Math.sin(ang);
+    for (let k = 0; k < 22; k++) {
+      const big = k < 6, t = r() * TAU, dd = big ? Math.sqrt(r()) * 0.45 : 0.35 + r() * 0.55;
+      const x0 = Math.cos(t) * dd * 78, y0 = Math.sin(t) * dd * 38;
+      pf.push(x0 * ca - y0 * sa, x0 * sa + y0 * ca, big ? 20 + r() * 9 : 9 + r() * 10, big ? 1 : 0.7 + r() * 0.3);
+    }
+    const alb = { day: 1, golden: 1, overcast: 0.92, storm: 0.8, night: 0.92 }[lk] || 1;
+    const c = GL3D.quad('cloud', CLOUD, Wc * res, Hc * res, { uPuff: new Float32Array(pf), uSize: [Wc, Hc], uSun: sun(lk), uDir: S.dir, uAmb: S.amb, uAlb: alb, uSeed: i * 13.7 + 2.0 + (soft ? 40 : 0), uSoft: soft ? 1 : 0 });
+    return c ? { c, w: Wc, h: Hc } : null;
+  }
+  // Smoke, steam and dust: a billowing ball lit from the sun's side, thin and ragged at the edge.
+  const PUFF = NOISE + `
+uniform vec3 uSun; uniform vec3 uCol; uniform vec3 uShade; uniform float uSeed; uniform float uDens;
+float Dp(vec2 p) {
+  vec2 w = vec2(fbm3(vec3(p * 1.6, uSeed)), fbm3(vec3(p * 1.6, uSeed + 5.0))) - 0.5;
+  vec2 q = p + w * 0.62;
+  float b = fbm3(vec3(q * 2.2, uSeed + 2.0));
+  return exp(-dot(q, q) * 2.9) * (0.45 + 0.9 * smoothstep(0.28, 0.78, b));
+}
+void main() {
+  vec2 p = (vUv - 0.5) * 2.0;
+  float d = Dp(p);
+  float a = clamp(1.0 - exp(-d * 2.6), 0.0, 1.0) * smoothstep(1.0, 0.7, length(p)) * uDens;
+  if (a < 0.004) { gl_FragColor = vec4(0.0); return; }
+  float e = 0.09, hx = Dp(p + vec2(e, 0.0)) - Dp(p - vec2(e, 0.0)), hy = Dp(p + vec2(0.0, e)) - Dp(p - vec2(0.0, e));
+  vec3 n = normalize(vec3(-hx / (2.0 * e), -hy / (2.0 * e), 1.6));
+  float wrap = clamp((dot(n, uSun) + 0.5) / 1.5, 0.0, 1.0);
+  vec3 col = mix(uShade, uCol, wrap * (0.7 + 0.3 * smoothstep(0.1, 0.7, d)));
+  gl_FragColor = vec4(col * a, a);
+}`;
+  // Fire: a hot core breaking up into flame tongues, white-yellow to orange to deep red. Drawn with additive light.
+  const FIRE = NOISE + `
+uniform float uSeed; uniform float uHot;
+void main() {
+  vec2 p = (vUv - 0.5) * 2.0;
+  vec2 w = vec2(fbm3(vec3(p * 2.0, uSeed)), fbm3(vec3(p * 2.0, uSeed + 3.0))) - 0.5;
+  float r = length(p + w * 0.75), n = fbm3(vec3(p * 4.0, uSeed + 7.0)), n2 = fbm3(vec3(p * 9.0, uSeed + 11.0));
+  float T = clamp((1.0 - r * 1.2) * (0.55 + 0.9 * n) * (0.8 + 0.4 * n2) * uHot, 0.0, 1.2);
+  vec3 c = mix(vec3(0.55, 0.06, 0.0), vec3(1.0, 0.42, 0.06), smoothstep(0.08, 0.45, T));
+  c = mix(c, vec3(1.0, 0.82, 0.38), smoothstep(0.4, 0.75, T));
+  c = mix(c, vec3(1.0, 0.98, 0.9), smoothstep(0.75, 1.05, T));
+  float a = smoothstep(0.02, 0.3, T);
+  gl_FragColor = vec4(c * a, a);
+}`;
+  const PUFFS = { smoke: { col: [0.46, 0.45, 0.44], shade: [0.15, 0.15, 0.16], dens: 1 }, steam: { col: [0.97, 0.98, 1.0], shade: [0.66, 0.71, 0.78], dens: 0.8 },
+    dust: { col: [0.9, 0.78, 0.6], shade: [0.55, 0.44, 0.32], dens: 0.6 }, black: { col: [0.2, 0.19, 0.2], shade: [0.05, 0.05, 0.06], dens: 0.95 } };
+  function puff(kind, i, lk, px) {
+    const P = PUFFS[kind] || PUFFS.smoke;
+    const c = GL3D.quad('puff', PUFF, px, px, { uSun: sun(lk), uCol: P.col, uShade: P.shade, uSeed: 3.1 + i * 7.3, uDens: P.dens });
+    return c ? { c, w: 40, h: 40 } : null;
+  }
+  function fire(i, px, hot) {
+    const c = GL3D.quad('fire', FIRE, px, px, { uSeed: 1.7 + i * 5.9, uHot: hot || 1.15 });
+    return c ? { c, w: 32, h: 32 } : null;
+  }
+  // Relight: takes a painted stretch of terrain (islands, forests, ice, rocks, craters) and gives it real texture and relief.
+  // Each pixel is sorted by its color into water, plants, sand, rock, ice or lava; each kind gets its own surface detail
+  // and height, and the whole stretch is lit by the mission sun with soft contact shadows and shadows cast on the ground.
+  const KINDS = `
+vec3 hsv(vec3 c) {
+  vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0), p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g)), q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+  float d = q.x - min(q.w, q.y), e = 1.0e-10;
+  return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+// material weights: x plants, y sand, z rock, w ice; water and lava are what is left over
+vec4 kinds(vec4 c, out float water, out float lava) {
+  vec3 h = hsv(c.rgb);
+  water = smoothstep(0.44, 0.48, h.x) * (1.0 - smoothstep(0.64, 0.7, h.x)) * smoothstep(0.18, 0.3, h.y);
+  float veg = smoothstep(0.15, 0.2, h.x) * (1.0 - smoothstep(0.43, 0.47, h.x)) * smoothstep(0.16, 0.26, h.y);
+  lava = (1.0 - smoothstep(0.07, 0.1, h.x)) * smoothstep(0.55, 0.7, h.y) * smoothstep(0.65, 0.8, h.z);
+  float ice = smoothstep(0.72, 0.85, h.z) * (1.0 - smoothstep(0.1, 0.2, h.y)) * (1.0 - water);
+  float sand = smoothstep(0.04, 0.07, h.x) * (1.0 - smoothstep(0.15, 0.18, h.x)) * smoothstep(0.12, 0.22, h.y) * smoothstep(0.4, 0.55, h.z) * (1.0 - lava);
+  float rock = clamp(1.0 - water - veg - sand - ice - lava, 0.0, 1.0);
+  return vec4(veg, sand, rock, ice);
+}`;
+  // Height pass: how tall each pixel's material stands (tree canopy and rock tall, ice a little, sand and water flat), softened,
+  // stored in two channels for precision.
+  const HMAP = NOISE + KINDS + `
+uniform sampler2D uTex; uniform vec2 uPx; uniform float uUnit;
+float hgt(vec2 uv) { vec4 c = texture2D(uTex, uv); float w, l; vec4 k = kinds(c, w, l); return c.a * dot(k, vec4(5.5, 0.4, 7.0, 1.6)); }
+void main() {
+  vec2 o = vec2(1.6 * uUnit) / uPx;
+  float h = (hgt(vUv) * 2.0 + hgt(vUv + vec2(o.x, 0.0)) + hgt(vUv - vec2(o.x, 0.0)) + hgt(vUv + vec2(0.0, o.y)) + hgt(vUv - vec2(0.0, o.y))) / 6.0;
+  float v = clamp(h / 16.0, 0.0, 1.0) * 255.0, hi = floor(v);
+  gl_FragColor = vec4(hi / 255.0, fract(v), 0.0, 1.0);
+}`;
+  const RELIGHT = NOISE + KINDS + `
+uniform sampler2D uTex; uniform sampler2D uH; uniform vec2 uPx; uniform float uUnit; uniform vec3 uSun; uniform float uDir; uniform float uAmb; uniform float uSeed; uniform float uShK;
+float hb(vec2 uv) { vec4 t = texture2D(uH, uv); return (t.r * 255.0 + t.g) / 255.0 * 16.0; }
+float detail(vec2 p, vec4 k, float water) {
+  float trees = smoothstep(0.3, 0.78, vnoise(p / 2.4 + uSeed)) * 0.75 + vnoise(p / 0.9 + uSeed) * 0.25;
+  float crag = 1.0 - abs(vnoise(p / 3.5 + uSeed + 7.0) * 2.0 - 1.0);
+  return k.x * trees * 2.4 + k.z * (crag * 2.2 + vnoise(p / 1.1) * 0.6) + k.w * vnoise(p / 4.0 + 3.0) * 0.5 + k.y * vnoise(p / 1.3) * 0.25 + water * vnoise(p / 1.6 + uSeed) * 0.12;
+}
+void main() {
+  vec2 uv = vUv, px = 1.0 / uPx, p = uv * uPx / uUnit;
+  vec4 c = texture2D(uTex, uv);
+  vec2 sd = normalize(uSun.xy + vec2(1e-4));
+  float tn = uSun.z / max(0.15, length(uSun.xy));
+  float h0 = hb(uv), sh = 0.0;
+  for (int k = 1; k <= 7; k++) { float t = float(k) * 1.4; sh = max(sh, smoothstep(0.0, 1.5, hb(uv + sd * t * uUnit * px) - h0 - t * tn)); }
+  sh *= uDir;
+  if (c.a < 0.02) { gl_FragColor = vec4(0.0, 0.0, 0.0, sh * uShK); return; }
+  float water, lava; vec4 k = kinds(c, water, lava);
+  float d0 = detail(p, k, water), e = 0.6;
+  float hx = hb(uv + vec2(e * uUnit * px.x, 0.0)) + detail(p + vec2(e, 0.0), k, water);
+  float hy = hb(uv + vec2(0.0, e * uUnit * px.y)) + detail(p + vec2(0.0, e), k, water);
+  float hc = h0 + d0;
+  vec3 n = normalize(vec3(-(hx - hc) / e, -(hy - hc) / e, 1.8));
+  float lit = (uAmb + uDir * max(dot(n, uSun), 0.0)) / (uAmb + uDir * uSun.z);
+  // contact shadows: darker where the ground dips below its surroundings
+  vec2 o = vec2(3.0 * uUnit) * px;
+  float around = (hb(uv + vec2(o.x, 0.0)) + hb(uv - vec2(o.x, 0.0)) + hb(uv + vec2(0.0, o.y)) + hb(uv - vec2(0.0, o.y))) * 0.25;
+  float ao = 1.0 - clamp((around - h0) * 0.09, 0.0, 0.3);
+  vec3 col = c.rgb;
+  // surface detail in the colors: gaps between tree crowns, grain in sand, streaks in rock, blue in ice
+  float trees = smoothstep(0.3, 0.78, vnoise(p / 2.4 + uSeed));
+  col *= 1.0 + k.x * (trees * 0.42 - 0.24 + (vnoise(p / 0.8) - 0.5) * 0.18);
+  col *= 1.0 + k.y * (vnoise(p / 0.7 + 2.0) - 0.5) * 0.14 + k.y * (vnoise(p / 9.0) - 0.5) * 0.12;
+  col *= 1.0 + k.z * ((vnoise(p / 2.0 + 5.0) - 0.5) * 0.3 + (vnoise(p / 12.0) - 0.5) * 0.2);
+  col = mix(col, col * vec3(0.9, 0.96, 1.04), k.w * vnoise(p / 6.0 + 1.0));
+  vec3 shaded = col * lit * ao * (1.0 - sh * 0.45);
+  if (water > 0.01) {
+    float q = 0.35;
+    vec2 g = vec2(vnoise(p / 1.4 + vec2(q, uSeed)) - vnoise(p / 1.4 + vec2(-q, uSeed)), vnoise(p / 1.4 + vec2(uSeed, q)) - vnoise(p / 1.4 + vec2(uSeed, -q))) * 1.1;
+    vec3 wn = normalize(vec3(-g, 1.0)), r = vec3(2.0 * wn.z * wn.x, 2.0 * wn.z * wn.y, 2.0 * wn.z * wn.z - 1.0);
+    float spec = pow(max(dot(r, uSun), 0.0), 600.0) * 3.5 * uDir;
+    vec3 wc = c.rgb * (0.9 + 0.2 * vnoise(p / 3.0 + uSeed)) * (0.94 + 0.12 * wn.x) * (1.0 - sh * 0.4) + vec3(spec);
+    shaded = mix(shaded, wc, water);
+  }
+  col = mix(shaded, c.rgb * 1.05, lava);
+  gl_FragColor = vec4(col * c.a, c.a);
+}`;
+  // First pass: natural edges (coastlines, forest edges and rocks lose their perfect curves) and smooth shallows.
+  const SHAPE = NOISE + `
+uniform sampler2D uTex; uniform vec2 uPx; uniform float uUnit; uniform float uSeed;
+void main() {
+  vec2 p = vUv * uPx / uUnit;
+  vec2 w = (vec2(vnoise(p / 7.0 + uSeed), vnoise(p / 7.0 + uSeed + 19.0)) - 0.5) * 3.4 + (vec2(vnoise(p / 1.7 + uSeed + 3.0), vnoise(p / 1.7 + uSeed + 7.0)) - 0.5) * 1.2;
+  vec2 uv = vUv + w * uUnit / uPx;
+  vec4 c = texture2D(uTex, uv);
+  if (c.a < 0.92) {
+    vec4 s = vec4(c.rgb * c.a, c.a);
+    for (int i = 0; i < 8; i++) { float a = float(i) * 0.7854; vec4 t = texture2D(uTex, uv + vec2(cos(a), sin(a)) * 3.5 * uUnit / uPx); s += vec4(t.rgb * t.a, t.a); }
+    s /= 9.0;
+    vec4 b = vec4(s.a > 0.001 ? s.rgb / s.a : vec3(0.0), s.a);
+    c = mix(c, b, 0.85 * (1.0 - smoothstep(0.8, 0.92, c.a)));
+  }
+  gl_FragColor = vec4(c.rgb * c.a, c.a);
+}`;
+  // The three steps can run on separate frames (relightStep), or all at once (relight).
+  function relightStep(j) {
+    const sz = [j.src.width, j.src.height];
+    if (!j.shaped) j.shaped = GL3D.quad('shape', SHAPE, sz[0], sz[1], { uPx: sz, uUnit: j.unit, uSeed: j.seed % 89 }, { uTex: j.src }) || 'x';
+    else if (!j.hm) j.hm = j.shaped === 'x' ? 'x' : GL3D.quad('hmap', HMAP, sz[0], sz[1], { uPx: sz, uUnit: j.unit }, { uTex: j.shaped }) || 'x';
+    else {
+      const S = SURF[j.lk] || SURF.day;
+      j.out = j.hm === 'x' ? null : GL3D.quad('relight', RELIGHT, sz[0], sz[1], { uPx: sz, uUnit: j.unit, uSun: sun(j.lk), uDir: S.dir, uAmb: S.amb, uSeed: j.seed % 97, uShK: 0.42 }, { uTex: j.shaped, uH: j.hm });
+      for (const t of [j.shaped, j.hm]) if (t && t !== 'x') t.width = t.height = 1;
+      j.done = true;
+    }
+    return j;
+  }
+  function relight(canvas, unit, lk, seed) {
+    const j = { src: canvas, unit, lk, seed };
+    while (!j.done) relightStep(j);
+    return j.out;
+  }
+  // Painted machines (the big bosses, boats, tanks, gun turrets): rounded into 3D from their outline, lit by the sun,
+  // with glossy highlights on the metal and a cool sky sheen on the edges.
+  const MHMAP = `
+uniform sampler2D uTex; uniform vec2 uPx; uniform float uUnit;
+varying vec2 vUv;
+float A(vec2 uv) { return texture2D(uTex, uv).a; }
+float ring(vec2 uv, float r) { vec2 o = vec2(r * uUnit) / uPx; float s = A(uv); for (int i = 0; i < 8; i++) { float a = float(i) * 0.7854; s += A(uv + vec2(cos(a), sin(a)) * o); } return s / 9.0; }
+void main() {
+  vec4 c = texture2D(uTex, vUv);
+  float lum = dot(c.rgb, vec3(0.3, 0.59, 0.11));
+  float h = ring(vUv, 1.2) * 0.45 + ring(vUv, 3.5) * 0.35 + ring(vUv, 8.0) * 0.2 + (lum - 0.45) * 0.14 * c.a;
+  float v = clamp(h, 0.0, 1.0) * 255.0, hi = floor(v);
+  gl_FragColor = vec4(hi / 255.0, fract(v), 0.0, 1.0);
+}`;
+  const METAL = `
+uniform sampler2D uTex; uniform sampler2D uH; uniform vec2 uPx; uniform float uUnit; uniform vec3 uSun; uniform float uDir; uniform float uAmb; uniform float uSpec;
+varying vec2 vUv;
+float H(vec2 uv) { vec4 t = texture2D(uH, uv); return (t.r * 255.0 + t.g) / 255.0 * 6.0; }
+void main() {
+  vec4 c = texture2D(uTex, vUv);
+  if (c.a < 0.01) { gl_FragColor = vec4(0.0); return; }
+  vec2 e = vec2(0.7 * uUnit) / uPx;
+  float h = H(vUv), hx = H(vUv + vec2(e.x, 0.0)) - H(vUv - vec2(e.x, 0.0)), hy = H(vUv + vec2(0.0, e.y)) - H(vUv - vec2(0.0, e.y));
+  vec3 n = normalize(vec3(-hx / 1.4, -hy / 1.4, 1.0));
+  float lit = (uAmb + uDir * max(dot(n, uSun), 0.0)) / (uAmb + uDir * uSun.z);
+  float spec = pow(max(dot(n, normalize(uSun + vec3(0.0, 0.0, 1.0))), 0.0), 36.0) * uSpec * uDir;
+  vec3 col = c.rgb * lit + vec3(1.0, 0.98, 0.94) * spec * 0.45 + vec3(0.6, 0.7, 0.85) * pow(1.0 - n.z, 2.0) * 0.3;
+  gl_FragColor = vec4(col * c.a, c.a);
+}`;
+  // spin: how the sprite is turned on screen (bosses fly nose-down), so the light comes from the world's sun
+  function metal(spr, lk, spin) {
+    const S = SURF[lk] || SURF.day, sz = [spr.c.width, spr.c.height], unit = spr.c.width / spr.w, su = sun(lk);
+    const cs = Math.cos(-spin), sn = Math.sin(-spin), ls = [su[0] * cs - su[1] * sn, su[0] * sn + su[1] * cs, su[2]];
+    const hm = GL3D.quad('mhmap', MHMAP, sz[0], sz[1], { uPx: sz, uUnit: unit }, { uTex: spr.c });
+    const out = hm && GL3D.quad('metal', METAL, sz[0], sz[1], { uPx: sz, uUnit: unit, uSun: ls, uDir: S.dir, uAmb: S.amb, uSpec: S.spec }, { uTex: spr.c, uH: hm });
+    if (hm) hm.width = hm.height = 1;
+    return out ? { c: out, w: spr.w, h: spr.h } : null;
+  }
+  return { water, waterFrame, ground, cloud, puff, fire, relight, relightStep, metal, sun, SURF, NOISE };
+})();
 function lg(g, x0, y0, x1, y1, stops) { const gr = g.createLinearGradient(x0, y0, x1, y1); for (const s of stops) gr.addColorStop(s[0], s[1]); return gr; }
 function rg(g, x, y, r0, r1, stops) { const gr = g.createRadialGradient(x, y, r0, x, y, r1); for (const s of stops) gr.addColorStop(s[0], s[1]); return gr; }
 function circ(g, x, y, r) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
@@ -949,18 +1868,18 @@ function camo(g, path, S, L, col, rng) {
 }
 function canopy(g, x, y, rx, ry, col) {
   g.save(); g.translate(x, y);
-  g.fillStyle = lg(g, -rx, -ry, rx, ry, [[0, '#A8D4F0'], [0.35, '#3A6E98'], [1, '#0B1A28']]);
+  g.fillStyle = PAINT_FLAT ? '#16314A' : lg(g, -rx, -ry, rx, ry, [[0, '#A8D4F0'], [0.35, '#3A6E98'], [1, '#0B1A28']]);
   g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.fill();
   g.strokeStyle = rgba(col.dark, 0.95); g.lineWidth = 0.6; g.stroke();
   g.beginPath(); g.moveTo(-rx, -ry * 0.15); g.lineTo(rx, -ry * 0.15); g.moveTo(-rx * 0.9, ry * 0.42); g.lineTo(rx * 0.9, ry * 0.42); g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.78)';
+  g.fillStyle = PAINT_FLAT ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,.78)';
   g.beginPath(); g.ellipse(-rx * 0.35, -ry * 0.45, rx * 0.22, ry * 0.28, -0.3, 0, TAU); g.fill();
   g.restore();
 }
 function nacelle(g, x, y, w, len, col, spin, pusher) {
   g.save(); g.translate(x, y);
   if (pusher) g.scale(1, -1);
-  g.fillStyle = lg(g, -w / 2, 0, w / 2, 0, [[0, col.dark], [0.35, col.light], [0.6, col.base], [1, col.dark]]);
+  g.fillStyle = PAINT_FLAT ? col.base : lg(g, -w / 2, 0, w / 2, 0, [[0, col.dark], [0.35, col.light], [0.6, col.base], [1, col.dark]]);
   g.beginPath();
   g.moveTo(-w * 0.42, -len / 2);
   g.quadraticCurveTo(0, -len / 2 - w * 0.3, w * 0.42, -len / 2);
@@ -975,6 +1894,7 @@ function nacelle(g, x, y, w, len, col, spin, pusher) {
   g.restore();
 }
 function shadeBody(g, path, cx, bw, n, L, col) {
+  if (PAINT_FLAT) { g.fillStyle = col.base; g.fill(path); return; }
   g.fillStyle = lg(g, cx - bw, 0, cx + bw, 0, [[0, col.dark], [0.3, col.light], [0.55, col.base], [1, col.dark]]);
   g.fill(path);
   g.fillStyle = lg(g, 0, n, 0, n + L, [[0, 'rgba(255,255,255,.08)'], [1, 'rgba(0,0,0,.25)']]);
@@ -989,9 +1909,9 @@ function paintPlane(g, sp, col) {
   const wy0 = w.y - 3, wy1 = w.y + Math.max(w.rc, w.sweep + w.tc) + 3;
 
   // wings
-  g.fillStyle = lg(g, 0, wy0, 0, wy1, [[0, col.light], [0.32, col.base], [1, col.dark]]); g.fill(wings);
-  g.fillStyle = lg(g, -S / 2, 0, S / 2, 0, [[0, 'rgba(0,0,0,.24)'], [0.42, 'rgba(255,255,255,.08)'], [0.58, 'rgba(255,255,255,.04)'], [1, 'rgba(0,0,0,.32)']]);
-  g.fill(wings);
+  g.fillStyle = PAINT_FLAT ? col.base : lg(g, 0, wy0, 0, wy1, [[0, col.light], [0.32, col.base], [1, col.dark]]); g.fill(wings);
+  if (!PAINT_FLAT) { g.fillStyle = lg(g, -S / 2, 0, S / 2, 0, [[0, 'rgba(0,0,0,.24)'], [0.42, 'rgba(255,255,255,.08)'], [0.58, 'rgba(255,255,255,.04)'], [1, 'rgba(0,0,0,.32)']]);
+  g.fill(wings); }
   if (sp.camo) camo(g, wings, S, L, col, rng);
   g.save(); g.clip(wings);
   if (sp.tips) { g.fillStyle = col.accent; g.fillRect(S / 2 - sp.tips, wy0, sp.tips + 2, wy1 - wy0); g.fillRect(-S / 2 - 2, wy0, sp.tips + 2, wy1 - wy0); }
@@ -1008,7 +1928,7 @@ function paintPlane(g, sp, col) {
     g.moveTo(tx * 0.5, le(0.5) + ch(0.5) * 0.72); g.lineTo(tx * 0.5, le(0.5) + ch(0.5) + 2);
     if (S > 60) for (const f of [0.25, 0.68]) { g.moveTo(tx * f, le(f) + 1); g.lineTo(tx * f, le(f) + ch(f) - 1); }
     g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,.32)'; g.lineWidth = 0.8;
+    g.strokeStyle = PAINT_FLAT ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,.32)'; g.lineWidth = 0.8;
     g.beginPath(); g.moveTo(rx, w.y + 0.7); g.lineTo(tx * 0.96, le(0.96) + 0.7); g.stroke();
     if (sp.edge) { g.strokeStyle = sp.edge; g.lineWidth = 1.5; g.beginPath(); g.moveTo(rx, w.y + 1.1); g.lineTo(tx * 0.97, le(0.97) + 1.1); g.stroke(); }
     g.lineWidth = 0.5;
@@ -1025,7 +1945,7 @@ function paintPlane(g, sp, col) {
   // tail
   if (!sp.noTail) {
     const tail = new Path2D(); tailSide(tail, sp, 1); tailSide(tail, sp, -1);
-    g.fillStyle = lg(g, 0, sp.tail.y - 2, 0, sp.tail.y + sp.tail.c + 3, [[0, col.light], [0.4, col.base], [1, col.dark]]);
+    g.fillStyle = PAINT_FLAT ? col.base : lg(g, 0, sp.tail.y - 2, 0, sp.tail.y + sp.tail.c + 3, [[0, col.light], [0.4, col.base], [1, col.dark]]);
     g.fill(tail);
     if (sp.camo) camo(g, tail, S, L, col, rng);
     g.strokeStyle = 'rgba(0,0,0,.5)'; g.stroke(tail);
@@ -1057,7 +1977,7 @@ function paintPlane(g, sp, col) {
     for (const s of [1, -1]) for (let i = 0; i < 3; i++) g.fillRect(s > 0 ? bw * 0.92 - 1.1 : -bw * 0.92, n + L * 0.13 + i * 1.8, 1.1, 1.1);
   }
   if (!sp.noTail) {
-    g.strokeStyle = col.dark; g.lineWidth = 1.4;
+    g.strokeStyle = PAINT_FLAT ? col.base : col.dark; g.lineWidth = 1.4;
     g.beginPath(); g.moveTo(0, sp.tail.y - 4); g.lineTo(0, L / 2 + 0.5); g.stroke();
     g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 0.5;
     g.beginPath(); g.moveTo(-0.4, sp.tail.y - 3); g.lineTo(-0.4, L / 2); g.stroke();
@@ -1079,7 +1999,7 @@ function paintPlane(g, sp, col) {
     const [x, y, r] = t;
     g.fillStyle = 'rgba(0,0,0,.42)'; circ(g, x + 0.6, y + 0.9, r + 0.7);
     g.fillStyle = '#15181C'; g.fillRect(x - r * 0.42, y + r * 0.2, 0.9, r * 1.35); g.fillRect(x + r * 0.42 - 0.9, y + r * 0.2, 0.9, r * 1.35);
-    g.fillStyle = rg(g, x - r * 0.35, y - r * 0.35, 0, r * 1.2, [[0, '#D8F1FF'], [0.42, '#3F77A3'], [1, '#0D1A26']]); circ(g, x, y, r);
+    g.fillStyle = PAINT_FLAT ? '#16314A' : rg(g, x - r * 0.35, y - r * 0.35, 0, r * 1.2, [[0, '#D8F1FF'], [0.42, '#3F77A3'], [1, '#0D1A26']]); circ(g, x, y, r);
     g.strokeStyle = 'rgba(0,0,0,.65)'; g.lineWidth = 0.6; g.beginPath(); g.arc(x, y, r, 0, TAU); g.stroke();
   }
   if (sp.prop) { g.fillStyle = sp.spinner || col.dark; g.beginPath(); g.ellipse(0, n + 0.2, bw * 0.42, 1.8, 0, 0, TAU); g.fill(); }
@@ -1886,7 +2806,7 @@ const world = {
   key: 'ocean', th: THEATERS.ocean, seed: 1, s: 0, chunks: new Map(), feats: new Map(), tex: null, glint: null,
   lightKey: 'day', light: null, cover: [], glows: [],
   set(key, seed, lightKey) { this.key = key; this.th = THEATERS[key]; this.seed = seed; this.s = 0; this.lightKey = lightKey || 'day'; this.light = LIGHTS[this.lightKey]; this.feats.clear(); this.invalidate(); this.cover = []; },
-  invalidate() { this.chunks.clear(); this.tex = null; this.glint = null; this.deep = null; this.drift = null; },
+  invalidate() { for (const c of this.chunks.values()) c.width = c.height = 1; this.chunks.clear(); this.tex = null; this.glint = null; this.deep = null; this.drift = null; this.wkey = ''; },
   featuresFor(k) {
     let f = this.feats.get(k);
     if (!f) { f = this.th.gen(mulberry32(this.seed * 7919 + k * 104729 + 17)); f.sort((a, b) => LAYER[a.t] - LAYER[b.t]); this.feats.set(k, f); }
@@ -1895,7 +2815,21 @@ const world = {
   chunk(k) {
     let c = this.chunks.get(k);
     if (c) return c;
-    c = document.createElement('canvas');
+    const j = this.job;
+    if (j && j.k === k && j.wkey === this.wkeyC()) {
+      // it was being prepared ahead: finish it now
+      while (!j.done) GLFX.relightStep(j);
+      this.job = null; c = j.out || j.src;
+      if (j.out) j.src.width = j.src.height = 1;
+    } else {
+      c = this.paintChunk(k);
+      if (AIR3D.on && this.key !== 'city') { const r = GLFX.relight(c, c.width / W, this.lightKey, k * 7 + this.seed); if (r) { c.width = c.height = 1; c = r; } }
+    }
+    this.chunks.set(k, c);
+    return c;
+  },
+  paintChunk(k) {
+    const c = document.createElement('canvas');
     c.width = Math.ceil(W * RES); c.height = Math.ceil(CH * RES);
     const g = c.getContext('2d');
     g.setTransform(c.width / W, 0, 0, c.height / CH, 0, 0);
@@ -1903,10 +2837,29 @@ const world = {
     for (let j = k - 1; j <= k + 1; j++) for (const f of this.featuresFor(j)) all.push([f, (k - j) * CH]);
     all.sort((a, b) => LAYER[a[0].t] - LAYER[b[0].t]);
     for (const [f, dy] of all) { g.save(); g.translate(0, dy); FEATURE_DRAW[f.t](g, f); g.restore(); }
-    this.chunks.set(k, c);
     return c;
   },
+  wkeyC() { return this.key + '|' + this.seed + '|' + this.lightKey + '|' + RES; },
+  // The next stretch of terrain is painted and relit one step per frame before it scrolls into view, so no frame does it all.
+  prepNext() {
+    if (!AIR3D.on || this.key === 'city') return;
+    const k = Math.floor((this.s + H) / CH) + 1;
+    if (this.chunks.has(k)) return;
+    const j = this.job;
+    if (!j || j.k !== k || j.wkey !== this.wkeyC()) {
+      if (j && !j.done) for (const t of [j.src, j.shaped, j.hm]) if (t && t !== 'x') t.width = t.height = 1;
+      const c = this.paintChunk(k);
+      this.job = { k, wkey: this.wkeyC(), src: c, unit: c.width / W, lk: this.lightKey, seed: k * 7 + this.seed };
+      return;
+    }
+    if (!j.done) GLFX.relightStep(j);
+    if (j.done) { this.chunks.set(k, j.out || j.src); if (j.out) j.src.width = j.src.height = 1; this.job = null; }
+  },
   buildTex() {
+    if (AIR3D.on) bakeSkyFx(this.lightKey);
+    // Real-looking ground, baked for this world and light; the painted tile is the fallback.
+    this.tex = !this.th.water && AIR3D.on ? GLFX.ground(this.key, this.lightKey, 256, Math.min(RES, 2)) : null;
+    if (this.tex) return;
     this.tex = sprite(TEX, TEX, (g) => { g.translate(-TEX / 2, -TEX / 2); this.th.tex(g, mulberry32(this.seed + 5)); });
     if (this.th.glint) this.glint = sprite(TEX, TEX, (g) => { g.translate(-TEX / 2, -TEX / 2); paintGlint(g, mulberry32(this.seed + 9)); });
   },
@@ -1934,12 +2887,37 @@ const world = {
       ctx.fillStyle = 'rgba(225,235,255,' + 0.38 * flick + ')'; ctx.fillRect(-14, -14, W + 28, H + 28);
     }
   },
+  // Moving water: 16 frames of real waves, baked a couple per frame, cross-faded so the motion is smooth.
+  waterFrames() {
+    const R = Math.min(RES, 1.6), key = this.key + '|' + this.lightKey + '|' + R.toFixed(2);
+    if (this.wkey !== key) { for (const f of this.wfr || []) f.c.width = f.c.height = 1; this.wkey = key; this.wfr = []; this.wfail = false; }
+    if (this.wfr.length < 16 && !this.wfail) {
+      const f = GLFX.waterFrame(this.key, this.lightKey, 256, R, this.wfr.length, 16);
+      if (f) this.wfr.push(f); else this.wfail = true;
+    }
+    return this.wfr.length ? this.wfr : null;
+  },
+  drawWater(wf, time) {
+    const T = 256, ph = (time / 4) * 16, i0 = Math.floor(ph) % 16, a = ph - Math.floor(ph), full = wf.length === 16;
+    const A = full ? wf[i0] : wf[0], B = full ? wf[(i0 + 1) % 16] : null, off = this.s % T;
+    for (const [img, al] of [[A, 1], [B, a]]) {
+      if (!img || al < 0.01) continue;
+      ctx.globalAlpha = al;
+      for (let y = off - T; y < H + 10; y += T) for (let x = -10; x < W + 10; x += T) ctx.drawImage(img.c, x, y, T, T);
+    }
+    ctx.globalAlpha = 1;
+  },
   draw(time) {
     if (!this.tex) this.buildTex();
+    const wf = this.th.water && AIR3D.on ? this.waterFrames() : null;
+    if (wf) this.drawWater(wf, time);
+    else {
     ctx.fillStyle = this.th.base; ctx.fillRect(-14, -14, W + 28, H + 28);
-    const off = this.s % TEX;
-    for (let y = off - TEX; y < H + 10; y += TEX) for (let x = -10; x < W + 10; x += TEX) ctx.drawImage(this.tex.c, x, y, TEX, TEX);
-    if (this.glint) {
+    const TT = this.tex.w, off = this.s % TT;
+    for (let y = off - TT; y < H + 10; y += TT) for (let x = -10; x < W + 10; x += TT) ctx.drawImage(this.tex.c, x, y, TT, TT);
+    }
+    if (this.glint && !wf) {
+      const off = this.s % TEX;
       const a = 0.5 + 0.5 * Math.sin(time * 1.9);
       ctx.globalAlpha = a;
       for (let y = off - TEX; y < H + 10; y += TEX) for (let x = -10; x < W + 10; x += TEX) ctx.drawImage(this.glint.c, x, y, TEX, TEX);
@@ -1949,7 +2927,7 @@ const world = {
       ctx.globalAlpha = 1;
     }
     // Under the surface: caustic light at a slower scroll (deeper = farther), or storm spindrift running ahead of the sea.
-    if (this.th.water && perfLevel >= 2) {
+    if (this.th.water && perfLevel >= 2 && (!wf || this.key === 'storm')) {
       if (this.key === 'storm') {
         const T = this.drift || (this.drift = sprite(TEX, TEX, (g) => { g.translate(-TEX / 2, -TEX / 2); paintDrift(g, mulberry32(this.seed + 31)); }));
         const off = (this.s * 1.25) % TEX, ox = (-time * 34) % TEX;
@@ -1969,12 +2947,27 @@ const world = {
     const k0 = Math.floor(this.s / CH), k1 = Math.floor((this.s + H) / CH);
     for (let k = k0; k <= k1; k++) ctx.drawImage(this.chunk(k), 0, H - (k + 1) * CH + this.s, W, CH);
     this.post();
-    for (const k of this.chunks.keys()) if (k < k0 - 1) this.chunks.delete(k);
+    this.prepNext();
+    for (const [k, c] of this.chunks) if (k < k0 - 1) { c.width = c.height = 1; this.chunks.delete(k); }
     for (const k of this.feats.keys()) if (k < k0 - 3) this.feats.delete(k);
   },
 };
 
 /* ---------------- clouds ---------------- */
+// Lit clouds and textured smoke, steam, dust and fire for the current light. The painted sprites stay as the fallback.
+function bakeSkyFx(lk) {
+  const key = lk + '|' + RES.toFixed(3);
+  if (bakeSkyFx.key === key) return;
+  bakeSkyFx.key = key;
+  const r = Math.min(RES, 2), four = (f) => { const a = [0, 1, 2, 3].map(f); return a.every(Boolean) ? a : null; };
+  const old = [].concat(SPR.cloudsHi || [], SPR.fx ? [].concat(SPR.fx.smoke, SPR.fx.steam, SPR.fx.dust, SPR.fx.fire) : [], SPR.clouds && SPR.clouds.gl ? SPR.clouds.concat(SPR.cloudSh) : []);
+  for (const o of old) if (o && o.c) o.c.width = o.c.height = 1;
+  const cl = four((i) => GLFX.cloud(i, lk, r));
+  if (cl) { SPR.clouds = cl; SPR.cloudSh = cl.map((c) => tinted(c, '#000')); cl.gl = true; }
+  SPR.cloudsHi = four((i) => GLFX.cloud(i, lk, Math.min(r, 1.5), true));
+  const fx = { smoke: four((i) => GLFX.puff('smoke', i, lk, 96)), steam: four((i) => GLFX.puff('steam', i, lk, 96)), dust: four((i) => GLFX.puff('dust', i, lk, 80)), fire: four((i) => GLFX.fire(i, 80)) };
+  SPR.fx = fx.smoke && fx.steam && fx.dust && fx.fire ? fx : null;
+}
 const clouds = {
   list: [],
   reset(fill) {
@@ -1996,11 +2989,11 @@ const clouds = {
   draw(layer, shadow) {
     for (const c of this.list) {
       if (c.layer !== layer) continue;
-      const spr = shadow ? SPR.cloudSh[c.i] : SPR.clouds[c.i];
+      const hi = layer === 'high' && !shadow && SPR.cloudsHi, spr = shadow ? SPR.cloudSh[c.i] : hi ? SPR.cloudsHi[c.i] : SPR.clouds[c.i];
       const w = spr.w * c.s, h = spr.h * c.s;
       const Lt = world.light, alt = layer === 'high' ? 140 : 72;
       const dx = shadow ? alt * Lt.sh[0] : 0, dy = shadow ? alt * Lt.sh[1] : 0;
-      ctx.globalAlpha = shadow ? (layer === 'high' ? 0.07 : 0.13) * Lt.shA / 0.25 : layer === 'high' ? 0.3 : 0.82;
+      ctx.globalAlpha = shadow ? (layer === 'high' ? 0.07 : 0.13) * Lt.shA / 0.25 : layer === 'high' ? (hi ? 0.38 : 0.3) : 0.82;
       if (c.flip) {
         ctx.setTransform(-K, 0, 0, K, (c.x + dx + OX) * K, (c.y + dy + OY) * K);
         ctx.drawImage(spr.c, -w / 2, -h / 2, w, h);
@@ -2549,16 +3542,16 @@ function drawPlume(p, sx, sy, time) {
   for (let i = 0; i < n; i++) {
     const ph = (time * 0.32 + p.ph + i / n) % 1, hz = ph * 380;
     const q = proj(sx, sy, hz);
-    puffs.push([ph, q[0] + ph * ph * 34 + Math.sin(time * 0.9 + i * 2) * 4, q[1], 14 + ph * 52]);
+    puffs.push([ph, q[0] + ph * ph * 34 + Math.sin(time * 0.9 + i * 2) * 4, q[1], 14 + ph * 52, i]);
   }
   puffs.sort((a, b) => a[0] - b[0]);
   ctx.globalCompositeOperation = 'lighter';
   ctx.globalAlpha = 0.55 + 0.25 * Math.sin(time * 9 + p.ph * 7);
   ctx.drawImage(SPR.fire.c, sx - 18, sy - 18, 36, 36);
   ctx.globalCompositeOperation = 'source-over';
-  for (const [ph, x, y, s] of puffs) {
+  for (const [ph, x, y, s, pi] of puffs) {
     const a = Math.min(1, ph * 6) * (1 - ph) * 0.95;
-    ctx.globalAlpha = a; ctx.drawImage(SPR.smoke.c, x - s * 0.7, y - s * 0.7, s * 1.4, s * 1.4);
+    ctx.globalAlpha = a; ctx.drawImage((SPR.fx ? SPR.fx.smoke[pi & 3] : SPR.smoke).c, x - s * 0.7, y - s * 0.7, s * 1.4, s * 1.4);
     ctx.globalAlpha = a * 0.22; ctx.drawImage(SPR.steam.c, x - s * 0.55 + Math.cos(world.light.sunA) * s * 0.18, y - s * 0.55 + Math.sin(world.light.sunA) * s * 0.18, s * 0.9, s * 0.9);
   }
   ctx.globalAlpha = 1;
@@ -2968,6 +3961,7 @@ function startGame(mode, m) {
   world.set(mode === 'endless' ? 'ocean' : mi.th, mode === 'endless' ? (Math.random() * 1e6) | 0 : G.m * 131 + 7, mode === 'endless' ? 'day' : missionLight(G.m, mi.th));
   clouds.reset(true); fog.reset(); ambient.reset();
   P = makePlayer(planeAllowed(save.plane) ? save.plane : 'kestrel');
+  AIR3D.prepare(['scout', 'diver', 'carrier', 'escort', 'gunship', 'ejet', 'bomber', 'hbomber'], P.id);
   if (PREMIUM.mega) { P.mega = true; P.bombs++; }
   if (mode === 'endless') banner('Endless', 'Survive as long as you can', 2.6, false, 'go');
   else banner('Mission ' + G.m, mi.name + ', ' + world.light.label.toLowerCase(), 2.6, false, 'go');
@@ -3256,7 +4250,11 @@ function clusterBurst(b) {
 // gnd: 0 = in the air, 1 = on the ground (over units), 2 = on the ground (under units)
 function addP(spr, x, y, vx, vy, life, size, grow, alpha, add, drag, gnd) {
   if (G.parts.length > MAXP()) return null;
+  // Textured smoke, steam, dust and fire: a random billow, turned at random and slowly rolling.
+  const fx = SPR.fx, v = fx && (spr === SPR.smoke ? fx.smoke : spr === SPR.fire ? fx.fire : spr === SPR.steam ? fx.steam : spr === SPR.dust ? fx.dust : null);
+  if (v) spr = v[(Math.random() * 4) | 0];
   const p = { spr, x, y, vx, vy, life, max: life, size, grow, alpha, add, drag: drag || 0, gnd: gnd || 0 };
+  if (v) { p.rot = Math.random() * TAU; p.vr = (Math.random() - 0.5) * 1.6; }
   G.parts.push(p);
   return p;
 }
@@ -3769,7 +4767,11 @@ function updateEnemies(dt) {
     e.x += e.vx * dt; e.y += e.vy * dt;
     if (e.ground) e.tAng = angLerp(e.tAng, aimAt(e.x, e.y), Math.min(1, 4 * dt));
     else if (e.mv === 'hover' || e.mv === 'line') e.ang = Math.PI / 2;
-    else e.ang = angLerp(e.ang, Math.atan2(e.vy, e.vx), Math.min(1, 7 * dt));
+    else {
+      const a0 = e.ang;
+      e.ang = angLerp(e.ang, Math.atan2(e.vy, e.vx), Math.min(1, 7 * dt));
+      if (dt > 0) e.bank = lerp(e.bank || 0, clamp(angLerp(0, e.ang - a0, 1) / dt / 2.2, -1, 1), Math.min(1, 6 * dt));
+    }
     if (e.y > -5 && e.y < H + 5) e.entered = true;
     enemyFire(e, dt);
     if (e.d.heavy && !e.ground) heavyFx(e, dt);
@@ -3961,9 +4963,10 @@ function updateParts(dt) {
 }
 
 /* ---------------- drawing ---------------- */
-function drawAircraft(id, x, y, rot, t, flash, sx, sc, flashMax, dark, tilt) {
+function drawAircraft(id, x, y, rot, t, flash, sx, sc, flashMax, dark, tilt, bank, lv) {
   const s = SPR[id];
   sx = sx || 1; sc = sc || 1;
+  const f3 = AIR3D.on ? AIR3D.get(id, rot, bank, lv) : null, m3 = !f3 && BOSS_ART[id] && AIR3D.on ? AIR3D.metal(id, Math.PI) : null;
   const cs = Math.cos(rot) * sc, sn = Math.sin(rot) * sc;
   ctx.setTransform(cs * K * sx, sn * K * sx, -sn * K, cs * K, (x + OX) * K, (y + OY) * K);
   const ba = BOSS_ART[id];
@@ -3972,9 +4975,17 @@ function drawAircraft(id, x, y, rot, t, flash, sx, sc, flashMax, dark, tilt) {
     for (const j of ba.jets) { const f = 0.94 + 0.12 * Math.sin(t * 31 + j[0] * 0.17); ctx.drawImage(SPR.fire.c, j[0] - 8 * f, j[1] - 2, 16 * f, 30 * f); ctx.drawImage(SPR.blue.c, j[0] - 5, j[1] - 2, 10, 16 * f); }
     ctx.globalCompositeOperation = 'source-over';
   }
-  ctx.drawImage(s.c, -s.w / 2, -s.h / 2, s.w, s.h);
+  if (f3) {
+    // the 3D frame nearest this heading, turned the last few degrees
+    const rr = rot - f3.a, c2 = Math.cos(rr) * sc, s2 = Math.sin(rr) * sc;
+    ctx.setTransform(c2 * K * sx, s2 * K * sx, -s2 * K, c2 * K, (x + OX) * K, (y + OY) * K);
+    ctx.drawImage(f3.c, -f3.w / 2, -f3.h / 2, f3.w, f3.h);
+    if (dark) { const o = f3.sh || (f3.sh = AIR3D.sil(f3, '#000')); ctx.globalAlpha = dark; ctx.drawImage(o.c, -f3.w / 2, -f3.h / 2, f3.w, f3.h); ctx.globalAlpha = 1; }
+    if (flash > 0) { const o = f3.wh || (f3.wh = AIR3D.sil(f3, '#fff')); ctx.globalAlpha = Math.min(flashMax || 0.55, flash * 9); ctx.drawImage(o.c, -f3.w / 2, -f3.h / 2, f3.w, f3.h); ctx.globalAlpha = 1; }
+    ctx.setTransform(cs * K * sx, sn * K * sx, -sn * K, cs * K, (x + OX) * K, (y + OY) * K);
+  } else ctx.drawImage((m3 || s).c, -s.w / 2, -s.h / 2, s.w, s.h);
   // SKY SLAP signature aircraft finish: restrained hot-engine bloom and precision rim light.
-  if (perfLevel >= 1 && !dark && PLANES[id]) {
+  if (!f3 && perfLevel >= 1 && !dark && PLANES[id]) {
     const pulse = 0.82 + 0.18 * Math.sin(t * 15 + x * 0.02);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
@@ -3993,7 +5004,7 @@ function drawAircraft(id, x, y, rot, t, flash, sx, sc, flashMax, dark, tilt) {
   }
   // SKY SLAP visual pass: restrained cockpit glint, metallic edge light and engine bloom.
   // Kept inside the aircraft transform and gated by quality for mobile performance.
-  if (perfLevel >= 1 && !dark && PLANES[id]) {
+  if (!f3 && perfLevel >= 1 && !dark && PLANES[id]) {
     const pulse = 0.72 + 0.28 * Math.sin(t * 8 + x * 0.013);
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -4014,7 +5025,7 @@ function drawAircraft(id, x, y, rot, t, flash, sx, sc, flashMax, dark, tilt) {
   }
   // Sunlight on metal: a sheen on whichever side faces the sun, plus a glint when a wing lines up with it.
   const L = world.light, lt = SPR[id + '_lt'];
-  if (lt && perfLevel >= 1 && !dark) {
+  if (!f3 && !m3 && lt && perfLevel >= 1 && !dark) {
     const la = L.sunA - rot;
     const lx = clamp(Math.cos(la) + (tilt || 0), -1, 1), ly = Math.sin(la), k = L.spec;
     ctx.globalCompositeOperation = 'screen';
@@ -4032,15 +5043,16 @@ function drawAircraft(id, x, y, rot, t, flash, sx, sc, flashMax, dark, tilt) {
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     }
   }
-  if (dark) { ctx.globalAlpha = dark; ctx.drawImage(SPR[id + '_sh'].c, -s.w / 2, -s.h / 2, s.w, s.h); ctx.globalAlpha = 1; }
-  if (flash > 0) { ctx.globalAlpha = Math.min(flashMax || 0.55, flash * 9); ctx.drawImage(SPR[id + '_wh'].c, -s.w / 2, -s.h / 2, s.w, s.h); ctx.globalAlpha = 1; }
+  if (dark && !f3) { ctx.globalAlpha = dark; ctx.drawImage(SPR[id + '_sh'].c, -s.w / 2, -s.h / 2, s.w, s.h); ctx.globalAlpha = 1; }
+  if (flash > 0 && !f3) { ctx.globalAlpha = Math.min(flashMax || 0.55, flash * 9); ctx.drawImage(SPR[id + '_wh'].c, -s.w / 2, -s.h / 2, s.w, s.h); ctx.globalAlpha = 1; }
   const props = PROPS[id];
   if (props && props.length && !dark) {
+    const kx = f3 ? Math.cos(f3.r) : 1;
     ctx.fillStyle = 'rgba(25,28,32,.3)';
-    for (const p of props) { ctx.beginPath(); ctx.ellipse(p.x, p.y, p.r, p.r * 0.16, 0, 0, TAU); ctx.fill(); }
+    for (const p of props) { ctx.beginPath(); ctx.ellipse(p.x * kx, p.y, p.r, p.r * 0.16, 0, 0, TAU); ctx.fill(); }
     ctx.strokeStyle = 'rgba(232,238,242,' + (0.28 + 0.22 * Math.sin(t * 93)) + ')'; ctx.lineWidth = 0.8;
     ctx.beginPath();
-    for (const p of props) { const a = (t * 37 + p.x * 0.1) % 1; ctx.moveTo(p.x - p.r * (0.25 + a * 0.75), p.y); ctx.lineTo(p.x + p.r * (0.25 + (1 - a) * 0.75), p.y); }
+    for (const p of props) { const a = (t * 37 + p.x * 0.1) % 1; ctx.moveTo(p.x * kx - p.r * (0.25 + a * 0.75), p.y); ctx.lineTo(p.x * kx + p.r * (0.25 + (1 - a) * 0.75), p.y); }
     ctx.stroke();
   }
   if (PSPEC[id] && PSPEC[id].jet && !dark) {
@@ -4084,11 +5096,11 @@ function drawParts(add, gnd) {
   if (add) ctx.globalCompositeOperation = 'source-over';
 }
 function drawGroundUnit(e) {
-  const rot = e.own > 0 ? Math.PI : 0, s = SPR[e.d.art];
+  const rot = e.own > 0 ? Math.PI : 0, s = (AIR3D.on && AIR3D.metal(e.d.art, rot)) || SPR[e.d.art];
   drawRot(s, e.x, e.y, rot);
   if (e.flash > 0) { ctx.globalAlpha = 0.7; drawRot(SPR[e.d.art + '_wh'], e.x, e.y, rot); ctx.globalAlpha = 1; }
   const ty = e.y + (rot ? -e.d.tur : e.d.tur);
-  drawRot(SPR[e.d.turret], e.x, ty, e.tAng + Math.PI / 2);
+  drawRot((AIR3D.on && AIR3D.metal(e.d.turret)) || SPR[e.d.turret], e.x, ty, e.tAng + Math.PI / 2);
 }
 // Armor bars on gunships and bombers: a red-to-gold bar with a white trail that drains after each hit.
 function drawEnemyBars() {
@@ -4263,10 +5275,10 @@ function renderGame() {
   drawWatermark();
   for (const w of G.wrecks) { const q = w.t / w.dur; drawAircraft(w.art, w.x, w.y, w.rot, G.time, 0, 1, 1 - 0.45 * q, 0, 0.25 + 0.5 * q); }
   for (const e of G.en) if (e.d.carrier && !e.dead) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.42 + 0.2 * Math.sin(G.time * 6 + e.id); ctx.drawImage(SPR.goldGlow.c, e.x - 27, e.y - 27, 54, 54); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
-  for (const e of G.en) if (!e.ground && !e.dead) drawAircraft(e.d.art, e.x, e.y, e.ang + Math.PI / 2, G.time + e.id * 0.37, e.flash, 1, 1, e.d.heavy ? 0.32 : 0.55);
+  for (const e of G.en) if (!e.ground && !e.dead) drawAircraft(e.d.art, e.x, e.y, e.ang + Math.PI / 2, G.time + e.id * 0.37, e.flash, 1, 1, e.d.heavy ? 0.32 : 0.55, 0, 0, e.d.heavy ? 0 : e.bank || 0, 1);
   if (b) {
     drawAircraft(b.key, b.x, b.y, Math.PI, G.time, b.flash, 1, 1, b.inv > 0 ? 0.6 : 0.22);
-    b.art.turrets.forEach((t, i) => drawRot(SPR[t[2] === 'B' ? 'turretB' : 'turretM'], b.x - t[0], b.y - t[1], b.tur[i] + Math.PI / 2));
+    b.art.turrets.forEach((t, i) => { const tk = t[2] === 'B' ? 'turretB' : 'turretM'; drawRot((AIR3D.on && AIR3D.metal(tk)) || SPR[tk], b.x - t[0], b.y - t[1], b.tur[i] + Math.PI / 2); });
   }
 
   const SS = SHOT_SPR();
@@ -4315,10 +5327,10 @@ function renderGame() {
     }
     if (P.wingT > 0) {
       const fade = P.wingT < 2 && Math.floor(P.wingT * 8) % 2 === 0;
-      if (!fade) for (const w of P.wing) drawAircraft('kestrel', w.x, w.y, P.hd + Math.PI / 2, G.time + 0.5, 0, 1, 0.62);
+      if (!fade) for (const w of P.wing) drawAircraft('kestrel', w.x, w.y, P.hd + Math.PI / 2, G.time + 0.5, 0, 1, 0.62, 0, 0, 0, P.bank, 2);
     }
     const blink = P.blink > 0 && Math.floor(P.blink * 18) % 2 === 0;
-    if (!blink) drawAircraft(P.id, P.x, P.y, P.hd + Math.PI / 2 + P.spin, G.time, 0, 1 - Math.abs(P.bank) * 0.22 - loopP * 0.3, 1 + 0.32 * loopP, 0, 0, P.bank * 0.9);
+    if (!blink) drawAircraft(P.id, P.x, P.y, P.hd + Math.PI / 2 + P.spin, G.time, 0, 1 - (AIR3D.on ? 0 : Math.abs(P.bank) * 0.22) - loopP * 0.3, 1 + 0.32 * loopP, 0, 0, P.bank * 0.9, P.bank, 4);
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 0.85; ctx.drawImage(SPR.spark.c, P.x - 4, P.y - 4, 8, 8); ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
@@ -4516,14 +5528,14 @@ function renderAttract() {
   fog.draw(world.light.fog);
   if (state === 'title') {
     const id = save.plane, y = H * 0.47 + Math.sin(atime * 1.3) * 5, x = W / 2 + Math.sin(atime * 0.5) * 8;
-    const roll = 1 - Math.abs(Math.sin(atime * 0.5)) * 0.08;
+    const roll = AIR3D.on ? 1 : 1 - Math.abs(Math.sin(atime * 0.5)) * 0.08;
     const wing = [[-48, 34], [48, 34]];
     for (const w of wing) drawShadow('kestrel', x + w[0], y + w[1] + Math.sin(atime * 1.3 + w[0]) * 3, 0, 30, 0.72);
     drawShadow(id, x, y, 0, 30, 1.2);
     clouds.draw('low', false);
     const tilt = Math.sin(atime * 0.5) * 0.95;
-    for (const w of wing) drawAircraft('kestrel', x + w[0], y + w[1] + Math.sin(atime * 1.3 + w[0]) * 3, 0, atime + w[0], 0, roll, 0.72, 0, 0, tilt);
-    drawAircraft(id, x, y, 0, atime, 0, roll, 1.2, 0, 0, tilt);
+    for (const w of wing) drawAircraft('kestrel', x + w[0], y + w[1] + Math.sin(atime * 1.3 + w[0]) * 3, 0, atime + w[0], 0, roll, 0.72, 0, 0, tilt, tilt * 0.55, 4);
+    drawAircraft(id, x, y, 0, atime, 0, roll, 1.2, 0, 0, tilt, tilt * 0.55, 4);
   } else clouds.draw('low', false);
   clouds.draw('high', false);
   world.drawGrade(atime);
@@ -4927,23 +5939,8 @@ const Radio = (() => {
     'Night in the Dead Zone. This is the last push. Goggles on.',
     'Final storm. The Warlord himself. End this, Big Mouf.',
   ];
-  const has = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
-  let voice = null, unlocked = false, lastAt = 0, hideT = null, bed = null, seq = 0, busyUntil = 0;
-  function pickVoice() {
-    if (!has) return;
-    let vs = [];
-    try { vs = speechSynthesis.getVoices() || []; } catch (e) {}
-    const en = vs.filter((v) => /^en/i.test(v.lang));
-    voice = en.find((v) => /daniel|fred|aaron|arthur|alex|google us english|male/i.test(v.name)) || en.find((v) => /en-US/i.test(v.lang)) || en[0] || null;
-  }
-  // iPhone only lets speech start from a tap, so the first tap primes it with a silent line.
-  function unlock() {
-    if (unlocked || !has) return;
-    unlocked = true;
-    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
-    pickVoice();
-    try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {}
-  }
+  // Tower talks in text only: no synthesized voice.
+  let lastAt = 0, hideT = null, busyUntil = 0;
   function show(text) {
     const box = document.getElementById('radio');
     if (!box) return;
@@ -4953,12 +5950,9 @@ const Radio = (() => {
     clearTimeout(hideT); hideT = setTimeout(() => box.classList.remove('show'), Math.max(2600, text.length * 75));
   }
   function stop() {
-    seq++; busyUntil = 0;
+    busyUntil = 0;
     clearTimeout(hideT);
     const box = document.getElementById('radio'); if (box) box.classList.remove('show');
-    if (has) try { speechSynthesis.cancel(); } catch (e) {}
-    if (bed) { bed.stop(); bed = null; }
-    Sound.duck(false);
   }
   function say(kind, force) {
     const list = LINES[kind];
@@ -4986,29 +5980,11 @@ const Radio = (() => {
     // A routine call never cuts into a line that is still being spoken; only the big moments (force) do.
     if (!force && (now - lastAt < 4500 || now < busyUntil)) return false;
     lastAt = now;
-    const id = ++seq, dur = Math.max(1.3, text.length * 0.062);
-    busyUntil = now + (dur + 0.8) * 1000;
+    busyUntil = now + (Math.max(1.3, text.length * 0.062) + 0.8) * 1000;
     show(shown || text);
-    Sound.sfx.radioIn();
-    if (has && save.sound && save.voice !== false) {
-      let ended = false;
-      const done = () => { if (ended || id !== seq) return; ended = true; if (bed) { bed.stop(); bed = null; } Sound.duck(false); Sound.sfx.radioOut(); };
-      try {
-        speechSynthesis.cancel();
-        if (bed) bed.stop();
-        bed = Sound.staticBed(dur + 0.6);
-        Sound.duck(true);
-        const u = new SpeechSynthesisUtterance(text);
-        if (voice) { u.voice = voice; u.lang = voice.lang; } else u.lang = 'en-US';
-        u.rate = 1.1; u.pitch = 0.8; u.volume = 1;
-        u.onend = done; u.onerror = done;
-        setTimeout(() => { if (id === seq) try { speechSynthesis.speak(u); } catch (e) { done(); } }, 170);
-        setTimeout(done, (dur * 2 + 2.5) * 1000);
-      } catch (e) { done(); }
-    } else setTimeout(() => { if (id === seq) Sound.sfx.radioOut(); }, dur * 1000);
     return text;
   }
-  return { say, stop, unlock, lines: LINES, brief, missionDone, speak };
+  return { say, stop, lines: LINES, brief, missionDone, speak };
 })();
 /* =====================================================================
    Menus, hangar, pilot levels, input and the main loop.
@@ -5054,7 +6030,7 @@ window.addEventListener('keyup', (e) => { if (KEYMAP[e.code]) keys[KEYMAP[e.code
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') pauseGame(); });
 // iPhone only unlocks audio on a completed tap, so listen for the end of touches and clicks too.
-for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, () => { Sound.init(); Radio.unlock(); }, { passive: true, capture: true });
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, () => { Sound.init(); }, { passive: true, capture: true });
 
 /* ---------------- screens ---------------- */
 const SCREENS = { title: 'scrTitle', map: 'scrMap', hangar: 'scrHangar', paused: 'scrPause', result: 'scrResult', help: 'scrHelp', steer: 'scrSteer', premium: 'scrPremium', leaders: 'scrLeaders' };
@@ -5083,7 +6059,6 @@ function syncToggles() {
   $('steerLbl').textContent = s360 ? '360°' : 'STD';
   $('btnSteer').classList.toggle('std', !s360);
   $('btnLoop').hidden = !s360;
-  document.querySelectorAll('.voice-seg button').forEach((b) => { const on = (b.dataset.v === 'on') === (save.voice !== false); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
 }
 const nextMission = () => clamp(save.unlocked, 1, LAST_MISSION);
 function refreshTitle() {
@@ -5104,6 +6079,7 @@ let pendingToasts = [];
 function go(name) {
   Sound.sfx.click();
   if (name !== 'result') Radio.stop();
+  if (name === 'title' || name === 'hangar') AIR3D.prep = null;
   if (name === 'title') {
     if (scene === 'game') { world.set('ocean', 7, 'golden'); clouds.reset(true); fog.reset(); }
     state = 'title'; scene = 'attract';
@@ -5301,8 +6277,11 @@ function drawHangarPlane(id) {
   const sp = PSPEC[id], s = Math.min((w * 0.6) / sp.S, (h * 0.72) / sp.L);
   const sh = SPR[id + '_sh'];
   g.globalAlpha = 0.32; g.drawImage(sh.c, w / 2 + 8 - (sh.w * s * 0.95) / 2, h / 2 + 14 - (sh.h * s * 0.95) / 2, sh.w * s * 0.95, sh.h * s * 0.95); g.globalAlpha = 1;
+  AIR3D.check();
+  const hero = AIR3D.hero(id, s * dpr);
+  if (hero) g.drawImage(hero.c, w / 2 - (hero.w * s) / 2, h / 2 - (hero.h * s) / 2, hero.w * s, hero.h * s);
   g.save(); g.translate(w / 2, h / 2); g.scale(s, s);
-  paintPlane(g, sp, COL[id]);
+  if (!hero) paintPlane(g, sp, COL[id]);
   g.fillStyle = 'rgba(25,28,32,.35)';
   for (const p of PROPS[id]) { g.beginPath(); g.ellipse(p.x, p.y, p.r, p.r * 0.14, 0, 0, TAU); g.fill(); }
   g.restore();
@@ -5591,7 +6570,7 @@ $('lbBody').addEventListener('submit', (e) => {
 });
 $('btnLeaders').addEventListener('click', () => go('leaders'));
 
-/* ---------------- night vision button + radio voice setting ---------------- */
+/* ---------------- night vision button ---------------- */
 function updateNVBtn() {
   const b = $('btnNV'), on = scene === 'game' && !!world.light.night && (state === 'play' || state === 'paused');
   b.hidden = !on;
@@ -5601,12 +6580,6 @@ function updateNVBtn() {
 }
 $('btnNV').addEventListener('pointerdown', (e) => e.stopPropagation());
 $('btnNV').addEventListener('click', () => toggleNV());
-document.querySelectorAll('.voice-seg').forEach((el) => el.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-v]');
-  if (!b) return;
-  save.voice = b.dataset.v === 'on'; persist(); syncToggles(); Sound.sfx.click();
-  toast(save.voice ? 'Radio voice on' : 'Radio voice off: Tower still shows on screen');
-}));
 
 /* ---------------- main loop ---------------- */
 let lastT = 0;
@@ -5627,6 +6600,7 @@ function frame(now) {
     }
   }
   try {
+    AIR3D.pump(state === 'play' ? (G && G.time < 2.6 ? 12 : 5) : 14);
     if (state === 'play') { update(dt); updateLoopBtn(); }
     if (scene === 'game') renderGame();
     else { atime += dt; world.update(dt, 40); clouds.update(dt, 40, 0.8); fog.update(dt, 40, world.light.fog); if (state !== 'title') renderAttract(); }
