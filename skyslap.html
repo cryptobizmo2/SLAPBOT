@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="BIG MOUF: SKY SLAP — cinematic arcade flight combat. Rule the skies, take the gold.">
-<title>BIG MOUF: SKY SLAP — Final Flight Build 3.5</title>
+<title>BIG MOUF: SKY SLAP — Final Flight Build 3.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Saira+Condensed:wght@500;600;700;800&display=swap">
@@ -491,7 +491,7 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
       <h2>Leaderboard</h2>
       <div class="chip"><svg><use href="#i-coin"/></svg><span data-coins>0</span></div>
     </div>
-    <div class="seg lb-tabs" id="lbTabs" role="group" aria-label="Board"><button data-b="endless" class="on">Endless best</button><button data-b="gold">Slap Gold earned</button></div>
+    <div class="seg lb-tabs" id="lbTabs" role="group" aria-label="Board"><button data-b="endless" class="on">Endless best</button><button data-b="gold">Slap Coins earned</button></div>
     <div class="scroll" id="lbBody"></div>
   </section>
 
@@ -527,7 +527,7 @@ a.btn{text-decoration:none;display:flex;align-items:center;justify-content:cente
         <li><span class="tok w"><svg class="i"><use href="#i-loop"/></svg></span><span><b>Double-tap</b> or hit the loop button to spin 360°. You can't be hit while you spin. 360° controls only.</span></li>
         <li><span class="tok b">B</span><span>Tap the <b>red button</b> for your plane's special. It also wipes out enemy fire.</span></li>
         <li><span class="tok p">P</span><span>Shoot <b>red-striped planes</b> for power-ups: P power, B bomb, W wingmen, + repair.</span></li>
-        <li><span class="tok coin"><svg class="i"><use href="#i-coin"/></svg></span><span>Collect <b>$SLAPGOLD</b> and earn XP. Level up to unlock new jets and weapons in the Hangar.</span></li>
+        <li><span class="tok coin"><svg class="i"><use href="#i-coin"/></svg></span><span>Collect <b>Slap Coins</b> and earn XP. Level up to unlock new jets and weapons in the Hangar. Slap Coins are game coins: they can't be withdrawn or traded.</span></li>
       </ul>
       <div class="toggle-row"><span>Controls</span><div class="seg steer-seg" role="group" aria-label="Controls"><button data-s="360">360°</button><button data-s="classic">Standard</button></div></div>
       <div class="toggle-row"><span>Radio voice</span><div class="seg voice-seg" role="group" aria-label="Radio voice"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
@@ -2501,7 +2501,7 @@ const PLANES = {
   goliath: { name: 'Goliath', role: 'Heavy gunship', desc: 'Slow and tough. A wide spread plus a heavy cannon.', cost: 3200, lvl: 6, speed: 0.86, hp: 145, fire: 1.16, special: 'Iron shield', icon: 'i-shield' },
   phantom: { name: 'Phantom', role: 'Prototype jet', desc: 'Piercing lasers cut straight through whole formations.', cost: 6500, lvl: 10, speed: 1.06, hp: 110, fire: 1.3, special: 'Sky lance', icon: 'i-bolt' },
   wraith:  { premium: 1, name: 'Wraith', role: 'Stealth jet', desc: 'Rapid pulse cannons. Its special tears open a black hole that eats bullets.', cost: 9000, lvl: 14, speed: 1.12, hp: 118, fire: 1.45, special: 'Black hole', icon: 'i-vortex' },
-  bigmouf: { premium: 2, name: 'Big Mouf', role: 'Gold-plated superjet', desc: 'Fires solid gold slugs. Its special turns every enemy bullet into $SLAPGOLD.', cost: 15000, lvl: 18, speed: 1.1, hp: 135, fire: 1.62, special: 'Gold rush', icon: 'i-coin' },
+  bigmouf: { premium: 2, name: 'Big Mouf', role: 'Gold-plated superjet', desc: 'Fires solid gold slugs. Its special turns every enemy bullet into Slap Coins.', cost: 15000, lvl: 18, speed: 1.1, hp: 135, fire: 1.62, special: 'Gold rush', icon: 'i-coin' },
 };
 const PLANE_ORDER = ['kestrel', 'viper', 'goliath', 'phantom', 'wraith', 'bigmouf'];
 const TRACKS = [
@@ -4367,7 +4367,7 @@ const coinFx = (() => {
     const tg = g.createLinearGradient(0, -fs / 2, 0, fs / 2); tg.addColorStop(0, '#FFF2B8'); tg.addColorStop(0.55, '#FFC23A'); tg.addColorStop(1, '#C47A0A');
     g.fillStyle = tg; g.fillText(txt, 0, 0);
     g.font = '700 ' + fs * 0.4 + 'px ' + getComputedStyle(document.body).fontFamily;
-    g.lineWidth = fs * 0.1; g.strokeText('SLAP GOLD EARNED', 0, fs * 0.72); g.fillStyle = '#FFE7A0'; g.fillText('SLAP GOLD EARNED', 0, fs * 0.72);
+    g.lineWidth = fs * 0.1; g.strokeText('SLAP COINS EARNED', 0, fs * 0.72); g.fillStyle = '#FFE7A0'; g.fillText('SLAP COINS EARNED', 0, fs * 0.72);
     g.restore();
   }
 
@@ -4508,7 +4508,7 @@ const Radio = (() => {
    ===================================================================== */
 const $ = (id) => document.getElementById(id);
 const REVIVE = 200;
-const CUR = '$SLAPGOLD';
+const CUR = 'Slap Coins';                // the game's own coins. $SLAPGOLD is only the real token, and only buying gets it.
 
 /* ---------------- input ---------------- */
 const input = { id: null, x: 0, y: 0, dx: 0, dy: 0, tapT: 0, tapX: 0, tapY: 0 };
@@ -5027,7 +5027,7 @@ function buildPremium() {
   else h += '<button class="btn primary big" id="premConnect">Connect Phantom wallet</button>';
   h += '<a class="btn gold" href="' + esc(cfg.buyUrl || 'https://www.coinbase.com/price/big-mouf-solana-4r7hbdhh3yevqzaesra3qpj8z3xh3qedsw88rdjxl1q9-token') + '" target="_blank" rel="noopener">' + coinIcon + 'Buy $SLAPGOLD on Coinbase</a>';
   h += '<button class="btn" id="premCopy">Copy $SLAPGOLD contract</button></div>';
-  h += '<p class="fine">Contract ' + esc(mint) + '<br>Connecting only proves the wallet is yours: you sign a free message. It never moves or spends tokens. Perks follow what you hold, so dropping below a level turns its perks off.</p>';
+  h += '<p class="fine">Contract ' + esc(mint) + '<br>Connecting only proves the wallet is yours: you sign a free message. It never moves or spends tokens. Perks follow what you hold, so dropping below a level turns its perks off.<br>The Slap Coins you win in the game are game coins for the Hangar. They cannot be withdrawn or traded: the only way to get $SLAPGOLD is to buy it.</p>';
   $('premBody').innerHTML = h;
   refreshCoins();
 }
