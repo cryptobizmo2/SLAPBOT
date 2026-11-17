@@ -1,0 +1,18 @@
+{
+  "id": "./skyslap.html",
+  "name": "Big Mouf: Sky Slap",
+  "short_name": "Sky Slap",
+  "description": "Rule the skies, take the gold. Free arcade sky shooter.",
+  "start_url": "./skyslap.html",
+  "scope": "./skyslap",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#06131C",
+  "theme_color": "#06131C",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "skyslap-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "skyslap-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
