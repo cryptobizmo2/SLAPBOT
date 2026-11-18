@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="skyslap-icon-512.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="BIG MOUF: SKY SLAP — cinematic arcade flight combat. Rule the skies, take the gold.">
-<title>BIG MOUF: SKY SLAP — Final Flight Build 3.11</title>
+<title>BIG MOUF: SKY SLAP — Final Flight Build 3.12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Saira+Condensed:wght@500;600;700;800&display=swap">
@@ -280,6 +280,7 @@ a.btn#lnkPrivacy{color:var(--paper)}
 .tok.w svg{width:1.3em;height:1.3em}
 .levelup{padding:.6em .7em;border-radius:.5em;border:1px solid var(--signal);background:rgba(255,176,32,.1);font-weight:700;line-height:1.3}
 .levelup b{color:var(--signal);font-family:var(--display);font-weight:400;font-size:1.15em;display:block}
+.levelup b.promo{color:#fff;font-size:1.4em;text-shadow:0 0 .6em rgba(255,176,32,.7)}
 .steer-btn{right:3.4em;width:auto;min-width:3.4em;padding:0 .55em;font-weight:800;font-size:.9em;letter-spacing:.02em}
 .steer-btn.std{color:#9FB4C6}
 .loop-btn[hidden]{display:none}
@@ -2910,7 +2911,7 @@ const LAYER = { dunes: 0, shoal: 0, scrub: 0, cinders: 0, wreck: 0, road: 1, wad
 
 const world = {
   key: 'ocean', th: THEATERS.ocean, seed: 1, s: 0, chunks: new Map(), feats: new Map(), tex: null, glint: null,
-  lightKey: 'day', light: null, cover: [], glows: [],
+  lightKey: 'day', light: null, cover: [], glows: [], towers: [],
   set(key, seed, lightKey) { this.key = key; this.th = THEATERS[key]; this.seed = seed; this.s = 0; this.lightKey = lightKey || 'day'; this.light = LIGHTS[this.lightKey]; this.feats.clear(); this.invalidate(); this.cover = []; },
   invalidate() { for (const c of this.chunks.values()) c.width = c.height = 1; this.chunks.clear(); this.tex = null; this.glint = null; this.deep = null; this.drift = null; this.wkey = ''; },
   featuresFor(k) {
@@ -3436,11 +3437,34 @@ function paintAsphaltTex(g, r) {
   for (let i = 0; i < 6; i++) { let x = r() * TEX, y = r() * TEX; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (r() - 0.5) * 14; y += r() * 10; g.lineTo(x, y); } g.stroke(); }
 }
 function towerFacade(L, tint) { return (L.facade || LIGHTS.day.facade)[tint % 3]; }
+// Destructible towers: shot down towers sink into a dust cloud and leave a pile of rubble.
+const RAZE = 1.25;
+function towerH(t) {
+  if (!t.dead) return t.h;
+  const k = Math.min(1, t.fallT / RAZE);
+  return t.h * (1 - k * k * (1.6 - 0.6 * k));
+}
+function drawRubble(t, sx, sy) {
+  const rng = mulberry32(((t.ph * 1e6) | 0) + 7), hw = t.w / 2 + 3, hd = t.d / 2 + 3;
+  ctx.fillStyle = 'rgba(18,16,14,.6)';
+  ctx.beginPath(); ctx.ellipse(sx, sy, hw * 1.2, hd * 1.2, 0, 0, TAU); ctx.fill();
+  const cols = ['#5E6166', '#77797C', '#45474B', '#8A7F72', '#6B5E52'];
+  for (let i = 0; i < 30; i++) {
+    const x = sx + (rng() - 0.5) * 2 * hw, y = sy + (rng() - 0.5) * 2 * hd, z = 2.5 + rng() * 6.5;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rng() * TAU);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-z / 2 + 1.2, -z * 0.35 + 1.2, z, z * 0.7);
+    ctx.fillStyle = cols[(rng() * cols.length) | 0]; ctx.fillRect(-z / 2, -z * 0.35, z, z * 0.7);
+    ctx.restore();
+  }
+  ctx.strokeStyle = 'rgba(40,36,32,.85)'; ctx.lineWidth = 1.2; ctx.beginPath();
+  for (let i = 0; i < 6; i++) { const x = sx + (rng() - 0.5) * 2 * hw, y = sy + (rng() - 0.5) * 2 * hd, a = rng() * TAU, l = 6 + rng() * 10; ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); }
+  ctx.stroke();
+}
 function drawTowerShadows(list, L) {
   ctx.fillStyle = 'rgba(0,0,0,' + Math.min(0.5, L.shA * 1.5) + ')';
   ctx.beginPath();
   for (const [t, sx, sy] of list) {
-    const k = t.h * 0.2, dx = L.sh[0] * k, dy = L.sh[1] * k, hw = t.w / 2, hd = t.d / 2;
+    const k = towerH(t) * 0.2, dx = L.sh[0] * k, dy = L.sh[1] * k, hw = t.w / 2, hd = t.d / 2;
     const c = [[sx - hw, sy - hd], [sx + hw, sy - hd], [sx + hw, sy + hd], [sx - hw, sy + hd]];
     ctx.moveTo(c[0][0], c[0][1]); for (let i = 1; i < 4; i++) ctx.lineTo(c[i][0], c[i][1]); ctx.closePath();
     for (let i = 0; i < 4; i++) { const a = c[i], b = c[(i + 1) % 4]; ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(b[0] + dx, b[1] + dy); ctx.lineTo(a[0] + dx, a[1] + dy); ctx.closePath(); }
@@ -3449,9 +3473,10 @@ function drawTowerShadows(list, L) {
 }
 const FACE_N = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 function drawTower(t, sx, sy, L) {
+  const TH = towerH(t);
   const hw = t.w / 2, hd = t.d / 2, VPY = vpy();
   const base = [[sx - hw, sy - hd], [sx + hw, sy - hd], [sx + hw, sy + hd], [sx - hw, sy + hd]];
-  const roof = base.map((p) => proj(p[0], p[1], t.h));
+  const roof = base.map((p) => proj(p[0], p[1], TH));
   const pal = t.steel ? ['#B84A38', '#5A2018'] : towerFacade(L, t.tint);
   const sunx = Math.cos(L.sunA), suny = Math.sin(L.sunA);
   for (let i = 0; i < 4; i++) {
@@ -3466,7 +3491,7 @@ function drawTower(t, sx, sy, L) {
     ctx.fillStyle = lit < 0 ? 'rgba(0,0,0,' + (-lit * 0.32) + ')' : 'rgba(255,245,220,' + lit * 0.14 + ')';
     ctx.fill();
     if (!t.steel) {
-      const floors = clamp(Math.round(t.h / 24), 6, 18), len = Math.hypot(b[0] - a[0], b[1] - a[1]), cols = Math.max(2, Math.round(len / 9));
+      const floors = clamp(Math.round(TH / 24), 6, 18), len = Math.hypot(b[0] - a[0], b[1] - a[1]), cols = Math.max(2, Math.round(len / 9));
       ctx.strokeStyle = 'rgba(10,20,30,.35)'; ctx.lineWidth = 0.6; ctx.beginPath();
       for (let k = 1; k < floors; k++) { const p = k / floors; ctx.moveTo(lerp(a[0], ra[0], p), lerp(a[1], ra[1], p)); ctx.lineTo(lerp(b[0], rb[0], p), lerp(b[1], rb[1], p)); }
       for (let k = 1; k < cols; k++) { const q = k / cols; ctx.moveTo(lerp(a[0], b[0], q), lerp(a[1], b[1], q)); ctx.lineTo(lerp(ra[0], rb[0], q), lerp(ra[1], rb[1], q)); }
@@ -3479,7 +3504,7 @@ function drawTower(t, sx, sy, L) {
     }
     if (L.night && !t.steel && world.glows.length < 160) {
       // Lit office windows at night: picked per tower so they stay put as it scrolls.
-      const rng = mulberry32(((t.ph * 1e6) | 0) + i * 97), floors = clamp(Math.round(t.h / 24), 6, 18), len = Math.hypot(b[0] - a[0], b[1] - a[1]), cols = Math.max(2, Math.round(len / 9));
+      const rng = mulberry32(((t.ph * 1e6) | 0) + i * 97), floors = clamp(Math.round(TH / 24), 6, 18), len = Math.hypot(b[0] - a[0], b[1] - a[1]), cols = Math.max(2, Math.round(len / 9));
       for (let k = 0; k < 7; k++) {
         const p = (Math.floor(rng() * floors) + 0.5) / floors, q = (Math.floor(rng() * cols) + 0.5) / cols;
         world.glows.push([lerp(lerp(a[0], b[0], q), lerp(ra[0], rb[0], q), p), lerp(lerp(a[1], b[1], q), lerp(ra[1], rb[1], q), p), rng() < 0.25 ? 1 : 0]);
@@ -3490,9 +3515,11 @@ function drawTower(t, sx, sy, L) {
   }
   ctx.fillStyle = t.steel ? '#C2584A' : '#6E7378';
   ctx.beginPath(); roof.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill();
+  if (t.flash > 0) { ctx.fillStyle = 'rgba(255,236,200,' + Math.min(0.55, t.flash * 6) + ')'; ctx.fill(); }
+  if (t.dmg > 0.45 && !t.dead) { ctx.fillStyle = 'rgba(30,20,14,' + Math.min(0.6, (t.dmg - 0.45) * 1.3) + ')'; ctx.fill(); }
   if (t.steel) return;
   ctx.strokeStyle = 'rgba(220,225,230,.7)'; ctx.lineWidth = 1.4; ctx.stroke();
-  const f = Math.min(0.34, t.h / 1000), rc = proj(sx, sy, t.h), sc = 1 + f;
+  const f = Math.min(0.34, TH / 1000), rc = proj(sx, sy, TH), sc = 1 + f;
   if (t.pad) {
     const rr = Math.min(t.w, t.d) * 0.3 * sc;
     ctx.fillStyle = '#2F3337'; ctx.beginPath(); ctx.arc(rc[0], rc[1], rr, 0, TAU); ctx.fill();
@@ -3688,13 +3715,17 @@ Object.assign(world, {
   },
   // Tall things drawn every frame with perspective: towers, bridge pylons, smoke columns.
   draw3D(time) {
-    this.cover.length = 0; this.glows.length = 0;
+    this.cover.length = 0; this.glows.length = 0; this.towers = [];
     if (!this.th.dyn) return;
     const L = this.light, vis = this.visible(DYN);
     const towers = vis.filter((v) => v[0].t === 'tower' && v[2] > -120 && v[2] < H + 120);
-    drawTowerShadows(towers, L);
-    towers.sort((a, b) => a[0].h - b[0].h);
-    for (const [t, x, y] of towers) drawTower(t, x, y, L);
+    for (const v of towers) { v[0]._sx = v[1]; v[0]._sy = v[2]; }
+    this.towers = towers;
+    for (const [t, x, y] of towers) if (t.dead) drawRubble(t, x, y);
+    const standing = towers.filter((v) => !v[0].dead || v[0].fallT < RAZE);
+    drawTowerShadows(standing, L);
+    standing.sort((a, b) => towerH(a[0]) - towerH(b[0]));
+    for (const [t, x, y] of standing) drawTower(t, x, y, L);
     for (const [f, x, y] of vis) if (f.t === 'cityriver' && y > -150 && y < H + 150) drawBridge3D(f, x, y, L);
     for (const [f, x, y] of vis) if (f.t === 'plume' && y > -60 && y < H + 220) this.cover.push(drawPlume(f, x, y, time));
   },
@@ -3908,13 +3939,15 @@ const planeAllowed = (id) => { const d = PLANES[id]; return !!d && (d.premium ? 
 const weaponAllowed = (id) => { const w = WEAPONS[id]; return !!w && (w.premium ? PREMIUM.tier >= w.premium : w.lvl <= pilotLevel()); };
 
 /* ---------------- pilot levels ---------------- */
-const RANKS = ['Cadet', 'Pilot Officer', 'Flying Officer', 'Flight Lieutenant', 'Squadron Leader', 'Wing Commander', 'Group Captain', 'Air Commodore', 'Air Marshal', 'Ace of Aces'];
+// US Air Force officer ranks: a promotion every 3 pilot levels, from Cadet to General at the max level.
+const RANKS = ['Cadet', 'Second Lieutenant', 'First Lieutenant', 'Captain', 'Major', 'Lieutenant Colonel', 'Colonel', 'Brigadier General', 'Major General', 'Lieutenant General', 'General'];
+const rankOf = (L) => RANKS[Math.min(RANKS.length - 1, Math.floor(L / 3))];
 const MAX_LVL = 30;
 const xpNeed = (L) => 150 + 110 * (L - 1);
 function levelInfo(xp) {
   let L = 1, rest = xp;
   while (L < MAX_LVL && rest >= xpNeed(L)) { rest -= xpNeed(L); L++; }
-  return { L, into: rest, need: xpNeed(L), rank: RANKS[Math.min(RANKS.length - 1, Math.floor((L - 1) / 3))] };
+  return { L, into: rest, need: xpNeed(L), rank: rankOf(L) };
 }
 const pilotLevel = () => levelInfo(save.xp || 0).L;
 function unlocksBetween(a, b) {
@@ -4349,6 +4382,7 @@ function clusterBurst(b) {
   explode(b.x, b.y, 0.9, true);
   for (const e of G.en) if (!e.dead && Math.hypot(e.x - b.x, e.y - b.y) < 62 + e.r) damageEnemy(e, b.dmg);
   if (G.boss && G.boss.state === 'fight' && bossHitAt(G.boss, b.x, b.y, 50)) damageBoss(G.boss, b.dmg * 1.2);
+  blastTowers(b.x, b.y, 62, b.dmg);
   Sound.sfx.boomS();
 }
 
@@ -4443,6 +4477,70 @@ function clearBullets(sparks) {
   G.eb.length = 0;
 }
 function dropCoins(x, y, n) { for (let i = 0; i < n; i++) G.pick.push({ kind: 'coin', x: x + rand(-6, 6), y: y + rand(-6, 6), vx: rand(-85, 85), vy: rand(-115, -20), t: rand(0, 3), val: G.coinVal }); }
+
+/* ---------------- destructible city towers ---------------- */
+// Towers sit below the jets, so bullets chip a roof as they pass over it and fly on to their targets.
+function towerHp(t) { return 45 + t.h * 0.4; }
+function roofRect(t) {
+  const a = proj(t._sx - t.w / 2, t._sy - t.d / 2, t.h), c = proj(t._sx + t.w / 2, t._sy + t.d / 2, t.h);
+  return [a[0], a[1], c[0], c[1]];
+}
+function hurtTower(t, dmg) {
+  if (t.dead) return;
+  t.hpMax = t.hpMax || towerHp(t);
+  t.dmg = (t.dmg || 0) + dmg / t.hpMax; t.flash = 0.06;
+  if (t.dmg >= 1) razeTower(t);
+}
+function shootTower(b) {
+  for (const [t] of world.towers) {
+    if (t.dead || b.lastTower === t || t._sy < 20) continue;
+    const r = roofRect(t);
+    if (b.x < r[0] || b.x > r[2] || b.y < r[1] || b.y > r[3]) continue;
+    b.lastTower = t;
+    hurtTower(t, b.dmg * 0.5);
+    if (Math.random() < 0.22) hitSpark(b.x, b.y);
+    return;
+  }
+}
+function blastTowers(x, y, rad, dmg) {
+  for (const [t] of world.towers) {
+    if (t.dead) continue;
+    const r = roofRect(t), cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2;
+    if (Math.hypot(cx - x, cy - y) < rad + Math.max(t.w, t.d) * 0.6) hurtTower(t, dmg);
+  }
+}
+function razeTower(t) {
+  t.dead = true; t.fallT = 0; t.smokeT = 6;
+  G.razed = (G.razed || 0) + 1;
+  const pts = Math.round((150 + t.h * 0.6) * (1 + 0.1 * (G.diff.m - 1)));
+  G.score += pts;
+  const r = roofRect(t), cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2;
+  explode(cx, cy, 1.5);
+  later(0.18, () => explode(t._sx + rand(-8, 8), t._sy + rand(-8, 8), 1.1, true));
+  float(cx, cy - 14, '+' + fmt(pts), '#FFCB52');
+  if (Math.random() < 0.6) dropCoins(cx, cy, 1 + (Math.random() < 0.4 ? 1 : 0));
+  Sound.sfx.boomL(); buzz(20);
+  if (!REDUCED) G.shake = Math.max(G.shake || 0, 5);
+  if (G.razed === 1 || G.razed === 10 || G.razed === 25) Radio.say('tower' + G.razed);
+}
+function updateTowers(dt) {
+  for (const [t, sx, sy] of world.towers) {
+    if (t.flash > 0) t.flash -= dt;
+    if (!t.dead) {
+      if (t.dmg > 0.45 && Math.random() < dt * 5) { const r = roofRect(t); addP(SPR.smoke, rand(r[0], r[2]), rand(r[1], r[3]), rand(-6, 6), rand(-20, -8), rand(1.2, 2), 6, 22, 0.45, false, 0); }
+      continue;
+    }
+    if (t.fallT < RAZE) {
+      t.fallT += dt;
+      // the collapse throws dust out from the base
+      if (Math.random() < dt * 30) addP(SPR.smoke, sx + rand(-t.w / 2, t.w / 2), sy + rand(-t.d / 2, t.d / 2), rand(-30, 30), rand(-30, 30), rand(1.4, 2.4), 12, 46, 0.7, false, 1.2, 1);
+      if (Math.random() < dt * 6) explode(sx + rand(-t.w / 3, t.w / 3), sy + rand(-t.d / 3, t.d / 3), 0.6, true);
+    } else if (t.smokeT > 0) {
+      t.smokeT -= dt;
+      if (Math.random() < dt * 4) addP(SPR.smoke, sx + rand(-6, 6), sy + rand(-6, 6), rand(-4, 4), rand(-16, -8), rand(2, 3.2), 9, 30, 0.5, false, 0, 1);
+    }
+  }
+}
 
 /* ---------------- damage ---------------- */
 function damageEnemy(e, dmg) {
@@ -4615,6 +4713,7 @@ function useSpecial() {
     const x = clamp(P.x + Math.cos(P.hd) * 170, 40, W - 40), y = clamp(P.y + Math.sin(P.hd) * 170, 60, H - 60);
     G.holes.push({ x, y, t: 0, dur: 3.4, dps: dmgAll * 0.9 });
   }
+  for (const v of world.towers) blastTowers(v[0]._sx, v[0]._sy, 1, dmgAll * 0.5);
   Sound.sfx.bomb();
   if (!REDUCED) G.shake = 8;
   updateSpecialBtn();
@@ -4721,6 +4820,7 @@ function update(dt) {
   ambient.update(sdt, G.speed);
   if (world.th.embers && Math.random() < sdt * 7) addP(SPR.ember, rand(0, W), H + 10, rand(-14, 14), -rand(40, 90), rand(3, 5), rand(3, 6), 2, 0.8, true, 0);
   for (let i = G.timers.length - 1; i >= 0; i--) { const tm = G.timers[i]; tm.t -= sdt; if (tm.t <= 0) { swapRemove(G.timers, i); tm.fn(); } }
+  updateTowers(sdt);
 
   if (G.mode === 'endless') { G.diffT -= dt; if (G.diffT <= 0) { G.diffT = 2; G.diff = makeDiff(Math.min(18, 1 + G.t / 35)); G.speed = 40 + Math.min(16, G.t / 20); } }
   switch (G.phase) {
@@ -4994,6 +5094,7 @@ function collide() {
       else if (!b.hit.has(-1)) { b.hit.add(-1); damageBoss(boss, b.dmg * 2.5); hitSpark(b.x, b.y); }
       Sound.sfx.hit();
     }
+    if (!used && b.kind !== 'cluster' && world.towers.length) shootTower(b);
     if (used) {
       hitSpark(b.x, b.y);
       if (b.kind === 'cluster') clusterBurst(b);
@@ -6065,6 +6166,7 @@ const Radio = (() => {
     endless: ['Tower to Big Mouf. Hold this sky as long as you can.'],
     night: ['Lights out, pilot. Hit your night vision.', 'Tower here. It is dark up there. Goggles on.'],
     k10: ['Ten down. Keep slapping.'], k25: ['Twenty five down. You are on fire.'], k50: ['Fifty kills. Ace in the making.'], k100: ['One hundred down. That is legend status.'],
+    tower1: ['Tower down. Their whole block is fair game.'], tower10: ['Ten buildings flattened. Keep slapping that skyline.'], tower25: ['Twenty five towers down. You are redrawing the map.'],
     warn: ['Heavy contact inbound. Stay frosty.', 'Big bird on radar. Here it comes.'],
     phase: ['Armor is cracking. Keep it on him.', 'He is breaking up. Hit him again.'],
     bossDown: ['Splash the big one. Nice work.', 'Big bird is down. The gold is yours.'],
@@ -6663,7 +6765,10 @@ function bank() {
     after = levelInfo(save.xp).L;
   }
   G.bankRes = { xp, before, after, unlocks: unlocksBetween(before, after) };
-  if (after > before) { pendingToasts.push('Level up! You are now level ' + after); Sound.sfx.levelup(); }
+  if (after > before) {
+    pendingToasts.push(rankOf(after) !== rankOf(before) ? 'Promoted! You are now a ' + rankOf(after) : 'Level up! You are now level ' + after);
+    Sound.sfx.levelup();
+  }
   return G.bankRes;
 }
 // The server's answer for a banked run: refresh balances and fix the board if it paid a different amount.
@@ -6690,7 +6795,8 @@ function resultButtons(primary) {
 function levelUpHtml(res) {
   if (!res || res.after <= res.before) return '';
   const li = levelInfo(save.xp);
-  return '<div class="levelup"><b>Level ' + res.after + ' ' + li.rank + '</b>' + (res.unlocks.length ? res.unlocks.join('<br>') : 'Keep flying to unlock more jets and weapons.') + '</div>';
+  const promo = rankOf(res.after) !== rankOf(res.before);
+  return '<div class="levelup">' + (promo ? '<b class="promo">Promoted to ' + li.rank + '</b>' : '') + '<b>Level ' + res.after + ' ' + li.rank + '</b>' + (res.unlocks.length ? res.unlocks.join('<br>') : 'Keep flying to unlock more jets and weapons.') + '</div>';
 }
 function finishMission(success) {
   const m = G.m;
